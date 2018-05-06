@@ -4,13 +4,12 @@ sys.path.append(os.getcwd())
 
 import numpy as np
 from typing import List
-
 from core.train import train, evaluate
 from core.nn import NeuralNet
 from core.layers import Linear, Tanh
-from core.data import DataIterator, BatchIterator
 from core.optimizer import SGD, Adam, RMSProp, Momentum
 from core.initializer import NormalInit, UniformInit, ZerosInit, ConstantInit, XavierUniformInit, XavierNormalInit, OrthogonalInit, SparseInit
+from core.data.data import DataIterator, BatchIterator
 
 
 def fizzbuzz_encode(x: int) -> List[int]:

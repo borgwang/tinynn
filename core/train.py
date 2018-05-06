@@ -4,7 +4,7 @@ from core.tensor import Tensor
 from core.nn import NeuralNet
 from core.loss import Loss, MSE
 from core.optimizer import Optimizer, Adam
-from core.data import DataIterator, BatchIterator
+from core.data.data import DataIterator, BatchIterator
 
 
 def train(net: NeuralNet,
