@@ -84,3 +84,6 @@ ENV/
 
 # mypy cache
 .mypy_cache/
+
+# Costomize
+core/__pycache__/
