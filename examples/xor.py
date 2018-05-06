@@ -23,9 +23,9 @@ targets = np.array([
 ])
 
 net = NeuralNet([
-    Linear(input_size=2, output_size=2),
+    Linear(num_in=2, num_out=2),
     Tanh(),
-    Linear(input_size=2, output_size=2)
+    Linear(num_in=2, num_out=2)
 ])
 
 train(net, inputs, targets)

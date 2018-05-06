@@ -3,6 +3,7 @@ from typing import Dict, Callable
 import numpy as np
 
 from core.tensor import Tensor
+from core.initializer import Initializer, XavierNormalInit, ZerosInit
 
 
 class Layer(object):
@@ -20,20 +21,23 @@ class Layer(object):
 
 class Linear(Layer):
 
-    def __init__(self, input_size: int, output_size: int) -> None:
+    def __init__(self,
+                 num_in: int,
+                 num_out: int,
+                 w_init: Initializer = XavierNormalInit(),
+                 b_init: Initializer = ZerosInit()) -> None:
         super().__init__()
-        # TODO: Weight initialization?
-        self.params['W'] = np.random.randn(input_size, output_size)
-        self.params['b'] = np.random.randn(output_size)
+        self.params['w'] = w_init((num_in, num_out))
+        self.params['b'] = b_init((1, num_out))
 
     def forward(self, inputs: Tensor) -> Tensor:
         self.inputs = inputs
-        return inputs @ self.params['W'] + self.params['b']
+        return inputs @ self.params['w'] + self.params['b']
 
     def backward(self, grad: Tensor) -> Tensor:
         self.grads['b'] = np.sum(grad, axis=0)
-        self.grads['W'] = self.inputs.T @ grad
-        return grad @ self.params['W'].T
+        self.grads['w'] = self.inputs.T @ grad
+        return grad @ self.params['w'].T
 
 
 F = Callable[[Tensor], Tensor]

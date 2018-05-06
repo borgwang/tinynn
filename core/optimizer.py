@@ -9,17 +9,17 @@ class Optimizer(object):
 
     def step(self, net: NeuralNet) -> None:
         # flatten all gradients
-        grad = np.concatenate([np.ravel(grad) for param, grad in net.params_and_grads()])
+        grad = np.concatenate([np.ravel(grad) for param, grad in net.get_params_and_grads()])
 
         step = self._compute_step(grad)
 
         pointer = 0
-        for param, grad in net.params_and_grads():
+        for param, grad in net.get_params_and_grads():
             block = np.prod(param.shape)
             param += step[pointer: pointer+block].reshape(param.shape)
             pointer += block
 
-    def _compute_step(self, grad: Tensor) -> None:
+    def _compute_step(self, grad: Tensor) -> Tensor:
         raise NotImplementedError
 
 
