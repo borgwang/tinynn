@@ -5,10 +5,11 @@ sys.path.append(os.getcwd())
 import numpy as np
 from typing import List
 
-from core.train import train
+from core.train import train, evaluate
 from core.nn import NeuralNet
 from core.layers import Linear, Tanh
-from core.optim import SGD
+from core.data import DataIterator, BatchIterator
+from core.optimizer import SGD, Adam, RMSProp, Momentum
 
 
 def fizzbuzz_encode(x: int) -> List[int]:
@@ -26,8 +27,8 @@ def binary_encode(x: int) -> List[int]:
     return [x >> i & 1 for i in range(10)]
 
 
-inputs = np.array([binary_encode(x) for x in range(101, 1024)])
-targets = np.array([fizzbuzz_encode(x) for x in range(101, 1024)])
+train_X = np.array([binary_encode(x) for x in range(101, 1024)])
+train_Y = np.array([fizzbuzz_encode(x) for x in range(101, 1024)])
 
 net = NeuralNet([
     Linear(input_size=10, output_size=50),
@@ -35,13 +36,9 @@ net = NeuralNet([
     Linear(input_size=50, output_size=4)
 ])
 
-train(net, inputs, targets, num_epochs=5000, optimizer=SGD(lr=0.001))
+train(net, train_X, train_Y, num_epochs=3000, iterator=BatchIterator(batch_size=32), optimizer=Momentum(lr=1e-3))
 
-for x in range(1, 101):
-    predicted = net.forward(binary_encode(x))
-    predicted_idx = np.argmax(predicted)
-    actual_idx = np.argmax(fizzbuzz_encode(x))
-    labels = [str(x), 'fizz', 'buzz', 'fizzbuzz']
-    if predicted_idx != actual_idx:
-        print('!!!!!!!!!!!!!')
-    print('%10s %10s %10s' % (x, labels[predicted_idx], labels[actual_idx]))
+test_X = np.array([binary_encode(x) for x in range(1, 101)])
+test_Y = np.array([fizzbuzz_encode(x) for x in range(1, 101)])
+
+evaluate(net, test_X, test_Y)

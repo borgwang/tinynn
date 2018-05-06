@@ -1,3 +1,4 @@
+import numpy as np
 from typing import Sequence, Iterator, Tuple
 
 from core.tensor import Tensor
@@ -8,6 +9,7 @@ class NeuralNet(object):
 
     def __init__(self, layers: Sequence[Layer]) -> None:
         self.layers = layers
+        self.num_params = sum([sum([np.prod(p.shape) for p in layer.params.values()]) for layer in layers])
 
     def forward(self, inputs: Tensor) -> Tensor:
         for layer in self.layers:

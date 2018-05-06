@@ -22,7 +22,7 @@ class Linear(Layer):
 
     def __init__(self, input_size: int, output_size: int) -> None:
         super().__init__()
-        # weight initialization?
+        # TODO: Weight initialization?
         self.params['W'] = np.random.randn(input_size, output_size)
         self.params['b'] = np.random.randn(output_size)
 

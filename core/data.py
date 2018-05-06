@@ -22,8 +22,11 @@ class BatchIterator(DataIterator):
     def __call__(self, inputs: Tensor, targets: Tensor) -> Iterator[Batch]:
         starts = np.arange(0, len(inputs), self.batch_size)
         if self.shuffle:
-            np.random.shuffle(starts)
-
+            idx = np.arange(len(inputs))
+            np.random.shuffle(idx)
+            inputs = inputs[idx]
+            targets = targets[idx]
+            
         for start in starts:
             end = start + self.batch_size
             batch_inputs = inputs[start: end]
