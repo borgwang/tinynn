@@ -67,7 +67,22 @@ def tanh_prime(x: Tensor) -> Tensor:
     return 1 - y ** 2
 
 
+def log_softmax(x: Tensor) -> Tensor:
+    exps = np.exp(x - np.max(x))
+    return np.log(exps / np.sum(exps))
+
+
+def log_softmax_prime(x: Tensor) -> Tensor:
+    return log_softmax(x)
+
+
 class Tanh(Activation):
 
     def __init__(self):
         super().__init__(tanh, tanh_prime)
+
+
+class LogSoftmax(Activation):
+
+    def __init__(self):
+        super().__init__(log_softmax, log_softmax_prime)

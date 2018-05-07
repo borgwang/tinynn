@@ -2,7 +2,7 @@ import numpy as np
 
 from core.tensor import Tensor
 from core.nn import NeuralNet
-from core.loss import Loss, MSE
+from core.loss import Loss, MSELoss
 from core.optimizer import Optimizer, Adam
 from core.data.data import DataIterator, BatchIterator
 
@@ -12,7 +12,7 @@ def train(net: NeuralNet,
           targets: Tensor,
           num_epochs: int = 5000,
           iterator: DataIterator = BatchIterator(),
-          loss: Loss = MSE(),
+          loss: Loss = MSELoss(),
           optimizer: Optimizer = Adam(3e-4)) -> None:
     for epoch in range(num_epochs):
         epoch_loss = 0.0

@@ -87,3 +87,4 @@ ENV/
 
 # Costomize
 core/__pycache__/
+examples/data/
