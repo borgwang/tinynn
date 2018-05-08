@@ -134,26 +134,3 @@ class OrthogonalInit(Initializer):
         q = u if u.shape == shape else v
         q = q.reshape(shape)
         return (self._gain * q[:shape[0], :shape[1]]).astype(np.float32)
-
-
-class SparseInit(Initializer):
-    '''
-    Implement the initialization method descripted in
-    “Deep learning via Hessian-free optimization” - Martens, J. (2010).
-
-    Weights will be initialized as a sparse tensor. Non-zero elements will
-    have values sampled from normal distribution N(0, 0.01)
-    '''
-    def __init__(self, sparsity: float = 0.1, std: float = 0.01) -> None:
-        self._sparsity = sparsity
-        self._std = std
-
-    def __call__(self, shape: Tuple) -> Tensor:
-        assert len(shape) == 2
-        n = np.prod(shape)
-        num_zeros = int(np.ceil(n * self._sparsity))
-        mask = np.full(n, True)
-        mask[:num_zeros] = False
-        np.random.shuffle(mask)
-        mask = mask.reshape(shape)
-        return np.random.normal(loc=0.0, scale=self._std, size=shape) * mask

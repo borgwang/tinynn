@@ -50,10 +50,10 @@ class CrossEntropyLoss(Loss):
         nll = -np.log(p[range(m), actual])
         if self._weight is not None:
             nll *= self._weight[actual]
-        return np.sum(nll)
+        return np.sum(nll) / m
 
     def grad(self, predicted: Tensor, actual: Tensor) -> Tensor:
         m = predicted.shape[0]
         grad = np.copy(predicted)
         grad[range(m), actual] -= 1.0
-        return grad
+        return grad / m

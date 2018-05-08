@@ -15,14 +15,14 @@ def train(net: NeuralNet,
           loss: Loss = MSELoss(),
           optimizer: Optimizer = Adam(3e-4)) -> None:
     for epoch in range(num_epochs):
-        epoch_loss = 0.0
+        epoch_loss = []
         for batch in iterator(inputs, targets):
             predicted = net.forward(batch.inputs)
-            epoch_loss += loss.loss(predicted, batch.targets)
+            epoch_loss.append(loss.loss(predicted, batch.targets))
             grad = loss.grad(predicted, batch.targets)
             net.backward(grad)
             optimizer.step(net)
-        print(epoch, epoch_loss)
+        print(epoch, np.sum(epoch_loss))
 
 
 def evaluate(net: NeuralNet,

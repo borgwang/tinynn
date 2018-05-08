@@ -35,7 +35,7 @@ class SGD(Optimizer):
 class Adam(Optimizer):
 
     def __init__(self,
-                 lr,
+                 lr: float = 0.001,
                  beta1: float = 0.9,
                  beta2: float = 0.999,
                  epsilon: float = 1e-8) -> None:
@@ -71,10 +71,10 @@ class RMSProp(Optimizer):
     mom = momentum * mom{t-1} + lr * grad_t / sqrt(mean_square + epsilon)
     '''
     def __init__(self,
-                 lr,
-                 decay: float = 0.9,
+                 lr: floar = 0.01,
+                 decay: float = 0.99,
                  momentum: float = 0.0,
-                 epsilon: float = 1e-10) -> None:
+                 epsilon: float = 1e-8) -> None:
         self.lr = lr
         self._decay = decay
         self._momentum = momentum
@@ -105,3 +105,7 @@ class Momentum(Optimizer):
         self._acc = self._momentum * self._acc + grad
         step = - self.lr * self._acc
         return step
+
+
+class LRScheduler(object):
+    # TODO
