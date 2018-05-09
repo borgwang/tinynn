@@ -1,5 +1,6 @@
 from typing import Tuple
 
+import scipy.stats as stats
 import numpy as np
 
 from core.tensor import Tensor
@@ -18,6 +19,16 @@ class NormalInit(Initializer):
 
     def __call__(self, shape: Tuple) -> Tensor:
         return np.random.normal(loc=self._mean, scale=self._std, size=shape)
+
+
+class TruncatedNormalInit(Initializer):
+
+    def __init__(self, mean: float = 0.0, std: float = 1.0) -> None:
+        self._tn = stats.truncnorm(
+            - 2 * std, 2 * std, loc=mean, scale=std)
+
+    def __call__(self, shape: Tuple) -> Tensor:
+        return self._tn.rvs(size=shape)
 
 
 class UniformInit(Initializer):

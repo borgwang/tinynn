@@ -5,19 +5,19 @@ import numpy as np
 import urllib
 import pickle
 import gzip
-try:
-    from urllib.error import URLError
-    from urllib.request import urlretrieve
-except ImportError:
-    from urllib2 import URLError
-    from urllib2 import urlretrieve
+from urllib.error import URLError
+from urllib.request import urlretrieve
 
 from core.tensor import Tensor
 from core.data.transform import Transform
 
 
 class Dataset(object):
-    pass
+
+    def __init__(self, dir: str, transform: Transform = None) -> None:
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        self.dir: str = dir
 
 
 class MNIST(Dataset):
@@ -25,10 +25,9 @@ class MNIST(Dataset):
     def __init__(self,
                  dir: str,
                  transform: Transform = None) -> None:
+        super().__init__(dir, transform)
         URL = 'http://deeplearning.net/data/mnist/mnist.pkl.gz'
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-        path = os.path.join(dir, URL.split('/')[-1])
+        path = os.path.join(self.dir, URL.split('/')[-1])
         self._download(path, URL)
         self._load(path)
 

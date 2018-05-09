@@ -15,19 +15,12 @@ class Loss(object):
 class MSELoss(Loss):
 
     def loss(self, predicted: Tensor, actual: Tensor) -> float:
-        return np.sum((predicted - actual) ** 2)
+        m = predicted.shape[0]
+        return np.sum((predicted - actual) ** 2) / m
 
     def grad(self, predicted: Tensor, actual: Tensor) -> Tensor:
-        return 2 * (predicted - actual)
-
-
-class SparseCrossEntropyLoss(Loss):
-
-    def loss(self, predicted: Tensor, actual: Tensor) -> float:
-        pass
-
-    def grad(self, predicted: Tensor, actual: Tensor) -> Tensor:
-        pass
+        m = predicted.shape[0]
+        return 2 * (predicted - actual) / m
 
 
 class CrossEntropyLoss(Loss):
@@ -36,7 +29,8 @@ class CrossEntropyLoss(Loss):
 
     weight is a 1D tensor assignning weight to each of the classes.
     '''
-    def __init__(self, weight: Tensor = None) -> None:
+    def __init__(self, weight: Tensor = None, sparse: bool = True) -> None:
+        self._sparse = sparse
         if weight is not None:
             assert len(weight.shape) == 1
             self._weight = np.asarray(weight)
@@ -45,9 +39,14 @@ class CrossEntropyLoss(Loss):
 
     def loss(self, predicted: Tensor, actual: int) -> float:
         m = predicted.shape[0]
+
         exps = np.exp(predicted - np.max(predicted))
         p = exps / np.sum(exps)
-        nll = -np.log(p[range(m), actual])
+        if self._sparse:
+            nll = -np.log(np.sum(p * actual, axis=1))
+        else:
+            nll = -np.log(p[range(m), actual])
+
         if self._weight is not None:
             nll *= self._weight[actual]
         return np.sum(nll) / m
@@ -55,5 +54,8 @@ class CrossEntropyLoss(Loss):
     def grad(self, predicted: Tensor, actual: Tensor) -> Tensor:
         m = predicted.shape[0]
         grad = np.copy(predicted)
-        grad[range(m), actual] -= 1.0
+        if self._sparse:
+            grad -= actual
+        else:
+            grad[range(m), actual] -= 1.0
         return grad / m

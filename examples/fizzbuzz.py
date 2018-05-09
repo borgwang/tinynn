@@ -8,7 +8,7 @@ from core.train import train, evaluate
 from core.nn import NeuralNet
 from core.layers import Linear, Tanh
 from core.optimizer import SGD, Adam, RMSProp, Momentum
-from core.initializer import NormalInit, UniformInit, ZerosInit, ConstantInit, XavierUniformInit, XavierNormalInit, OrthogonalInit, SparseInit
+from core.initializer import NormalInit, UniformInit, ZerosInit, ConstantInit, XavierUniformInit, XavierNormalInit, OrthogonalInit
 from core.data.data import DataIterator, BatchIterator
 
 
@@ -36,9 +36,6 @@ net = NeuralNet([
     Tanh(),
     Linear(num_in=50, num_out=4)
 ])
-
-for param in net.get_params():
-    print(np.sum(np.square(param)))
 
 train(net,
       train_X,

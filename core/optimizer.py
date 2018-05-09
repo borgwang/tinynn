@@ -7,9 +7,13 @@ from core.tensor import Tensor
 
 class Optimizer(object):
 
+    def __init__(self, lr: float) -> None:
+        self.lr = lr
+
     def step(self, net: NeuralNet) -> None:
         # flatten all gradients
-        grad = np.concatenate([np.ravel(grad) for param, grad in net.get_params_and_grads()])
+        grad = np.concatenate(
+            [np.ravel(grad) for param, grad in net.get_params_and_grads()])
 
         step = self._compute_step(grad)
 
@@ -26,7 +30,7 @@ class Optimizer(object):
 class SGD(Optimizer):
 
     def __init__(self, lr) -> None:
-        self.lr = lr
+        super().__init__(lr)
 
     def _compute_step(self, grad: Tensor) -> Tensor:
         return - self.lr * grad
@@ -39,7 +43,7 @@ class Adam(Optimizer):
                  beta1: float = 0.9,
                  beta2: float = 0.999,
                  epsilon: float = 1e-8) -> None:
-        self.lr = lr
+        super().__init__(lr)
         self._b1 = beta1
         self._b2 = beta2
         self._eps = epsilon
@@ -52,7 +56,8 @@ class Adam(Optimizer):
     def _compute_step(self, grad: Tensor) -> Tensor:
         self._t += 1
 
-        lr_t = self.lr * np.sqrt(1 - np.power(self._b2, self._t)) / (1 - np.power(self._b1, self._t))
+        lr_t = self.lr * np.sqrt(1 - np.power(self._b2, self._t)) / \
+            (1 - np.power(self._b1, self._t))
 
         self._m = self._b1 * self._m + (1 - self._b1) * grad
         self._v = self._b2 * self._v + (1 - self._b2) * np.square(grad)
@@ -71,11 +76,11 @@ class RMSProp(Optimizer):
     mom = momentum * mom{t-1} + lr * grad_t / sqrt(mean_square + epsilon)
     '''
     def __init__(self,
-                 lr: floar = 0.01,
+                 lr: float = 0.01,
                  decay: float = 0.99,
                  momentum: float = 0.0,
                  epsilon: float = 1e-8) -> None:
-        self.lr = lr
+        super().__init__(lr)
         self._decay = decay
         self._momentum = momentum
         self._eps = epsilon
@@ -85,27 +90,138 @@ class RMSProp(Optimizer):
 
     def _compute_step(self, grad: Tensor) -> Tensor:
         self._ms = self._decay * self._ms + (1 - self._decay) * np.square(grad)
-        self._mom = self._momentum * self._mom + self.lr * grad / np.sqrt(self._ms + self._eps)
+        self._mom = self._momentum * self._mom + \
+            self.lr * grad / np.sqrt(self._ms + self._eps)
 
         step = -self._mom
         return step
 
 
 class Momentum(Optimizer):
-    # accumulation = momentum * accumulation + gradient
-    # variable -= learning_rate * accumulation
-
+    '''
+     accumulation = momentum * accumulation + gradient
+     variable -= learning_rate * accumulation
+    '''
     def __init__(self, lr, momentum: float = 0.9) -> None:
-        self.lr = lr
+        super().__init__(lr)
         self._momentum = momentum
-
         self._acc: Tensor = 0
 
     def _compute_step(self, grad: Tensor) -> Tensor:
         self._acc = self._momentum * self._acc + grad
-        step = - self.lr * self._acc
+        step: Tensor = -self.lr * self._acc
         return step
 
 
 class LRScheduler(object):
-    # TODO
+    '''
+    LRScheduler model receive a optimizer and Adjust the lr by calling
+    step() method during training.
+    '''
+    def __init__(self, optimizer: Optimizer) -> None:
+        self._optim = optimizer
+        self._initial_lr = self.get_current_lr()
+
+        self._t: int = 0
+
+    def step(self) -> float:
+        self._t += 1
+        self._optim.lr = self._compute_lr()
+        return self.get_current_lr()
+
+    def _compute_lr(self) -> float:
+        raise NotImplementedError
+
+    def get_current_lr(self) -> float:
+        return self._optim.lr
+
+
+class StepLR(LRScheduler):
+    '''
+    LR decayed by gamma every 'step_size' epoches.
+    '''
+    def __init__(self,
+                 optimizer: Optimizer,
+                 step_size: int,
+                 gamma: float = 0.1) -> None:
+        super().__init__(optimizer)
+        assert step_size >= 1, 'step_size must greater than 0 (%d was set)' % step_size
+        self._step_size = step_size
+        self._gamma = gamma
+
+    def _compute_lr(self) -> float:
+        decay = self._gamma if self._t % self._step_size == 0 else 1.0
+        return decay * self.get_current_lr()
+
+
+class MultiStepLR(LRScheduler):
+    '''
+    LR decayed by gamma when the number of epoch reaches one of the milestones.
+    Argument 'milestones' must be a int list and be increasing.
+    '''
+    def __init__(self,
+                 optimizer: Optimizer,
+                 milestones: List,
+                 gamma: float = 0.1) -> None:
+        super().__init__(optimizer)
+        milestones = [int(m) for m in milestones]
+        assert all(x < y for x, y in zip(milestones[:-1], milestones[1:])) and \
+            all(isinstance(x, int) for x in milestones), \
+            'milestones must be a list of int and be increasing!'
+
+        self._milestones = milestones
+        self._gamma = gamma
+
+    def _compute_lr(self) -> float:
+        decay = self._gamma if self._t in self._milestones else 1.0
+        return decay * self.get_current_lr()
+
+
+class ExponentialLR(LRScheduler):
+    '''
+    ExponentialLR is computed by:
+
+    lr_decayed = lr * decay_rate ^ (current_steps / decay_steps)
+    '''
+    def __init__(self,
+                 optimizer: Optimizer,
+                 decay_steps: int,
+                 decay_rate: float = (1 / np.e)) -> None:
+        super().__init__(optimizer)
+        self._decay_steps = decay_steps
+        self._decay_rate = decay_rate
+
+    def _compute_lr(self) -> float:
+        if self._t <= self._decay_steps:
+            return self._initial_lr * \
+                self._decay_rate ** (self._t  / self._decay_steps)
+        else:
+            return self.get_current_lr()
+
+
+class LinearLR(LRScheduler):
+    '''
+    Linear decay learning rate when the number of the epoche is in
+    [start_step, start_step + decay_steps]
+    '''
+    def __init__(self,
+                 optimizer: Optimizer,
+                 decay_steps: int,
+                 final_lr: float = 1e-6,
+                 start_step: int = 0) -> None:
+        super().__init__(optimizer)
+        assert final_lr < self._initial_lr, \
+            'The final lr should be no greater than the initial lr.'
+        assert decay_steps > 0
+
+        self._lr_delta = (final_lr - self._initial_lr) / decay_steps
+
+        self._final_lr = final_lr
+        self._decay_steps = decay_steps
+        self._start_step = start_step
+
+    def _compute_lr(self) -> float:
+        if self._t > self._start_step:
+            if self._t <= self._start_step + self._decay_steps:
+                return self.get_current_lr() + self._lr_delta
+        return self.get_current_lr()

@@ -41,5 +41,6 @@ def evaluate(net: NeuralNet,
         raise ValueError('Target Tensor dimensional error!')
 
     accuracy = np.sum(predicted_idx == target_idx) / len(targets)
+    print('Accuracy on %d data: %.2f%%' % (len(targets), accuracy * 100))
 
-    print('Accuracy on %d test data: %.2f%%' % (len(targets), accuracy * 100))
+    return accuracy
