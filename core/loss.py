@@ -1,24 +1,28 @@
-import numpy as np
+# Author: borgwang <borgwang@126.com>
+# Date: 2018-05-05
+#
+# Filename: loss.py
+# Description: Implementation of loss funtions in neural network.
 
-from core.tensor import Tensor
+import numpy as np
 
 
 class Loss(object):
 
-    def loss(self, predicted: Tensor, actual: Tensor) -> float:
+    def loss(self, predicted, actual):
         raise NotImplementedError
 
-    def grad(self, predicted: Tensor, actual: Tensor) -> Tensor:
+    def grad(self, predicted, actual):
         raise NotImplementedError
 
 
 class MSELoss(Loss):
 
-    def loss(self, predicted: Tensor, actual: Tensor) -> float:
+    def loss(self, predicted, actual):
         m = predicted.shape[0]
         return np.sum((predicted - actual) ** 2) / m
 
-    def grad(self, predicted: Tensor, actual: Tensor) -> Tensor:
+    def grad(self, predicted, actual):
         m = predicted.shape[0]
         return 2 * (predicted - actual) / m
 
@@ -29,7 +33,7 @@ class CrossEntropyLoss(Loss):
 
     weight is a 1D tensor assignning weight to each of the classes.
     '''
-    def __init__(self, weight: Tensor = None, sparse: bool = True) -> None:
+    def __init__(self, weight=None, sparse=True):
         self._sparse = sparse
         if weight is not None:
             assert len(weight.shape) == 1
@@ -37,7 +41,7 @@ class CrossEntropyLoss(Loss):
         else:
             self._weight = None
 
-    def loss(self, predicted: Tensor, actual: int) -> float:
+    def loss(self, predicted, actual):
         m = predicted.shape[0]
 
         exps = np.exp(predicted - np.max(predicted))
@@ -51,7 +55,7 @@ class CrossEntropyLoss(Loss):
             nll *= self._weight[actual]
         return np.sum(nll) / m
 
-    def grad(self, predicted: Tensor, actual: Tensor) -> Tensor:
+    def grad(self, predicted, actual):
         m = predicted.shape[0]
         grad = np.copy(predicted)
         if self._sparse:

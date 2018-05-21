@@ -1,3 +1,10 @@
+# Author: borgwang <borgwang@126.com>
+# Date: 2018-05-08
+#
+# Filename: run.py
+# Description: Example MNIST code for tinynn.
+
+
 import sys
 import os
 sys.path.append(os.getcwd())
@@ -6,7 +13,7 @@ import numpy as np
 
 from core.train import train, evaluate
 from core.nn import NeuralNet
-from core.layers import Linear, Tanh, ReLU, Sigmoid
+from core.layers import Linear, Tanh, ReLU, Sigmoid, LeakyReLU, Dropout
 from core.optimizer import SGD, Adam, RMSProp, Momentum, StepLR, MultiStepLR, LinearLR, ExponentialLR
 from core.loss import CrossEntropyLoss
 from core.initializer import NormalInit, TruncatedNormalInit, UniformInit, ZerosInit, ConstantInit, XavierUniformInit, XavierNormalInit, OrthogonalInit
@@ -39,12 +46,14 @@ def get_one_hot(targets, nb_classes):
 mnist = MNIST('./examples/data', transform=None)
 train_X, train_Y = mnist.get_train_data()
 valid_X, valid_Y = mnist.get_valid_data()
-train_Y = get_one_hot(train_Y, 10)
-valid_Y = get_one_hot(valid_Y, 10)
+test_X, test_Y = mnist.get_test_data()
+# train_Y = get_one_hot(train_Y, 10)
+# valid_Y = get_one_hot(valid_Y, 10)
 
-# train_X = np.concatenate([train_X, valid_X])
-# train_Y = np.concatenate([train_Y, valid_Y])
-# train_Y = get_one_hot(np.concatenate([train_Y, valid_Y]), 10)
+train_X = np.concatenate([train_X, valid_X])
+train_Y = np.concatenate([train_Y, valid_Y])
+train_Y = get_one_hot(train_Y, 10)
+test_Y = get_one_hot(test_Y, 10)
 
 net = NeuralNet([
     Linear(num_in=784, num_out=200),
@@ -58,9 +67,7 @@ num_epochs = 50
 iterator = BatchIterator(batch_size=32)
 loss = CrossEntropyLoss()
 optimizer = Adam(1e-3)
-# lr_scheduler = MultiStepLR(optimizer, milestones=[1, 3, 5], gamma=0.5)
-# lr_scheduler = LinearLR(optimizer, decay_steps=25, final_lr=1e-4)
-lr_scheduler = ExponentialLR(optimizer, decay_steps=5)
+lr_scheduler = ExponentialLR(optimizer, decay_steps=50)
 
 batch_losses = []
 epoch_accs = []
@@ -75,7 +82,7 @@ for epoch in range(num_epochs):
         optimizer.step(net)
     print('lr:', lr_scheduler.step())
     print('Epoch %d timecost: %.4f' % (epoch, time.time() - t_start))
-    valid_acc = evaluate(net, valid_X, valid_Y)
-    epoch_accs.append(valid_acc)
+    test_acc = evaluate(net, test_X, test_Y)
+    epoch_accs.append(test_acc)
 
 import pdb; pdb.set_trace()

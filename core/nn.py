@@ -1,33 +1,49 @@
-import numpy as np
-from typing import Sequence, Iterator, Tuple
+# Author: borgwang <borgwang@126.com>
+# Date: 2018-05-05
+#
+# Filename: nn.py
+# Description: feedforwad Neural Network class
 
-from core.tensor import Tensor
-from core.layers import Layer
+
+import numpy as np
+
+from core.layers import Dropout
 
 
 class NeuralNet(object):
 
-    def __init__(self, layers: Sequence[Layer]) -> None:
+    def __init__(self, layers):
         self.layers = layers
+        self.training = True
         self.num_params = sum([sum([np.prod(p.shape) for p in layer.params.values()]) for layer in layers])
 
-    def forward(self, inputs: Tensor) -> Tensor:
+    def forward(self, inputs):
         for layer in self.layers:
+            if isinstance(layer, Dropout) and not self.training:
+                continue
             inputs = layer.forward(inputs)
         return inputs
 
-    def backward(self, grad: Tensor) -> Tensor:
+    def backward(self, grad):
         for layer in reversed(self.layers):
+            if isinstance(layer, Dropout) and not self.training:
+                continue
             grad = layer.backward(grad)
         return grad
 
-    def get_params_and_grads(self) -> Iterator[Tuple[Tensor, Tensor]]:
+    def get_params_and_grads(self):
         for layer in self.layers:
             for name, param in layer.params.items():
                 grad = layer.grads[name]
                 yield param, grad
 
-    def get_params(self) -> Iterator[Tensor]:
+    def get_params(self):
         for layer in self.layers:
             for name, param in layer.params.items():
                 yield param
+
+    def set_training_phase(self):
+        self.training = True
+
+    def set_test_phase(self):
+        self.training = False

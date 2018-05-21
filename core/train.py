@@ -7,13 +7,13 @@ from core.optimizer import Optimizer, Adam
 from core.data.data import DataIterator, BatchIterator
 
 
-def train(net: NeuralNet,
-          inputs: Tensor,
-          targets: Tensor,
-          num_epochs: int = 5000,
-          iterator: DataIterator = BatchIterator(),
-          loss: Loss = MSELoss(),
-          optimizer: Optimizer = Adam(3e-4)) -> None:
+def train(net,
+          inputs,
+          targets,
+          num_epochs=5000,
+          iterator=BatchIterator(),
+          loss=MSELoss(),
+          optimizer=Adam(3e-4)):
     for epoch in range(num_epochs):
         epoch_loss = []
         for batch in iterator(inputs, targets):
@@ -25,9 +25,10 @@ def train(net: NeuralNet,
         print(epoch, np.sum(epoch_loss))
 
 
-def evaluate(net: NeuralNet,
-             inputs: Tensor,
-             targets: Tensor) -> None:
+def evaluate(net,
+             inputs,
+             targets):
+    net.set_test_phase()
 
     predicted = net.forward(inputs)
     predicted_idx = np.argmax(predicted, axis=1)
@@ -42,5 +43,7 @@ def evaluate(net: NeuralNet,
 
     accuracy = np.sum(predicted_idx == target_idx) / len(targets)
     print('Accuracy on %d data: %.2f%%' % (len(targets), accuracy * 100))
+
+    net.set_training_phase()
 
     return accuracy

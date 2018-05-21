@@ -7,52 +7,52 @@ from core.tensor import Tensor
 
 
 class Initializer(object):
-    def __call__(self, shape: Tuple) -> Tensor:
+    def __call__(self, shape):
         raise NotImplementedError
 
 
 class NormalInit(Initializer):
 
-    def __init__(self, mean: float = 0.0, std: float = 1.0) -> None:
+    def __init__(self, mean=0.0, std=1.0):
         self._mean = mean
         self._std = std
 
-    def __call__(self, shape: Tuple) -> Tensor:
+    def __call__(self, shape):
         return np.random.normal(loc=self._mean, scale=self._std, size=shape)
 
 
 class TruncatedNormalInit(Initializer):
 
-    def __init__(self, mean: float = 0.0, std: float = 1.0) -> None:
+    def __init__(self, mean=0.0, std=1.0):
         self._tn = stats.truncnorm(
             - 2 * std, 2 * std, loc=mean, scale=std)
 
-    def __call__(self, shape: Tuple) -> Tensor:
+    def __call__(self, shape):
         return self._tn.rvs(size=shape)
 
 
 class UniformInit(Initializer):
 
-    def __init__(self, a: float = 0.0, b: float = 1.0) -> None:
+    def __init__(self, a=0.0, b=1.0):
         self._a = a
         self._b = b
 
-    def __call__(self, shape: Tuple) -> Tensor:
+    def __call__(self, shape):
         return np.random.uniform(low=self._a, high=self._b, size=shape)
 
 
 class ZerosInit(Initializer):
 
-    def __call__(self, shape: Tuple) -> Tensor:
+    def __call__(self, shape):
         return np.zeros(shape=shape, dtype=float)
 
 
 class ConstantInit(Initializer):
 
-    def __init__(self, val : float) -> None:
+    def __init__(self, val):
         self._val = val
 
-    def __call__(self, shape: Tuple) -> Tensor:
+    def __call__(self, shape):
         return np.full(shape=shape, fill_value=self._val, dtype=float)
 
 
@@ -66,10 +66,10 @@ class XavierUniformInit(Initializer):
     a = gain * sqrt(6.0 / (num_in + num_out))
 
     '''
-    def __init__(self, gain: float = 1.0) -> None:
+    def __init__(self, gain=1.0):
         self._gain = gain
 
-    def __call__(self, shape: Tuple) -> Tensor:
+    def __call__(self, shape):
         assert len(shape) >= 2
         a = self._gain * np.sqrt(6.0 / (shape[0] + shape[1]))
         return np.random.uniform(low=-a, high=a, size=shape)
@@ -84,10 +84,10 @@ class XavierNormalInit(Initializer):
     Weights will have values sampled from uniform distribution N(0, std) where
     std = gain * sqrt(1.0 / (num_in + num_out))
     '''
-    def __init__(self, gain: float = 1.0) -> None:
+    def __init__(self, gain=1.0):
         self._gain = gain
 
-    def __call__(self, shape: Tuple) -> Tensor:
+    def __call__(self, shape):
         assert len(shape) >= 2
         std = self._gain * np.sqrt(2.0 / (shape[0] + shape[1]))
         return np.random.normal(loc=0.0, scale=std, size=shape)
@@ -102,10 +102,10 @@ class HeUniformInit(Initializer):
     Weights will have values sampled from uniform distribution U(-a, a) where
     a = sqrt(6.0 / num_in)
     '''
-    def __init__(self, gain: float = 1.0) -> None:
+    def __init__(self, gain=1.0):
         self._gain = gain
 
-    def __call__(self, shape: Tuple) -> Tensor:
+    def __call__(self, shape):
         a = self._gain * np.sqrt(6.0 / shape[0])
         return np.random.uniform(low=-a, high=a, size=shape)
 
@@ -119,10 +119,10 @@ class HeNormalInit(Initializer):
     Weights will have values sampled from normal distribution N(0, std) where
     std = sqrt(2.0 / num_in)
     '''
-    def __init__(self, gain: float = 1.0) -> None:
+    def __init__(self, gain=1.0):
         self._gain = gain
 
-    def __call__(self, shape: Tuple) -> Tensor:
+    def __call__(self, shape):
         std = self._gain * np.sqrt(2.0 / shape[0])
         return np.random.normal(loc=0.0, scale=std, size=shape)
 
@@ -135,10 +135,10 @@ class OrthogonalInit(Initializer):
 
     The shape must be at least 2 dimensional.
     '''
-    def __init__(self, gain: float = 1.0) -> None:
+    def __init__(self, gain=1.0):
         self._gain = gain
 
-    def __call__(self, shape: Tuple) -> Tensor:
+    def __call__(self, shape):
         assert len(shape) == 2  # only support 2 dimension tensor for now
         a = np.random.normal(0.0, 1.0, shape)
         u, _, v = np.linalg.svd(a, full_matrices=False)
