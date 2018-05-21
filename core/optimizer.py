@@ -1,3 +1,11 @@
+# Author: borgwang <borgwang@126.com>
+# Date: 2018-05-05
+#
+# Filename: Optimizer.py
+# Description:
+#   Implement multiple optimization algorithms and learning rate scheuler.
+
+
 from typing import List
 
 import numpy as np
@@ -7,8 +15,9 @@ from core.tensor import Tensor
 
 class Optimizer(object):
 
-    def __init__(self, lr):
+    def __init__(self, lr, weight_decay):
         self.lr = lr
+        self.weight_decay = weight_decay
 
     def step(self, net):
         # flatten all gradients
@@ -20,6 +29,7 @@ class Optimizer(object):
         pointer = 0
         for param, grad in net.get_params_and_grads():
             block = np.prod(param.shape)
+            param *= (1 - self.weight_decay)
             param += step[pointer: pointer+block].reshape(param.shape)
             pointer += block
 
@@ -29,8 +39,8 @@ class Optimizer(object):
 
 class SGD(Optimizer):
 
-    def __init__(self, lr):
-        super().__init__(lr)
+    def __init__(self, lr, weight_decay=0.0):
+        super().__init__(lr, weight_decay)
 
     def _compute_step(self, grad):
         return - self.lr * grad
@@ -42,11 +52,12 @@ class Adam(Optimizer):
                  lr=0.001,
                  beta1=0.9,
                  beta2=0.999,
-                 epsilon=1e-8):
-        super().__init__(lr)
+                 eps=1e-8,
+                 weight_decay=0.0):
+        super().__init__(lr, weight_decay)
         self._b1 = beta1
         self._b2 = beta2
-        self._eps = epsilon
+        self._eps = eps
 
         self._t= 0
 
@@ -79,11 +90,12 @@ class RMSProp(Optimizer):
                  lr=0.01,
                  decay=0.99,
                  momentum=0.0,
-                 epsilon=1e-8):
-        super().__init__(lr)
+                 eps=1e-8,
+                 weight_decay=0.0):
+        super().__init__(lr, weight_decay)
         self._decay = decay
         self._momentum = momentum
-        self._eps = epsilon
+        self._eps = eps
 
         self._ms: Tensor = 0
         self._mom: Tensor = 0
@@ -102,8 +114,8 @@ class Momentum(Optimizer):
      accumulation = momentum * accumulation + gradient
      variable -= learning_rate * accumulation
     '''
-    def __init__(self, lr, momentum=0.9):
-        super().__init__(lr)
+    def __init__(self, lr, momentum=0.9, weight_decay=0.0):
+        super().__init__(lr, weight_decay)
         self._momentum = momentum
         self._acc: Tensor = 0
 

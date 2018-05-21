@@ -23,22 +23,6 @@ from core.data.dataset import MNIST
 
 import matplotlib.pyplot as plt
 
-# ZOO = {
-#     'linear': [
-#         Linear(num_in=784, num_out=10)
-#     ],
-#     '5-layers-sigmoid': [
-#         Linear(num_in=784, num_out=200),
-#         Sigmoid(),
-#         Linear(num_in=200, num_out=100),
-#         Sigmoid(),
-#         Linear(num_in=100, num_out=60),
-#         Sigmoid(),
-#         Linear(num_in=60, num_out=30),
-#         Sigmoid(),
-#         Linear(num_in=30, num_out=10)
-#     ]
-# }
 
 def get_one_hot(targets, nb_classes):
     return np.eye(nb_classes)[np.array(targets).reshape(-1)]
@@ -47,13 +31,14 @@ mnist = MNIST('./examples/data', transform=None)
 train_X, train_Y = mnist.get_train_data()
 valid_X, valid_Y = mnist.get_valid_data()
 test_X, test_Y = mnist.get_test_data()
-# train_Y = get_one_hot(train_Y, 10)
-# valid_Y = get_one_hot(valid_Y, 10)
-
-train_X = np.concatenate([train_X, valid_X])
-train_Y = np.concatenate([train_Y, valid_Y])
 train_Y = get_one_hot(train_Y, 10)
-test_Y = get_one_hot(test_Y, 10)
+valid_Y = get_one_hot(valid_Y, 10)
+valid_Y = get_one_hot(valid_Y, 10)
+
+# train_X = np.concatenate([train_X, valid_X])
+# train_Y = np.concatenate([train_Y, valid_Y])
+# train_Y = get_one_hot(train_Y, 10)
+# test_Y = get_one_hot(test_Y, 10)
 
 net = NeuralNet([
     Linear(num_in=784, num_out=200),
@@ -66,8 +51,8 @@ net = NeuralNet([
 num_epochs = 50
 iterator = BatchIterator(batch_size=32)
 loss = CrossEntropyLoss()
-optimizer = Adam(1e-3)
-lr_scheduler = ExponentialLR(optimizer, decay_steps=50)
+optimizer = Adam(lr=1e-3, weight_decay=0.001)
+# lr_scheduler = ExponentialLR(optimizer, decay_steps=50)
 
 batch_losses = []
 epoch_accs = []
@@ -80,9 +65,7 @@ for epoch in range(num_epochs):
         grad = loss.grad(predicted, batch.targets)
         net.backward(grad)
         optimizer.step(net)
-    print('lr:', lr_scheduler.step())
+    # print('lr:', lr_scheduler.step())
     print('Epoch %d timecost: %.4f' % (epoch, time.time() - t_start))
     test_acc = evaluate(net, test_X, test_Y)
     epoch_accs.append(test_acc)
-
-import pdb; pdb.set_trace()

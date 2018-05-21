@@ -2,7 +2,7 @@
 # Date: 2018-05-05
 #
 # Filename: nn.py
-# Description: feedforwad Neural Network class
+# Description: Feedforwad Neural Network class.
 
 
 import numpy as np

@@ -4,6 +4,7 @@
 # Filename: layers.py
 # Description: Network layers and Activation layers...
 
+
 import numpy as np
 
 from core.initializer import XavierNormalInit, ZerosInit

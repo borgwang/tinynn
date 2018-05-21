@@ -4,6 +4,7 @@
 # Filename: loss.py
 # Description: Implementation of loss funtions in neural network.
 
+
 import numpy as np
 
 
