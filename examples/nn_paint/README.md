@@ -1,10 +1,10 @@
-Use a fully-connected neural network to mimic a image.  
-The input to the network is the coordinate of pixels of the image i.e. (x, y) and the ground true label is the corresponding RGB of that pixel.
+## NN painting
+Mimic a picture using a fully-connected neural. The input to the network are the coordinate of pixels of the image i.e. (x, y) and the ground true label is the corresponding RGB of that pixel.
 
-Basically it's a simple regression task which the neural network tries to learning the mapping between coordinate and RGB value of a specify image. The result shows some kind of 'smooth' effect.
+Basically it's a regression task which neural network tries to learn the mapping between coordinate and RGB value of a specify picture. The result shows some kind of blurry effect.
 
 ## Example  
-Origin picture
+Origin picture  
 <img src="https://github.com/borgwang/toys/raw/master/nn_paint/res/origin.jpg" width = "256" height = "160" alt="origin" align=center />  
 
 Painting  
@@ -12,5 +12,4 @@ Painting
 
 ## Architecture
 We use a 4 layers full-connected neural network and train it with Adam optimizer(learning_rate=0.0003).  
-
 Feel free to modify the code to build your own painter.  
