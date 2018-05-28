@@ -8,6 +8,7 @@
 import numpy as np
 
 from core.nn import NeuralNet
+from utils.timer import Timer
 
 
 class Model(object):
@@ -22,25 +23,26 @@ class Model(object):
     def forward(self, inputs):
         return self.net.forward(inputs)
 
-    def backward(self, predicted, targets):
-        loss = self.loss_fn.loss(predicted, targets)
-        grad = self.loss_fn.grad(predicted, targets)
+    def backward(self, preds, targets):
+        loss = self.loss_fn.loss(preds, targets)
+        grad = self.loss_fn.grad(preds, targets)
         self.net.backward(grad)
-        grads = [grad for param, grad in self.net.get_params_and_grads()]
-        return loss, grads
-
-    def apply_grad(self, grads):
-        flatten_grads = np.concatenate([np.ravel(grad) for grad in grads])
+        # flatten gradient list in order to compute actual gradient step.
+        flatten_grads = np.concatenate(
+            [np.ravel(grad) for param, grad in self.net.get_params_and_grads()])
         flatten_step = self.optim._compute_step(flatten_grads)
 
-        p = 0
         step = []
+        p = 0
         for param, grad in self.net.get_params_and_grads():
             block = np.prod(param.shape)
+            # TODO: Doing weight decay inside optimizer
             _step = flatten_step[p: p+block].reshape(param.shape) - \
                 self.optim.weight_decay * param
             step.append(_step)
-            param += _step
             p += block
+        return loss, step
 
-        return step
+    def apply_grad(self, grads):
+        for grad, (param, _) in zip(grads, self.net.get_params_and_grads()):
+            param += grad

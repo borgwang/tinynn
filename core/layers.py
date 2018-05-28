@@ -16,6 +16,7 @@ class Layer(object):
     def __init__(self):
         self.params = {}
         self.grads = {}
+        self.shape = None
 
     def forward(self, inputs):
         raise NotImplementedError
@@ -38,6 +39,7 @@ class Linear(Layer):
         super().__init__()
         self.params['w'] = w_init((num_in, num_out))
         self.params['b'] = b_init((1, num_out))
+        self.shape = [(num_in, num_out), (1, num_out)]
 
     def forward(self, inputs):
         self.inputs = inputs

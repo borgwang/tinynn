@@ -15,8 +15,7 @@ class NeuralNet(object):
     def __init__(self, layers):
         self.layers = layers
         self.training = True
-        self.num_params = sum([sum([np.prod(p.shape) for p in layer.params.values()]) for layer in layers])
-
+        
     def forward(self, inputs):
         for layer in self.layers:
             # TODO: Turn off dropout at test time
