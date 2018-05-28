@@ -48,13 +48,24 @@ class Model(object):
         for grad, (param, _) in zip(grads, self.net.get_params_and_grads()):
             param += grad
 
-    def save_model(self, path):
+    def save(self, path):
         with open(path, 'wb') as f:
             pickle.dump(self.net, f, -1)
         # TODO: logging module
         print('Model saved in %s.' % path)
 
-    def load_model(self, path):
+    def load(self, path):
+        # compatibility checking
         with open(path, 'rb') as f:
-            self.net = pickle.load(f)
+            net = pickle.load(f)
+        for l1, l2 in zip(self.net.layers, net.layers):
+            if l1.shape != l2.shape:
+                raise ValueError('Incompatable architecture. %s in loaded model and %s in defined model.' % (l1.shape, l2.shape))
+            else:
+                print('%s: %s' % (l1.name, l1.shape))
+        self.net = net
         print('Restored model from %s.' % path)
+
+    def initialize(self):
+        self.net.initialize()
+        return self

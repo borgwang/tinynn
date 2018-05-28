@@ -13,15 +13,19 @@ from core.math import *
 
 class Layer(object):
 
-    def __init__(self):
+    def __init__(self, name):
         self.params = {}
         self.grads = {}
         self.shape = None
+        self.name = name
 
     def forward(self, inputs):
         raise NotImplementedError
 
     def backward(self, grad):
+        raise NotImplementedError
+
+    def initializate_layer(self):
         raise NotImplementedError
 
 
@@ -36,12 +40,21 @@ class Linear(Layer):
                  num_out,
                  w_init=XavierNormalInit(),
                  b_init=ZerosInit()):
-        super().__init__()
-        self.params['w'] = w_init((num_in, num_out))
-        self.params['b'] = b_init((1, num_out))
-        self.shape = [(num_in, num_out), (1, num_out)]
+        super().__init__('Linear')
+        # self.params['w'] = w_init((num_in, num_out))
+        # self.params['b'] = b_init((1, num_out))
+        self.w_shape = (num_in, num_out)
+        self.b_shape = (1, num_out)
+        self.w_init = w_init
+        self.b_init = b_init
+        self.shape = [self.w_shape, self.b_shape]
+
+        self.params = {}
+        self.is_init = False
 
     def forward(self, inputs):
+        if not self.is_init:
+            raise ValueError('Parameters unintialized error!')
         self.inputs = inputs
         return inputs @ self.params['w'] + self.params['b']
 
@@ -50,6 +63,11 @@ class Linear(Layer):
         self.grads['w'] = self.inputs.T @ grad
         return grad @ self.params['w'].T
 
+    def initializate(self):
+        self.params['w'] = self.w_init(self.w_shape)
+        self.params['b'] = self.b_init(self.b_shape)
+        self.is_init = True
+
 
 # ----------
 # Non-linear Activation Layers
@@ -57,8 +75,8 @@ class Linear(Layer):
 
 class Activation(Layer):
 
-    def __init__(self, f, f_prime):
-        super().__init__()
+    def __init__(self, f, f_prime, name):
+        super().__init__(name)
         self.f = f
         self.f_prime = f_prime
 
@@ -69,29 +87,31 @@ class Activation(Layer):
     def backward(self, grad):
         return self.f_prime(self.inputs) * grad
 
+    def initializate(self):
+        return
+
 
 class Sigmoid(Activation):
 
     def __init__(self):
-        super().__init__(sigmoid, sigmoid_prime)
-
+        super().__init__(sigmoid, sigmoid_prime, 'Sigmoid')
 
 class Tanh(Activation):
 
     def __init__(self):
-        super().__init__(tanh, tanh_prime)
+        super().__init__(tanh, tanh_prime, 'Tanh')
 
 
 class ReLU(Activation):
 
     def __init__(self):
-        super().__init__(relu, relu_prime)
+        super().__init__(relu, relu_prime, 'ReLU')
 
 
 class LeakyReLU(Activation):
 
     def __init__(self, negative_slope=0.01):
-        super().__init__(leaky_relu, leaky_relu_prime)
+        super().__init__(leaky_relu, leaky_relu_prime, 'LeakyReLU')
         self._negative_slope = negative_slope
 
     def forward(self, inputs):
@@ -109,7 +129,7 @@ class LeakyReLU(Activation):
 class Dropout(Layer):
 
     def __init__(self, keep_prob=0.5):
-        super().__init__()
+        super().__init__('Dropout')
         self._keep_prob = keep_prob
         self.training = True
 
@@ -119,3 +139,6 @@ class Dropout(Layer):
 
     def backward(self, grad):
         return grad * self._mask
+
+    def initializate(self):
+        return
