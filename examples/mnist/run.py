@@ -32,9 +32,9 @@ def get_one_hot(targets, nb_classes):
 def main(args):
     # data preparing
     mnist = MNIST(args.data_path, transform=None)
-    train_X, train_Y = mnist.get_train_data()
-    valid_X, valid_Y = mnist.get_valid_data()
-    test_X, test_Y = mnist.get_test_data()
+    train_X, train_Y = mnist.train_data
+    valid_X, valid_Y = mnist.valid_data
+    test_X, test_Y = mnist.test_data
     train_Y = get_one_hot(train_Y, 10)
     valid_Y = get_one_hot(valid_Y, 10)
 
@@ -49,7 +49,18 @@ def main(args):
         Linear(num_in=50, num_out=10)
     ])
     loss_fn = CrossEntropyLoss()
-    optimizer = Adam(lr=args.lr, weight_decay=0)
+
+    if args.optim == 'adam':
+        optimizer = Adam(lr=args.lr)
+    elif args.optim == 'sgd':
+        optimizer = SGD(lr=args.lr)
+    elif args.optim == 'momentum':
+        optimizer = Momentum(lr=args.lr)
+    elif args.optim == 'rmsprop':
+        optimizer = RMSProp(lr=args.lr)
+    else:
+        raise ValueError('Invalid Optimizer!!')
+
     # lr_scheduler = ExponentialLR(optimizer, decay_steps=50)
     model = Model(net=net, loss_fn=loss_fn, optimizer=optimizer)
 
@@ -58,9 +69,9 @@ def main(args):
     for epoch in range(args.num_ep):
         t_start = time.time()
         for batch in iterator(train_X, train_Y):
-            predicted = model.forward(batch.inputs)
-            loss, grads = model.backward(predicted, batch.targets)
-            step = model.apply_grad(grads)
+            pred = model.forward(batch.inputs)
+            loss, grads = model.backward(pred, batch.targets)
+            model.apply_grad(grads)
         # print('current lr: %.4f' % lr_scheduler.step())
         print('Epoch %d timecost: %.4f' % (epoch, time.time() - t_start))
 
@@ -86,6 +97,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_ep', default=100, type=int)
     parser.add_argument('--data_path', default='./examples/data', type=str)
+    parser.add_argument('--optim', default='adam', type=str, help='[adam|sgd|momentum|rmsprop]')
     parser.add_argument('--lr', default=1e-3, type=float)
     parser.add_argument('--batch_size', default=32, type=int)
     parser.add_argument('--seed', default=0, type=int)

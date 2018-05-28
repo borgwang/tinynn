@@ -27,13 +27,16 @@ class MNIST(Dataset):
         self._download(path, URL)
         self._load(path)
 
-    def get_train_data(self):
+    @property
+    def train_data(self):
         return self._train_set
 
-    def get_test_data(self):
+    @property
+    def test_data(self):
         return self._test_set
 
-    def get_valid_data(self):
+    @property
+    def valid_data(self):
         return self._valid_set
 
     def _download(self, path, url):

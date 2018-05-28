@@ -27,7 +27,6 @@ class BaseOptimizer(object):
         # flatten all gradients
         flatten_grads = np.concatenate(
             [np.ravel(grad) for param, grad in net.get_params_and_grads()])
-
         flatten_step = self._compute_step(flatten_grads)
 
         p = 0
@@ -67,7 +66,6 @@ class Adam(BaseOptimizer):
         self._eps = eps
 
         self._t= 0
-
         self._m= 0
         self._v= 0
 
