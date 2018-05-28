@@ -22,8 +22,10 @@ from data_processor.data_iterator import BatchIterator
 
 def main():
     # data preparing
-    img = np.asarray(Image.open('examples/data/origin.jpg'), dtype='float32')
-    img /= 255.0
+    img_path = 'examples/data/origin.jpg'
+    if not os.path.isfile(img_path):
+        raise FileExistsError('Please put an image name \'origin.jpg\' in %s' % img_path)
+    img = np.asarray(Image.open(), dtype='float32') / 255.0
 
     train_X, train_Y = [], []
     h, w, _ = img.shape
@@ -36,15 +38,15 @@ def main():
     train_Y = np.asarray(train_Y)
 
     net = NeuralNet([
-        Linear(num_in=2, num_out=30),
+        Linear(2, 30),
         ReLU(),
-        Linear(num_in=30, num_out=60),
+        Linear(30, 60),
         ReLU(),
-        Linear(num_in=60, num_out=60),
+        Linear(60, 60),
         ReLU(),
-        Linear(num_in=60, num_out=30),
+        Linear(60, 30),
         ReLU(),
-        Linear(num_in=30, num_out=3),
+        Linear(30, 3),
         Sigmoid()
     ])
 

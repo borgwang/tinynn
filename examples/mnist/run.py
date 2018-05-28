@@ -40,13 +40,13 @@ def main(args):
 
     # build model
     net = NeuralNet([
-        Linear(num_in=784, num_out=200),
+        Linear(784, 200),
         ReLU(),
-        Linear(num_in=200, num_out=100),
+        Linear(200, 100),
         ReLU(),
-        Linear(num_in=100, num_out=50),
+        Linear(100, 50),
         ReLU(),
-        Linear(num_in=50, num_out=10)
+        Linear(50, 10)
     ])
     loss_fn = CrossEntropyLoss()
 
@@ -63,7 +63,7 @@ def main(args):
 
     # lr_scheduler = ExponentialLR(optimizer, decay_steps=50)
     model = Model(net=net, loss_fn=loss_fn, optimizer=optimizer)
-
+    model.load_model('examples/data/model.pk')
     # train
     iterator = BatchIterator(batch_size=args.batch_size)
     for epoch in range(args.num_ep):
@@ -91,6 +91,8 @@ def main(args):
         accuracy = np.sum(test_pred_idx == test_Y_idx) / len(test_Y)
         print('Accuracy on %d data: %.2f%%' % (len(test_Y), accuracy * 100))
         model.is_training = True
+
+    # model.save_model('examples/data/model.pk')
 
 
 if __name__ == '__main__':
