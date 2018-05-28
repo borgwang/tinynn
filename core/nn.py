@@ -19,6 +19,7 @@ class NeuralNet(object):
 
     def forward(self, inputs):
         for layer in self.layers:
+            # TODO: Turn off dropout at test time
             if isinstance(layer, Dropout) and not self.training:
                 continue
             inputs = layer.forward(inputs)
@@ -36,11 +37,6 @@ class NeuralNet(object):
             for name, param in layer.params.items():
                 grad = layer.grads[name]
                 yield param, grad
-
-    def get_params(self):
-        for layer in self.layers:
-            for name, param in layer.params.items():
-                yield param
 
     def set_training_phase(self):
         self.training = True

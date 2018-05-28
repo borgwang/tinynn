@@ -1,6 +1,7 @@
-from typing import Tuple
-
+import sys
 import os
+sys.path.append(os.getcwd())
+
 import numpy as np
 import urllib
 import pickle
@@ -8,13 +9,10 @@ import gzip
 from urllib.error import URLError
 from urllib.request import urlretrieve
 
-from core.tensor import Tensor
-from core.data.transform import Transform
-
 
 class Dataset(object):
 
-    def __init__(self, dir: str, transform: Transform = None) -> None:
+    def __init__(self, dir, transform=None):
         if not os.path.exists(dir):
             os.makedirs(dir)
         self.dir: str = dir
@@ -22,25 +20,23 @@ class Dataset(object):
 
 class MNIST(Dataset):
 
-    def __init__(self,
-                 dir: str,
-                 transform: Transform = None) -> None:
+    def __init__(self, dir, transform=None):
         super().__init__(dir, transform)
         URL = 'http://deeplearning.net/data/mnist/mnist.pkl.gz'
         path = os.path.join(self.dir, URL.split('/')[-1])
         self._download(path, URL)
         self._load(path)
 
-    def get_train_data(self) -> Tuple[Tensor, Tensor]:
+    def get_train_data(self):
         return self._train_set
 
-    def get_test_data(self) -> Tuple[Tensor, Tensor]:
+    def get_test_data(self):
         return self._test_set
 
-    def get_valid_data(self) -> Tuple[Tensor, Tensor]:
+    def get_valid_data(self):
         return self._valid_set
 
-    def _download(self, path: str, url: str) -> None:
+    def _download(self, path, url):
         try:
             if os.path.exists(path):
                 print('{} already exists, skipping ...'.format(path))
@@ -55,7 +51,7 @@ class MNIST(Dataset):
         except KeyboardInterrupt:
             print('Interrupted')
 
-    def _load(self, path: str) -> None:
+    def _load(self, path):
         print('Loading MNIST dataset...')
         with gzip.open(path, 'rb') as f:
             self._train_set, self._valid_set, self._test_set = pickle.load(f, encoding='latin1')

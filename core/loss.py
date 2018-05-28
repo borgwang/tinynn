@@ -8,7 +8,7 @@
 import numpy as np
 
 
-class Loss(object):
+class BaseLoss(object):
 
     def loss(self, predicted, actual):
         raise NotImplementedError
@@ -17,7 +17,7 @@ class Loss(object):
         raise NotImplementedError
 
 
-class MSELoss(Loss):
+class MSELoss(BaseLoss):
 
     def loss(self, predicted, actual):
         m = predicted.shape[0]
@@ -28,7 +28,7 @@ class MSELoss(Loss):
         return 2 * (predicted - actual) / m
 
 
-class CrossEntropyLoss(Loss):
+class CrossEntropyLoss(BaseLoss):
     '''
     L = weight[class] * (-log(exp(x[class]) / sum(exp(x))))
 
