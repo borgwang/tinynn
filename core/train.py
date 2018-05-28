@@ -2,8 +2,9 @@ import numpy as np
 
 from core.tensor import Tensor
 from core.nn import NeuralNet
-from core.loss import Loss, MSELoss
-from core.optimizer import Optimizer, Adam
+from core.loss import BaseLoss, MSELoss
+from core.optimizer import BaseOptimizer, Adam
+
 from core.data.data import DataIterator, BatchIterator
 
 
@@ -25,9 +26,7 @@ def train(net,
         print(epoch, np.sum(epoch_loss))
 
 
-def evaluate(net,
-             inputs,
-             targets):
+def evaluate(net, inputs, targets):
     net.set_test_phase()
 
     predicted = net.forward(inputs)

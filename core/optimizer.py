@@ -1,7 +1,7 @@
 # Author: borgwang <borgwang@126.com>
 # Date: 2018-05-05
 #
-# Filename: Optimizer.py
+# Filename: BaseOptimizer.py
 # Description:
 #   Implement multiple optimization algorithms and learning rate scheuler.
 
@@ -13,7 +13,11 @@ from core.nn import NeuralNet
 from core.tensor import Tensor
 
 
-class Optimizer(object):
+# ----------
+# Optimizer
+# ----------
+
+class BaseOptimizer(object):
 
     def __init__(self, lr, weight_decay):
         self.lr = lr
@@ -21,23 +25,26 @@ class Optimizer(object):
 
     def step(self, net):
         # flatten all gradients
-        grad = np.concatenate(
+        flatten_grads = np.concatenate(
             [np.ravel(grad) for param, grad in net.get_params_and_grads()])
 
-        step = self._compute_step(grad)
+        flatten_step = self._compute_step(flatten_grads)
 
-        pointer = 0
+        p = 0
+        step = []
         for param, grad in net.get_params_and_grads():
             block = np.prod(param.shape)
-            param *= (1 - self.weight_decay)
-            param += step[pointer: pointer+block].reshape(param.shape)
-            pointer += block
+            _step = flatten_step[p: p+block].reshape(param.shape) - self.weight_decay * param
+            step.append(_step)
+            param += _step
+            p += block
+        return step
 
     def _compute_step(self, grad):
         raise NotImplementedError
 
 
-class SGD(Optimizer):
+class SGD(BaseOptimizer):
 
     def __init__(self, lr, weight_decay=0.0):
         super().__init__(lr, weight_decay)
@@ -46,7 +53,7 @@ class SGD(Optimizer):
         return - self.lr * grad
 
 
-class Adam(Optimizer):
+class Adam(BaseOptimizer):
 
     def __init__(self,
                  lr=0.001,
@@ -78,7 +85,7 @@ class Adam(Optimizer):
         return step
 
 
-class RMSProp(Optimizer):
+class RMSProp(BaseOptimizer):
     '''
     RMSProp maintain a moving (discouted) average of the square of gradients.
     Then divide gradients by the root of this average.
@@ -109,7 +116,7 @@ class RMSProp(Optimizer):
         return step
 
 
-class Momentum(Optimizer):
+class Momentum(BaseOptimizer):
     '''
      accumulation = momentum * accumulation + gradient
      variable -= learning_rate * accumulation
@@ -125,13 +132,17 @@ class Momentum(Optimizer):
         return step
 
 
-class LRScheduler(object):
+# ----------
+# Learning Rate Scheduler
+# ----------
+
+class BaseScheduler(object):
     '''
-    LRScheduler model receive a optimizer and Adjust the lr by calling
+    BaseScheduler model receive a optimizer and Adjust the lr by calling
     step() method during training.
     '''
-    def __init__(self, optimizer):
-        self._optim = optimizer
+    def __init__(self):
+        self._optim = None
         self._initial_lr = self.get_current_lr()
 
         self._t: int = 0
@@ -148,7 +159,7 @@ class LRScheduler(object):
         return self._optim.lr
 
 
-class StepLR(LRScheduler):
+class StepLR(BaseScheduler):
     '''
     LR decayed by gamma every 'step_size' epoches.
     '''
@@ -166,7 +177,7 @@ class StepLR(LRScheduler):
         return decay * self.get_current_lr()
 
 
-class MultiStepLR(LRScheduler):
+class MultiStepLR(BaseScheduler):
     '''
     LR decayed by gamma when the number of epoch reaches one of the milestones.
     Argument 'milestones' must be a int list and be increasing.
@@ -189,7 +200,7 @@ class MultiStepLR(LRScheduler):
         return decay * self.get_current_lr()
 
 
-class ExponentialLR(LRScheduler):
+class ExponentialLR(BaseScheduler):
     '''
     ExponentialLR is computed by:
 
@@ -211,7 +222,7 @@ class ExponentialLR(LRScheduler):
             return self.get_current_lr()
 
 
-class LinearLR(LRScheduler):
+class LinearLR(BaseScheduler):
     '''
     Linear decay learning rate when the number of the epoche is in
     [start_step, start_step + decay_steps]

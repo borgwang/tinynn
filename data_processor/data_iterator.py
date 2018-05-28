@@ -1,25 +1,32 @@
-from typing import Iterator, NamedTuple
+# Author: borgwang <borgwang@126.com>
+# Date: 2018-05-23
+#
+# Filename: data_iterator.py
+# Description: Data Iterator class
 
+
+from typing import Iterator, NamedTuple
 import numpy as np
 
 from core.tensor import Tensor
 
+
 Batch = NamedTuple('Batch', [('inputs', Tensor), ('targets', Tensor)])
 
 
-class DataIterator(object):
+class BaseIterator(object):
 
-    def __call__(self, inputs: Tensor, targets: Tensor) -> Iterator[Batch]:
+    def __call__(self, inputs, targets):
         raise NotImplementedError
 
 
-class BatchIterator(DataIterator):
+class BatchIterator(BaseIterator):
 
-    def __init__(self, batch_size: int = 32, shuffle: bool = True) -> None:
+    def __init__(self, batch_size=32, shuffle=True):
         self.batch_size = batch_size
         self.shuffle = shuffle
 
-    def __call__(self, inputs: Tensor, targets: Tensor) -> Iterator[Batch]:
+    def __call__(self, inputs, targets):
         starts = np.arange(0, len(inputs), self.batch_size)
         if self.shuffle:
             idx = np.arange(len(inputs))
