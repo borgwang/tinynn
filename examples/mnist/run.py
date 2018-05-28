@@ -19,6 +19,7 @@ from core.optimizer import SGD, Adam, RMSProp, Momentum, StepLR, MultiStepLR, Li
 from core.loss import CrossEntropyLoss
 from core.initializer import NormalInit, TruncatedNormalInit, UniformInit, ZerosInit, ConstantInit, XavierUniformInit, XavierNormalInit, OrthogonalInit
 from core.model import Model
+from core.evaluator import AccEvaluator
 from utils.seeder import random_seed
 
 from data_processor.dataset import MNIST
@@ -46,9 +47,11 @@ def main(args):
         ReLU(),
         Linear(200, 100),
         ReLU(),
-        Linear(100, 50),
+        Linear(100, 70),
         ReLU(),
-        Linear(50, 10)
+        Linear(70, 30),
+        ReLU(),
+        Linear(30, 10)
     ])
     loss_fn = CrossEntropyLoss()
 
@@ -65,9 +68,11 @@ def main(args):
 
     # lr_scheduler = ExponentialLR(optimizer, decay_steps=50)
     model = Model(net=net, loss_fn=loss_fn, optimizer=optimizer)
-    model.load_model('examples/data/model.pk')
+    model.initialize()
+    # model.load('examples/data/model.pk')
     # train
     iterator = BatchIterator(batch_size=args.batch_size)
+    evaluator = AccEvaluator()
     for epoch in range(args.num_ep):
         t_start = time.time()
         for batch in iterator(train_X, train_Y):
@@ -81,20 +86,11 @@ def main(args):
         model.is_training = False
         test_pred = model.forward(test_X)
         test_pred_idx = np.argmax(test_pred, axis=1)
-
-        if len(test_Y.shape) == 1:
-            assert(len(test_Y) == len(test_pred_idx))
-            test_Y_idx = np.asarray(test_Y)
-        elif len(test_Y.shape) == 2:
-            test_Y_idx = np.argmax(test_Y, axis=1)
-        else:
-            raise ValueError('Target Tensor dimensional error!')
-
-        accuracy = np.sum(test_pred_idx == test_Y_idx) / len(test_Y)
-        print('Accuracy on %d data: %.2f%%' % (len(test_Y), accuracy * 100))
+        test_Y_idx = np.asarray(test_Y)
+        res = evaluator.eval(test_pred_idx, test_Y_idx)
+        print(res)
         model.is_training = True
-
-    # model.save_model('examples/data/model.pk')
+    # model.save('examples/data/model.pk')
 
 
 if __name__ == '__main__':

@@ -31,6 +31,10 @@ class NeuralNet(object):
             grad = layer.backward(grad)
         return grad
 
+    def initialize(self):
+        for layer in self.layers:
+            layer.initializate()
+
     def get_params_and_grads(self):
         for layer in self.layers:
             for name, param in layer.params.items():
