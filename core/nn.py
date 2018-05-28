@@ -15,7 +15,7 @@ class NeuralNet(object):
     def __init__(self, layers):
         self.layers = layers
         self.training = True
-        
+
     def forward(self, inputs):
         for layer in self.layers:
             # TODO: Turn off dropout at test time

@@ -6,6 +6,7 @@
 
 
 import numpy as np
+import pickle
 
 from core.nn import NeuralNet
 from utils.timer import Timer
@@ -46,3 +47,14 @@ class Model(object):
     def apply_grad(self, grads):
         for grad, (param, _) in zip(grads, self.net.get_params_and_grads()):
             param += grad
+
+    def save_model(self, path):
+        with open(path, 'wb') as f:
+            pickle.dump(self.net, f, -1)
+        # TODO: logging module
+        print('Model saved in %s.' % path)
+
+    def load_model(self, path):
+        with open(path, 'rb') as f:
+            self.net = pickle.load(f)
+        print('Restored model from %s.' % path)

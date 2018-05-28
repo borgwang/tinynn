@@ -42,9 +42,9 @@ class MNIST(Dataset):
     def _download(self, path, url):
         try:
             if os.path.exists(path):
-                print('{} already exists, skipping ...'.format(path))
+                print('{} already exists, skipping...'.format(path))
             else:
-                print('Downloading {} ...'.format(url))
+                print('Downloading {}...'.format(url))
                 try:
                     urlretrieve(url, path)
                 except URLError:
