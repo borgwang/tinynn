@@ -11,6 +11,7 @@ sys.path.append(os.getcwd())
 import time
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
 
 from core.nn import NeuralNet
 from core.layers import Linear, Tanh, ReLU, Sigmoid, LeakyReLU, Dropout
@@ -18,11 +19,10 @@ from core.optimizer import SGD, Adam, RMSProp, Momentum, StepLR, MultiStepLR, Li
 from core.loss import CrossEntropyLoss
 from core.initializer import NormalInit, TruncatedNormalInit, UniformInit, ZerosInit, ConstantInit, XavierUniformInit, XavierNormalInit, OrthogonalInit
 from core.model import Model
+from utils.seeder import random_seed
 
 from data_processor.dataset import MNIST
 from data_processor.data_iterator import BatchIterator
-
-import matplotlib.pyplot as plt
 
 
 def get_one_hot(targets, nb_classes):
@@ -37,6 +37,8 @@ def main(args):
     test_X, test_Y = mnist.test_data
     train_Y = get_one_hot(train_Y, 10)
     valid_Y = get_one_hot(valid_Y, 10)
+
+    random_seed(args.seed)
 
     # build model
     net = NeuralNet([
