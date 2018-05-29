@@ -27,21 +27,10 @@ class Model(object):
     def backward(self, preds, targets):
         loss = self.loss_fn.loss(preds, targets)
         grad = self.loss_fn.grad(preds, targets)
-        self.net.backward(grad)
-        # flatten gradient list in order to compute actual gradient step.
-        flatten_grads = np.concatenate(
-            [np.ravel(grad) for param, grad in self.net.get_params_and_grads()])
-        flatten_step = self.optim._compute_step(flatten_grads)
 
-        step = []
-        p = 0
-        for param, grad in self.net.get_params_and_grads():
-            block = np.prod(param.shape)
-            # TODO: Doing weight decay inside optimizer
-            _step = flatten_step[p: p+block].reshape(param.shape) - \
-                self.optim.weight_decay * param
-            step.append(_step)
-            p += block
+        grads = self.net.backward(grad)
+        params = self.net.get_parameters()
+        step = self.optim.compute_step(grads, params)
         return loss, step
 
     def apply_grad(self, grads):
@@ -68,4 +57,3 @@ class Model(object):
 
     def initialize(self):
         self.net.initialize()
-        return self

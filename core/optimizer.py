@@ -23,20 +23,21 @@ class BaseOptimizer(object):
         self.lr = lr
         self.weight_decay = weight_decay
 
-    def step(self, net):
+    def compute_step(self, grads, params):
+        step = []
         # flatten all gradients
         flatten_grads = np.concatenate(
-            [np.ravel(grad) for param, grad in net.get_params_and_grads()])
+            [np.ravel(v) for grad in grads for v in grad.values()])
         flatten_step = self._compute_step(flatten_grads)
 
         p = 0
-        step = []
-        for param, grad in net.get_params_and_grads():
-            block = np.prod(param.shape)
-            _step = flatten_step[p: p+block].reshape(param.shape) - self.weight_decay * param
-            step.append(_step)
-            param += _step
-            p += block
+        for param in params:
+            for k, v in param.items():
+                block = np.prod(v.shape)
+                _step = flatten_step[p:p+block].reshape(v.shape)
+                _step -= self.weight_decay * v
+                step.append(_step)
+                p += block
         return step
 
     def _compute_step(self, grad):

@@ -10,26 +10,24 @@ import sys
 sys.path.append(os.getcwd())
 import gym
 import numpy as np
-
+import argparse
+import matplotlib.pyplot as plt
 from agent import DQN
+
+from utils.seeder import random_seed
 
 
 def main(args):
-    np.random.seed(args.seed)
+    random_seed(args.seed)
     env = gym.make('CartPole-v0')
+    env.seed(args.seed)
+
     agent = DQN(env, args)
     agent.construct_model()
 
     # load pretrained models or init new a model.
-    saver = tf.train.Saver(max_to_keep=1)
-    if args.model_path is not None:
-        saver.restore(agent.sess, args.model_path)
-        ep_base = int(args.model_path.split('_')[-1])
-        best_mean_rewards = float(args.model_path.split('/')[-1].split('_')[0])
-    else:
-        agent.sess.run(tf.global_variables_initializer())
-        ep_base = 0
-        best_mean_rewards = None
+    ep_base = 0
+    best_mean_rewards = None
 
     rewards_history, steps_history = [], []
     train_steps = 0
@@ -76,15 +74,6 @@ def main(args):
             current_mean_rewards = total_reward / args.test_ep
             print('Episode: %d Average Reward: %.2f' %
                   (ep + 1, current_mean_rewards))
-            # save model if current model outpeform the old one
-            if best_mean_rewards is None or (current_mean_rewards >= best_mean_rewards):
-                best_mean_rewards = current_mean_rewards
-                if not os.path.isdir(args.save_path):
-                    os.makedirs(args.save_path)
-                save_name = args.save_path + str(round(best_mean_rewards, 2)) \
-                    + '_' + str(ep_base + ep + 1)
-                saver.save(agent.sess, save_name)
-                print('Model saved %s' % save_name)
 
     # plot training rewards
     plt.plot(steps_history, rewards_history)
@@ -103,14 +92,12 @@ def args_parse():
         '--save_path', default='examples/data/rl_models/',
         help='Path to save a model during training.')
     parser.add_argument(
-        '--double_q', default=True, help='enable or disable double dqn')
+        '--log_every', default=100, help='Log and save model every x episodes')
     parser.add_argument(
-        '--log_every', default=500, help='Log and save model every x episodes')
-    parser.add_argument(
-        '--seed', default=31, help='random seed')
+        '--seed', default=0, help='random seed')
 
     parser.add_argument(
-        '--max_ep', type=int, default=2000, help='Number of training episodes')
+        '--max_ep', type=int, default=10000, help='Number of training episodes')
     parser.add_argument(
         '--test_ep', type=int, default=50, help='Number of test episodes')
     parser.add_argument(

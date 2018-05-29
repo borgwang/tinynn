@@ -112,6 +112,7 @@ class MAEEvaluator(BaseEvaluator):
         res = {'mse': mse}
         return res
 
+
 class R2Evaluator(BaseEvaluator):
     ''' R-square Evalutor'''
     pass
