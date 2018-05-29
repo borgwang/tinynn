@@ -10,6 +10,7 @@ sys.path.append(os.getcwd())
 
 import time
 import numpy as np
+import argparse
 from PIL import Image
 
 from core.nn import NeuralNet
@@ -21,11 +22,12 @@ from core.evaluator import EVEvaluator, MSEEvaluator, MAEEvaluator
 from data_processor.data_iterator import BatchIterator
 
 
-def main():
+def main(args):
     # data preparing
-    img_path = 'examples/data/origin.jpg'
+    filename = 'origin.jpg'
+    img_path = os.path.join(args.dir, filename)
     if not os.path.isfile(img_path):
-        raise FileExistsError('Please put an image name \'origin.jpg\' in %s' % img_path)
+        raise FileExistsError('Image \'origin.jpg\' not exist in %s' % args.dir)
     img = np.asarray(Image.open(img_path), dtype='float32') / 255.0
 
     train_X, train_Y = [], []
@@ -36,7 +38,6 @@ def main():
             train_Y.append(img[r][c])
 
     train_X = np.asarray(train_X)
-    # train_Y = np.reshape(train_Y, (-1, 1))
     train_Y = np.asarray(train_Y)
 
     net = NeuralNet([
@@ -56,9 +57,8 @@ def main():
     model.initialize()
     ev_evaluator = EVEvaluator()
     mse_evaluator = MSEEvaluator()
-    mae_evaluator = MAEEvaluator()
-    iterator = BatchIterator(batch_size=32)
-    for epoch in range(100):
+    iterator = BatchIterator(batch_size=args.batch_size)
+    for epoch in range(args.num_ep):
         t_start = time.time()
         for batch in iterator(train_X, train_Y):
             preds = model.forward(batch.inputs)
@@ -69,15 +69,24 @@ def main():
         preds = net.forward(train_X)
         ev = ev_evaluator.eval(preds, train_Y)
         mse = mse_evaluator.eval(preds, train_Y)
-        mae = mae_evaluator.eval(preds, train_Y)
-        print(ev, mse, mae)
-        
-        # # genrerate painting
-        # preds = preds.reshape(h, w, -1)
-        # preds = (preds * 255.0).astype('uint8')
-        # Image.fromarray(preds).save('examples/data/painting-%d.jpg' % epoch)
-        # print('Epoch %d time cost: %.2f' % (epoch, time.time() - t_start))
+        print(ev, mse)
+
+        if args.paint:
+            # genrerate painting
+            preds = preds.reshape(h, w, -1)
+            preds = (preds * 255.0).astype('uint8')
+            output_filename = 'painting-%d.jpg' % epoch
+            Image.fromarray(preds).save(os.path.join(args.dir, output_filename))
+            
+        print('Epoch %d time cost: %.2f' % (epoch, time.time() - t_start))
 
 
 if __name__ =='__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dir', default='./examples/data/', type=str)
+    parser.add_argument('--seed', default=0, type=int)
+    parser.add_argument('--batch_size', default=32, type=int)
+    parser.add_argument('--num_ep', default=100, type=int)
+    parser.add_argument('--paint', default=True, type=bool)
+    args = parser.parse_args()
+    main(args)

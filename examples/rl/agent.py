@@ -10,11 +10,15 @@ from collections import deque
 
 from core.nn import NeuralNet
 from core.layers import Linear, ReLU
+from core.model import Model
+from core.loss import MSELoss
+from core.optimizer import RMSProp
 
 
 class DQN(object):
 
     def __init__(self, env, args):
+        self.args = args
         # Init replay buffer
         self.replay_buffer = deque(maxlen=args.buffer_size)
 
@@ -28,72 +32,38 @@ class DQN(object):
         self.learning_rate = args.lr
         self.batch_size = args.batch_size
 
-        self.double_q = args.double_q
         self.target_network_update_interval = args.target_network_update
 
-    def network(self, input_state):
+    def build_net(self):
         q_net = NeuralNet([
-            Linear(num_in=self.state_dim, num_out=100),
+            Linear(self.state_dim, 100),
             ReLU(),
-            Linear(num_in=100, num_out=self.action_dim)
+            Linear(100, self.action_dim)
         ])
         return q_net
-        
+
     def construct_model(self):
-        self.sess = tf.Session(config=sess_config)
-        with tf.device(device):
-            with tf.name_scope('input_state'):
-                self.input_state = tf.placeholder(
-                    tf.float32, [None, self.state_dim])
+        self.q_net = self.build_net()
+        self.model = Model(net=self.q_net, loss_fn=MSELoss(), optimizer=RMSProp(self.args.lr))
+        self.model.initialize()
 
-            with tf.name_scope('q_network'):
-                self.output_Q = self.network(self.input_state)
+        # Target network
+        self.target_q_net = self.build_net()
+        self.target_q_net.initialize()
 
-            with tf.name_scope('optimize'):
-                self.input_action = tf.placeholder(
-                    tf.float32, [None, self.action_dim])
-                self.target_Q = tf.placeholder(tf.float32, [None])
-                # Q value of the selceted action
-                action_Q = tf.reduce_sum(tf.multiply(
-                    self.output_Q, self.input_action), reduction_indices=1)
-
-                self.loss = tf.reduce_mean(tf.square(self.target_Q - action_Q))
-                optimizer = tf.train.RMSPropOptimizer(self.learning_rate)
-                self.train_op = optimizer.minimize(self.loss)
-
-            # Target network
-            with tf.name_scope('target_network'):
-                self.target_output_Q = self.network(self.input_state)
-
-            q_parameters = tf.get_collection(
-                tf.GraphKeys.TRAINABLE_VARIABLES, scope='q_network')
-            target_q_parameters = tf.get_collection(
-                tf.GraphKeys.TRAINABLE_VARIABLES, scope='target_network')
-
-            with tf.name_scope('update_target_network'):
-                self.update_target_network = []
-                for v_source, v_target in zip(
-                        q_parameters, target_q_parameters):
-                    # update_op = v_target.assign(v_source)
-                    # soft target update to stabilize training
-                    update_op = v_target.assign_sub(0.1 * (v_target - v_source))
-                    self.update_target_network.append(update_op)
-                # group all update together
-                self.update_target_network = tf.group(
-                    *self.update_target_network)
 
     def sample_action(self, state, policy):
         self.global_step += 1
-        # Q_value of all actions
-        output_Q = self.sess.run(
-            self.output_Q, feed_dict={self.input_state: [state]})[0]
+        # Q value of all actions
+        output_q = self.model.forward([state])[0]
+
         if policy == 'egreedy':
             if random.random() <= self.epsilon:  # random action
                 return random.randint(0, self.action_dim - 1)
             else:   # greedy action
-                return np.argmax(output_Q)
+                return np.argmax(output_q)
         elif policy == 'greedy':
-            return np.argmax(output_Q)
+            return np.argmax(output_q)
         elif policy == 'random':
             return random.randint(0, self.action_dim - 1)
 
@@ -108,9 +78,11 @@ class DQN(object):
             self.update_model()
 
     def update_model(self):
-        # Update target network
         if self.global_step % self.target_network_update_interval == 0:
-            self.sess.run(self.update_target_network)
+            # Update target network. Assign params in q_net to target_q_net
+            q_net_params = self.q_net.get_parameters()
+            self.target_q_net.set_parameters(q_net_params)
+
         # Sample experience
         minibatch = random.sample(self.replay_buffer, self.batch_size)
 
@@ -118,17 +90,8 @@ class DQN(object):
         s_batch, a_batch, r_batch, next_s_batch, done_batch = \
             np.array(minibatch).T.tolist()
 
-        next_s_all_action_Q = self.sess.run(
-            self.target_output_Q, {self.input_state: next_s_batch})
+        next_s_all_action_Q = self.target_q_net.forward(next_s_batch)
         next_s_Q_batch = np.max(next_s_all_action_Q, 1)
-
-        if self.double_q:
-            # use sourse network to selcete best action a*
-            next_s_action_batch = np.argmax(self.sess.run(
-                self.output_Q, {self.input_state: next_s_batch}), 1)
-            # then use target network to compute Q(s', a*)
-            next_s_Q_batch = next_s_all_action_Q[np.arange(self.batch_size),
-                                                 next_s_action_batch]
 
         # Calculate target_Q_batch
         target_Q_batch = []
@@ -141,8 +104,12 @@ class DQN(object):
                     r_batch[i] + self.gamma * next_s_Q_batch[i])
 
         # Train the network
-        self.sess.run(self.train_op, {
-            self.target_Q: target_Q_batch,
-            self.input_action: a_batch,
-            self.input_state: s_batch
-        })
+        preds = self.model.forward(np.asarray(s_batch))
+        preds = np.multiply(preds, a_batch)
+
+        targets = np.reshape(target_Q_batch, (-1, 1))
+        targets = np.tile(targets, (1, 2))
+        targets = np.multiply(targets, a_batch)
+        loss, grads = self.model.backward(preds, targets)
+
+        self.model.apply_grad(grads)

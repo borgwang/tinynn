@@ -49,7 +49,7 @@ class Linear(Layer):
         self.b_init = b_init
         self.shape = [self.w_shape, self.b_shape]
 
-        self.params = {}
+        self.params = {'w': None, 'b': None}
         self.is_init = False
 
     def forward(self, inputs):
@@ -59,8 +59,8 @@ class Linear(Layer):
         return inputs @ self.params['w'] + self.params['b']
 
     def backward(self, grad):
-        self.grads['b'] = np.sum(grad, axis=0)
         self.grads['w'] = self.inputs.T @ grad
+        self.grads['b'] = np.sum(grad, axis=0)
         return grad @ self.params['w'].T
 
     def initializate(self):

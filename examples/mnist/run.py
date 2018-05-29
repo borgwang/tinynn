@@ -97,7 +97,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_ep', default=100, type=int)
     parser.add_argument('--data_path', default='./examples/data', type=str)
-    parser.add_argument('--optim', default='adam', type=str, help='[adam|sgd|momentum|rmsprop]')
     parser.add_argument('--lr', default=1e-3, type=float)
     parser.add_argument('--batch_size', default=32, type=int)
     parser.add_argument('--seed', default=0, type=int)
