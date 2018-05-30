@@ -15,7 +15,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from core.nn import NeuralNet
-from core.layers import Linear, Tanh, ReLU, Sigmoid, LeakyReLU, Dropout
+from core.layers import Linear, Conv2D, Flatten, Tanh, ReLU, Sigmoid, LeakyReLU, Dropout
 from core.optimizer import SGD, Adam, RMSProp, Momentum, StepLR, MultiStepLR, LinearLR, ExponentialLR
 from core.loss import CrossEntropyLoss
 from core.initializer import NormalInit, TruncatedNormalInit, UniformInit, ZerosInit, ConstantInit, XavierUniformInit, XavierNormalInit, OrthogonalInit
@@ -43,18 +43,33 @@ def main(args):
     random_seed(args.seed)
 
     # build model
-    net = NeuralNet([
-        Linear(784, 200),
-        ReLU(),
-        # Dropout(),
-        Linear(200, 100),
-        ReLU(),
-        Linear(100, 70),
-        ReLU(),
-        Linear(70, 30),
-        ReLU(),
-        Linear(30, 10)
-    ])
+    # net = NeuralNet([
+    #     Linear(784, 200),
+    #     ReLU(),
+    #     # Dropout(),
+    #     Linear(200, 100),
+    #     ReLU(),
+    #     Linear(100, 70),
+    #     ReLU(),
+    #     Linear(70, 30),
+    #     ReLU(),
+    #     Linear(30, 10)
+    # ])
+    c1 = Conv2D((28, 28, 1), channels=4, kernel_size=5, stride=1)
+    c1_a = ReLU()
+    c2 = Conv2D(conv1.out_dim, channels=8, kernel_size=5, stride=2)
+    c2_a = ReLU()
+    c3 = Conv2D(conv2.out_dim, channels=12, kernel_size=4, stride=2)
+    c3_a = ReLU()
+    flat = Flatten(conv3.out_dim)
+    f1 = Linear(flat.out_dim, 70)
+    f1_a = ReLU()
+    f2 = Linear(70, 10)
+
+    net = NeuralNet([c1, c1_a, c2, c2_a, c3, c3_a, flat, f1, f1_a, f2])
+    
+
+    import pdb; pdb.set_trace()
     loss_fn = CrossEntropyLoss()
 
     if args.optim == 'adam':
@@ -83,15 +98,14 @@ def main(args):
             model.apply_grad(grads)
         # print('current lr: %.4f' % lr_scheduler.step())
         print('Epoch %d timecost: %.4f' % (epoch, time.time() - t_start))
-        model.timer.report()
         # evaluate
-        model.set_phase('test')
+        model.set_phase('TEST')
         test_pred = model.forward(test_X)
         test_pred_idx = np.argmax(test_pred, axis=1)
         test_Y_idx = np.asarray(test_Y)
         res = evaluator.eval(test_pred_idx, test_Y_idx)
         print(res)
-        model.set_phase('train')
+        model.set_phase('TRAIN')
     # model.save('examples/data/model.pk')
 
 
