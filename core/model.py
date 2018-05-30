@@ -18,8 +18,7 @@ class Model(object):
         self.loss_fn = loss_fn
         self.optim = optimizer
 
-        self._phase = 'train'
-        self.timer = Timer('compute step')
+        self._phase = 'TRAIN'
 
     def forward(self, inputs):
         return self.net.forward(inputs)
@@ -29,9 +28,7 @@ class Model(object):
         grad = self.loss_fn.grad(preds, targets)
         grads = self.net.backward(grad)
         params = self.net.get_parameters()
-        self.timer.start()
         step = self.optim.compute_step(grads, params)
-        self.timer.pause()
         return loss, step
 
     def apply_grad(self, grads):
@@ -63,6 +60,6 @@ class Model(object):
         return self._phase
 
     def set_phase(self, phase):
-        assert phase in ('train', 'test')
+        assert phase in ('TRAIN', 'TEST')
         self.net.set_phase(phase)
         self._phase = phase

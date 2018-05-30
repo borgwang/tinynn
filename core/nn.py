@@ -14,7 +14,7 @@ class NeuralNet(object):
 
     def __init__(self, layers):
         self.layers = layers
-        self._phase = 'train'
+        self._phase = 'TRAIN'
 
     def forward(self, inputs):
         for layer in self.layers:
