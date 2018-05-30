@@ -1,11 +1,16 @@
-import sys
-import os
-sys.path.append(os.getcwd())
+# Author: borgwang <borgwang@126.com>
+# Date: 2018-05-23
+#
+# Filename: dataset.py
+# Description: dataset class
 
+
+import os
 import numpy as np
 import urllib
 import pickle
 import gzip
+
 from urllib.error import URLError
 from urllib.request import urlretrieve
 

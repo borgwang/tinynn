@@ -77,7 +77,7 @@ def main(args):
             preds = (preds * 255.0).astype('uint8')
             output_filename = 'painting-%d.jpg' % epoch
             Image.fromarray(preds).save(os.path.join(args.dir, output_filename))
-            
+
         print('Epoch %d time cost: %.2f' % (epoch, time.time() - t_start))
 
 

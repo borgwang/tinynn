@@ -25,8 +25,6 @@ def main(args):
     agent = DQN(env, args)
     agent.construct_model()
 
-    # load pretrained models or init new a model.
-    ep_base = 0
     best_mean_rewards = None
 
     rewards_history, steps_history = [], []
@@ -83,16 +81,9 @@ def main(args):
 
 
 def args_parse():
-    # TODO: finish DQN example
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--model_path', default=None,
-        help='Whether to use a saved model. (*None|model path)')
-    parser.add_argument(
-        '--save_path', default='examples/data/rl_models/',
-        help='Path to save a model during training.')
-    parser.add_argument(
-        '--log_every', default=100, help='Log and save model every x episodes')
+        '--log_every', default=20, help='Log and save model every x episodes')
     parser.add_argument(
         '--seed', default=0, help='random seed')
 

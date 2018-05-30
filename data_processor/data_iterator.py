@@ -5,13 +5,11 @@
 # Description: Data Iterator class
 
 
-from typing import Iterator, NamedTuple
+from collections import namedtuple
 import numpy as np
 
-from core.tensor import Tensor
 
-
-Batch = NamedTuple('Batch', [('inputs', Tensor), ('targets', Tensor)])
+Batch = namedtuple('Batch', ['inputs', 'targets'])
 
 
 class BaseIterator(object):
@@ -38,4 +36,4 @@ class BatchIterator(BaseIterator):
             end = start + self.batch_size
             batch_inputs = inputs[start: end]
             batch_targets = targets[start: end]
-            yield Batch(batch_inputs, batch_targets)
+            yield Batch(inputs=batch_inputs, targets=batch_targets)
