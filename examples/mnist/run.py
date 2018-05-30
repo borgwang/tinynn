@@ -8,6 +8,7 @@
 import sys
 import os
 sys.path.append(os.getcwd())
+
 import time
 import argparse
 import numpy as np
@@ -45,6 +46,7 @@ def main(args):
     net = NeuralNet([
         Linear(784, 200),
         ReLU(),
+        # Dropout(),
         Linear(200, 100),
         ReLU(),
         Linear(100, 70),
@@ -70,7 +72,7 @@ def main(args):
     model = Model(net=net, loss_fn=loss_fn, optimizer=optimizer)
     model.initialize()
     # model.load('examples/data/model.pk')
-    # train
+
     iterator = BatchIterator(batch_size=args.batch_size)
     evaluator = AccEvaluator()
     for epoch in range(args.num_ep):
@@ -81,15 +83,15 @@ def main(args):
             model.apply_grad(grads)
         # print('current lr: %.4f' % lr_scheduler.step())
         print('Epoch %d timecost: %.4f' % (epoch, time.time() - t_start))
-
+        model.timer.report()
         # evaluate
-        model.is_training = False
+        model.set_phase('test')
         test_pred = model.forward(test_X)
         test_pred_idx = np.argmax(test_pred, axis=1)
         test_Y_idx = np.asarray(test_Y)
         res = evaluator.eval(test_pred_idx, test_Y_idx)
         print(res)
-        model.is_training = True
+        model.set_phase('train')
     # model.save('examples/data/model.pk')
 
 
@@ -97,6 +99,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_ep', default=100, type=int)
     parser.add_argument('--data_path', default='./examples/data', type=str)
+    parser.add_argument('--optim', default='adam', type=str)
     parser.add_argument('--lr', default=1e-3, type=float)
     parser.add_argument('--batch_size', default=32, type=int)
     parser.add_argument('--seed', default=0, type=int)

@@ -1,9 +1,12 @@
-from typing import Tuple
+# Author: borgwang <borgwang@126.com>
+# Date: 2018-05-23
+#
+# Filename: initializer.py
+# Description: Weight initializer class
+
 
 import scipy.stats as stats
 import numpy as np
-
-from core.tensor import Tensor
 
 
 class Initializer(object):

@@ -14,10 +14,10 @@ from core.math import *
 class Layer(object):
 
     def __init__(self, name):
-        self.params = {}
-        self.grads = {}
+        self.params, self.grads = {}, {}
         self.shape = None
         self.name = name
+        self.is_training = True
 
     def forward(self, inputs):
         raise NotImplementedError
@@ -25,8 +25,11 @@ class Layer(object):
     def backward(self, grad):
         raise NotImplementedError
 
-    def initializate_layer(self):
+    def initializate(self):
         raise NotImplementedError
+
+    def set_phase(self, phase):
+        self.is_training = True if phase == 'train' else False
 
 
 # ----------
@@ -131,13 +134,16 @@ class Dropout(Layer):
     def __init__(self, keep_prob=0.5):
         super().__init__('Dropout')
         self._keep_prob = keep_prob
-        self.training = True
 
     def forward(self, inputs):
-        self._mask = np.random.binomial(1, self._keep_prob, size=inputs.shape) / self._keep_prob
-        return inputs * self._mask
+        if self.is_training:
+            self._mask = np.random.binomial(1, self._keep_prob, size=inputs.shape) / self._keep_prob
+            return inputs * self._mask
+        else:
+            return inputs
 
     def backward(self, grad):
+        assert self.is_training is True
         return grad * self._mask
 
     def initializate(self):

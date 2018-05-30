@@ -6,11 +6,7 @@
 #   Implement multiple optimization algorithms and learning rate scheuler.
 
 
-from typing import List
-
 import numpy as np
-from core.nn import NeuralNet
-from core.tensor import Tensor
 
 
 # ----------
@@ -29,7 +25,6 @@ class BaseOptimizer(object):
         flatten_grads = np.concatenate(
             [np.ravel(v) for grad in grads for v in grad.values()])
         flatten_step = self._compute_step(flatten_grads)
-
         p = 0
         for param in params:
             for k, v in param.items():
@@ -73,13 +68,13 @@ class Adam(BaseOptimizer):
     def _compute_step(self, grad):
         self._t += 1
 
-        lr_t = self.lr * np.sqrt(1 - np.power(self._b2, self._t)) / \
-            (1 - np.power(self._b1, self._t))
+        lr_t = self.lr * (1 - self._b2 ** self._t) ** 0.5 / \
+            (1 - self._b1 ** self._t)
 
         self._m = self._b1 * self._m + (1 - self._b1) * grad
-        self._v = self._b2 * self._v + (1 - self._b2) * np.square(grad)
+        self._v = self._b2 * self._v + (1 - self._b2) * (grad ** 2)
 
-        step = -lr_t * self._m / (np.sqrt(self._v) + self._eps)
+        step = -lr_t * self._m / ((self._v ** 0.5) + self._eps)
 
         return step
 
