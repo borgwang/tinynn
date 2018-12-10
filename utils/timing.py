@@ -43,7 +43,5 @@ class Timer(object):
         self.report()
 
     def report(self):
-        print('*****')
-        print('Timer: %s total: %.2f mean: %.6f count: %d' %
-              (self.task_name, np.sum(self.duration), np.mean(self.duration), self.count))
-        print('*****')
+        print('--- Timer: {} total: {:.4f} mean: {:.4f} count: {} ---'.format(
+            self.task_name, np.sum(self.duration), np.mean(self.duration), self.count))
