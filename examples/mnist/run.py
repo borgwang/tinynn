@@ -12,13 +12,11 @@ sys.path.append(os.getcwd())
 import time
 import argparse
 import numpy as np
-import matplotlib.pyplot as plt
 
 from core.nn import NeuralNet
-from core.layers import Linear, Conv2D, Flatten, Tanh, ReLU, Sigmoid, LeakyReLU, Dropout
-from core.optimizer import SGD, Adam, RMSProp, Momentum, StepLR, MultiStepLR, LinearLR, ExponentialLR
+from core.layers import Linear, ReLU
+from core.optimizer import SGD, Adam, RMSProp, Momentum
 from core.loss import CrossEntropyLoss
-from core.initializer import NormalInit, TruncatedNormalInit, UniformInit, ZerosInit, ConstantInit, XavierUniformInit, XavierNormalInit, OrthogonalInit
 from core.model import Model
 from core.evaluator import AccEvaluator
 from utils.seeder import random_seed
@@ -42,34 +40,19 @@ def main(args):
 
     random_seed(args.seed)
 
-    # build model
-    # net = NeuralNet([
-    #     Linear(784, 200),
-    #     ReLU(),
-    #     # Dropout(),
-    #     Linear(200, 100),
-    #     ReLU(),
-    #     Linear(100, 70),
-    #     ReLU(),
-    #     Linear(70, 30),
-    #     ReLU(),
-    #     Linear(30, 10)
-    # ])
-    c1 = Conv2D((28, 28, 1), channels=4, kernel_size=5, stride=1)
-    c1_a = ReLU()
-    c2 = Conv2D(conv1.out_dim, channels=8, kernel_size=5, stride=2)
-    c2_a = ReLU()
-    c3 = Conv2D(conv2.out_dim, channels=12, kernel_size=4, stride=2)
-    c3_a = ReLU()
-    flat = Flatten(conv3.out_dim)
-    f1 = Linear(flat.out_dim, 70)
-    f1_a = ReLU()
-    f2 = Linear(70, 10)
+    net = NeuralNet([
+        Linear(784, 200),
+        ReLU(),
+        # Dropout(),
+        Linear(200, 100),
+        ReLU(),
+        Linear(100, 70),
+        ReLU(),
+        Linear(70, 30),
+        ReLU(),
+        Linear(30, 10)
+    ])
 
-    net = NeuralNet([c1, c1_a, c2, c2_a, c3, c3_a, flat, f1, f1_a, f2])
-    
-
-    import pdb; pdb.set_trace()
     loss_fn = CrossEntropyLoss()
 
     if args.optim == 'adam':
@@ -83,7 +66,6 @@ def main(args):
     else:
         raise ValueError('Invalid Optimizer!!')
 
-    # lr_scheduler = ExponentialLR(optimizer, decay_steps=50)
     model = Model(net=net, loss_fn=loss_fn, optimizer=optimizer)
     model.initialize()
     # model.load('examples/data/model.pk')
@@ -111,7 +93,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num_ep', default=100, type=int)
+    parser.add_argument('--num_ep', default=10, type=int)
     parser.add_argument('--data_path', default='./examples/data', type=str)
     parser.add_argument('--optim', default='adam', type=str)
     parser.add_argument('--lr', default=1e-3, type=float)

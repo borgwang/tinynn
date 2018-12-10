@@ -30,7 +30,7 @@ class NeuralNet(object):
 
     def initialize(self):
         for layer in self.layers:
-            layer.initializate()
+            layer.initialize()
 
     def get_params_and_grads(self):
         for layer in self.layers:
