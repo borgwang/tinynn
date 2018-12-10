@@ -47,9 +47,9 @@ class MNIST(Dataset):
     def _download(self, path, url):
         try:
             if os.path.exists(path):
-                print('{} already exists, skipping...'.format(path))
+                print('{} already exists.'.format(path))
             else:
-                print('Downloading {}...'.format(url))
+                print('Downloading {}.'.format(url))
                 try:
                     urlretrieve(url, path)
                 except URLError:
@@ -60,6 +60,7 @@ class MNIST(Dataset):
             print('Interrupted')
 
     def _load(self, path):
-        print('Loading MNIST dataset...')
+        print('Loading MNIST dataset.')
         with gzip.open(path, 'rb') as f:
-            self._train_set, self._valid_set, self._test_set = pickle.load(f, encoding='latin1')
+            self._train_set, self._valid_set, self._test_set = \
+                pickle.load(f, encoding='latin1')

@@ -33,7 +33,8 @@ class Model(object):
 
     def apply_grad(self, grads):
         for grad, (param, _) in zip(grads, self.net.get_params_and_grads()):
-            param += grad
+            for k, v in param.items():
+                param[k] += grad[k]
 
     def save(self, path):
         with open(path, 'wb') as f:
