@@ -40,18 +40,19 @@ def main(args):
 
     random_seed(args.seed)
 
-    net = NeuralNet([
-        Linear(784, 200),
-        ReLU(),
-        # Dropout(),
-        Linear(200, 100),
-        ReLU(),
-        Linear(100, 70),
-        ReLU(),
-        Linear(70, 30),
-        ReLU(),
-        Linear(30, 10)
-    ])
+    # net = NeuralNet([
+    #     Linear(784, 200),
+    #     ReLU(),
+    #     # Dropout(),
+    #     Linear(200, 100),
+    #     ReLU(),
+    #     Linear(100, 70),
+    #     ReLU(),
+    #     Linear(70, 30),
+    #     ReLU(),
+    #     Linear(30, 10)
+    # ])
+    net = NeuralNet([Linear(784, 10)])
 
     loss_fn = CrossEntropyLoss()
 
@@ -94,7 +95,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_ep', default=10, type=int)
-    parser.add_argument('--data_path', default='./examples/data', type=str)
+    parser.add_argument('--data_path', default='../data', type=str)
     parser.add_argument('--optim', default='adam', type=str)
     parser.add_argument('--lr', default=1e-3, type=float)
     parser.add_argument('--batch_size', default=32, type=int)
