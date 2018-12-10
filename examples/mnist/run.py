@@ -15,7 +15,7 @@ import numpy as np
 
 from core.nn import NeuralNet
 from core.layers import Linear, ReLU
-from core.optimizer import SGD, Adam, RMSProp, Momentum
+from core.optimizer import SGD, Adam, RMSProp, Momentum, LinearLR, CyclicalLR
 from core.loss import CrossEntropyLoss
 from core.model import Model
 from core.evaluator import AccEvaluator
@@ -71,13 +71,14 @@ def main(args):
 
     iterator = BatchIterator(batch_size=args.batch_size)
     evaluator = AccEvaluator()
+    loss_list = list()
     for epoch in range(args.num_ep):
         t_start = time.time()
         for batch in iterator(train_X, train_Y):
             pred = model.forward(batch.inputs)
             loss, grads = model.backward(pred, batch.targets)
             model.apply_grad(grads)
-        # print('current lr: %.4f' % lr_scheduler.step())
+            loss_list.append(loss)
         print('Epoch %d timecost: %.4f' % (epoch, time.time() - t_start))
         # evaluate
         model.set_phase('TEST')
@@ -87,16 +88,16 @@ def main(args):
         res = evaluator.eval(test_pred_idx, test_Y_idx)
         print(res)
         model.set_phase('TRAIN')
-    model.save('../data/model.pk')
+    # model.save('../data/model.pk')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num_ep', default=3, type=int)
+    parser.add_argument('--num_ep', default=10, type=int)
     parser.add_argument('--data_path', default='../data', type=str)
     parser.add_argument('--optim', default='adam', type=str)
-    parser.add_argument('--lr', default=1e-3, type=float)
-    parser.add_argument('--batch_size', default=32, type=int)
+    parser.add_argument('--lr', default=3e-3, type=float)
+    parser.add_argument('--batch_size', default=64, type=int)
     parser.add_argument('--seed', default=0, type=int)
     args = parser.parse_args()
     main(args)

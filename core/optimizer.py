@@ -139,21 +139,22 @@ class BaseScheduler(object):
     BaseScheduler model receive a optimizer and Adjust the lr by calling
     step() method during training.
     '''
-    def __init__(self):
-        self._optim = None
-        self._initial_lr = self.get_current_lr()
+    def __init__(self, optimizer):
+        self._optim = optimizer
+        self._initial_lr = self.curr_lr
 
         self._t = 0
 
     def step(self):
         self._t += 1
         self._optim.lr = self._compute_lr()
-        return self.get_current_lr()
+        return self.curr_lr
 
     def _compute_lr(self):
         raise NotImplementedError
 
-    def get_current_lr(self):
+    @property
+    def curr_lr(self):
         return self._optim.lr
 
 
@@ -172,7 +173,7 @@ class StepLR(BaseScheduler):
 
     def _compute_lr(self):
         decay = self._gamma if self._t % self._step_size == 0 else 1.0
-        return decay * self.get_current_lr()
+        return decay * self.curr_lr
 
 
 class MultiStepLR(BaseScheduler):
@@ -195,7 +196,7 @@ class MultiStepLR(BaseScheduler):
 
     def _compute_lr(self):
         decay = self._gamma if self._t in self._milestones else 1.0
-        return decay * self.get_current_lr()
+        return decay * self.curr_lr
 
 
 class ExponentialLR(BaseScheduler):
@@ -217,7 +218,7 @@ class ExponentialLR(BaseScheduler):
             return self._initial_lr * \
                 self._decay_rate ** (self._t  / self._decay_steps)
         else:
-            return self.get_current_lr()
+            return self.curr_lr
 
 
 class LinearLR(BaseScheduler):
@@ -231,8 +232,6 @@ class LinearLR(BaseScheduler):
                  final_lr=1e-6,
                  start_step=0):
         super().__init__(optimizer)
-        assert final_lr < self._initial_lr, \
-            'The final lr should be no greater than the initial lr.'
         assert decay_steps > 0
 
         self._lr_delta = (final_lr - self._initial_lr) / decay_steps
@@ -244,5 +243,30 @@ class LinearLR(BaseScheduler):
     def _compute_lr(self):
         if self._t > self._start_step:
             if self._t <= self._start_step + self._decay_steps:
-                return self.get_current_lr() + self._lr_delta
-        return self.get_current_lr()
+                return self.curr_lr + self._lr_delta
+        return self.curr_lr
+
+
+class CyclicalLR(BaseScheduler):
+    '''
+    Cyclical increase and decrease learning rate within a reasonable range.
+    See https://arxiv.org/pdf/1506.01186.pdf for details.
+    '''
+    def __init__(self,
+                 optimizer,
+                 cyclical_steps,
+                 max_lr=1e-2,
+                 min_lr=1e-3):
+        super().__init__(optimizer)
+        assert cyclical_steps > 2
+        assert max_lr >= min_lr
+        self._cyclical_steps = cyclical_steps
+        self._min_lr = min_lr
+        self._max_lr = max_lr
+        self._abs_lr_delta = 2 * (max_lr - min_lr) / cyclical_steps
+
+    def _compute_lr(self):
+        if self._t % self._cyclical_steps < self._cyclical_steps // 2:
+            return self.curr_lr + self._abs_lr_delta
+        else:
+            return self.curr_lr - self._abs_lr_delta
