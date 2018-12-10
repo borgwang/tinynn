@@ -3,7 +3,7 @@
 #
 # Filename: BaseOptimizer.py
 # Description:
-#   Implement multiple optimization algorithms and learning rate scheuler.
+#   Implement multiple optimization algorithms and learning rate scheduler.
 
 
 import numpy as np
@@ -98,8 +98,8 @@ class RMSProp(BaseOptimizer):
         self._momentum = momentum
         self._eps = eps
 
-        self._ms: Tensor = 0
-        self._mom: Tensor = 0
+        self._ms = 0
+        self._mom = 0
 
     def _compute_step(self, grad):
         self._ms = self._decay * self._ms + (1 - self._decay) * np.square(grad)
@@ -118,11 +118,11 @@ class Momentum(BaseOptimizer):
     def __init__(self, lr, momentum=0.9, weight_decay=0.0):
         super().__init__(lr, weight_decay)
         self._momentum = momentum
-        self._acc: Tensor = 0
+        self._acc = 0
 
     def _compute_step(self, grad):
         self._acc = self._momentum * self._acc + grad
-        step: Tensor = -self.lr * self._acc
+        step = -self.lr * self._acc
         return step
 
 
@@ -139,7 +139,7 @@ class BaseScheduler(object):
         self._optim = None
         self._initial_lr = self.get_current_lr()
 
-        self._t: int = 0
+        self._t = 0
 
     def step(self):
         self._t += 1
@@ -155,7 +155,7 @@ class BaseScheduler(object):
 
 class StepLR(BaseScheduler):
     '''
-    LR decayed by gamma every 'step_size' epoches.
+    LR decayed by gamma every 'step_size' epochs.
     '''
     def __init__(self,
                  optimizer,
