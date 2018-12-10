@@ -40,20 +40,18 @@ def main(args):
 
     random_seed(args.seed)
 
-    # net = NeuralNet([
-    #     Linear(784, 200),
-    #     ReLU(),
-    #     # Dropout(),
-    #     Linear(200, 100),
-    #     ReLU(),
-    #     Linear(100, 70),
-    #     ReLU(),
-    #     Linear(70, 30),
-    #     ReLU(),
-    #     Linear(30, 10)
-    # ])
-    net = NeuralNet([Linear(784, 10)])
-
+    net = NeuralNet([
+        Linear(784, 200),
+        ReLU(),
+        # Dropout(),
+        Linear(200, 100),
+        ReLU(),
+        Linear(100, 70),
+        ReLU(),
+        Linear(70, 30),
+        ReLU(),
+        Linear(30, 10)
+    ])
     loss_fn = CrossEntropyLoss()
 
     if args.optim == 'adam':
@@ -69,7 +67,7 @@ def main(args):
 
     model = Model(net=net, loss_fn=loss_fn, optimizer=optimizer)
     model.initialize()
-    # model.load('examples/data/model.pk')
+    # model.load('../data/model.pk')
 
     iterator = BatchIterator(batch_size=args.batch_size)
     evaluator = AccEvaluator()
@@ -89,12 +87,12 @@ def main(args):
         res = evaluator.eval(test_pred_idx, test_Y_idx)
         print(res)
         model.set_phase('TRAIN')
-    # model.save('examples/data/model.pk')
+    model.save('../data/model.pk')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num_ep', default=10, type=int)
+    parser.add_argument('--num_ep', default=3, type=int)
     parser.add_argument('--data_path', default='../data', type=str)
     parser.add_argument('--optim', default='adam', type=str)
     parser.add_argument('--lr', default=1e-3, type=float)

@@ -34,9 +34,7 @@ class NeuralNet(object):
 
     def get_params_and_grads(self):
         for layer in self.layers:
-            for name, param in layer.params.items():
-                grad = layer.grads[name]
-                yield param, grad
+            yield layer.params, layer.grads
 
     def get_parameters(self):
         return [layer.params for layer in self.layers]
