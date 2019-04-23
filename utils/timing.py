@@ -24,6 +24,7 @@ class Timer(object):
         self.task_name = task_name
         self.duration = []
         self.now = None
+        self.check_point = None
         self.is_timing = False
         self.count = 0
 
@@ -43,5 +44,5 @@ class Timer(object):
         self.report()
 
     def report(self):
-        print('--- Timer: {} total: {:.4f} mean: {:.4f} count: {} ---'.format(
+        print('[Timer] {} total: {:.4f} mean: {:.4f} count: {}'.format(
             self.task_name, np.sum(self.duration), np.mean(self.duration), self.count))
