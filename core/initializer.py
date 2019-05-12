@@ -4,7 +4,6 @@
 # Filename: initializer.py
 # Description: Weight initializer class
 
-
 import scipy.stats as stats
 import numpy as np
 
@@ -69,6 +68,7 @@ class XavierUniformInit(Initializer):
     a = gain * sqrt(6.0 / (num_in + num_out))
 
     '''
+
     def __init__(self, gain=1.0):
         self._gain = gain
 
@@ -87,6 +87,7 @@ class XavierNormalInit(Initializer):
     Weights will have values sampled from uniform distribution N(0, std) where
     std = gain * sqrt(1.0 / (num_in + num_out))
     '''
+
     def __init__(self, gain=1.0):
         self._gain = gain
 
@@ -99,12 +100,13 @@ class XavierNormalInit(Initializer):
 class HeUniformInit(Initializer):
     '''
     Implement the He initialization method descripted in
-    “Delving deep into rectifiers: Surpassing human-level performance on ImageNet classification”
-    He, K. et al. (2015)
+    “Delving deep into rectifiers: Surpassing human-level performance
+    on ImageNet classification” He, K. et al. (2015)
 
     Weights will have values sampled from uniform distribution U(-a, a) where
     a = sqrt(6.0 / num_in)
     '''
+
     def __init__(self, gain=1.0):
         self._gain = gain
 
@@ -116,12 +118,13 @@ class HeUniformInit(Initializer):
 class HeNormalInit(Initializer):
     '''
     Implement the He initialization method descripted in
-    “Delving deep into rectifiers: Surpassing human-level performance on ImageNet classification”
-    He, K. et al. (2015)
+    “Delving deep into rectifiers: Surpassing human-level performance
+    on ImageNet classification” He, K. et al. (2015)
 
     Weights will have values sampled from normal distribution N(0, std) where
     std = sqrt(2.0 / num_in)
     '''
+
     def __init__(self, gain=1.0):
         self._gain = gain
 
@@ -138,6 +141,7 @@ class OrthogonalInit(Initializer):
 
     The shape must be at least 2 dimensional.
     '''
+
     def __init__(self, gain=1.0):
         self._gain = gain
 
