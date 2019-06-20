@@ -4,8 +4,8 @@
 # Filename: initializer.py
 # Description: Weight initializer class
 
-import scipy.stats as stats
 import numpy as np
+import scipy.stats as stats
 
 
 class Initializer(object):

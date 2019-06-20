@@ -5,11 +5,6 @@
 # Description: Feedforwad Neural Network class.
 
 
-import numpy as np
-
-from core.layers import Dropout
-
-
 class NeuralNet(object):
 
     def __init__(self, layers):
