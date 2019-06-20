@@ -159,14 +159,14 @@ class BaseScheduler(object):
 
 class StepLR(BaseScheduler):
     '''
-    LR decayed by gamma every 'step_size' epochs.
+    LR decayed by gamma every "step_size" epochs.
     '''
     def __init__(self,
                  optimizer,
                  step_size,
                  gamma=0.1):
         super().__init__(optimizer)
-        assert step_size >= 1, 'step_size must greater than 0 (%d was set)' % step_size
+        assert step_size >= 1, "step_size must greater than 0 (%d was set)" % step_size
         self._step_size = step_size
         self._gamma = gamma
 
@@ -178,7 +178,7 @@ class StepLR(BaseScheduler):
 class MultiStepLR(BaseScheduler):
     '''
     LR decayed by gamma when the number of epoch reaches one of the milestones.
-    Argument 'milestones' must be a int list and be increasing.
+    Argument "milestones" must be a int list and be increasing.
     '''
     def __init__(self,
                  optimizer,
@@ -188,7 +188,7 @@ class MultiStepLR(BaseScheduler):
         milestones = [int(m) for m in milestones]
         assert all(x < y for x, y in zip(milestones[:-1], milestones[1:])) and \
             all(isinstance(x, int) for x in milestones), \
-            'milestones must be a list of int and be increasing!'
+            "milestones must be a list of int and be increasing!"
 
         self._milestones = milestones
         self._gamma = gamma

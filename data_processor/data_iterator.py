@@ -9,7 +9,7 @@ from collections import namedtuple
 import numpy as np
 
 
-Batch = namedtuple('Batch', ['inputs', 'targets'])
+Batch = namedtuple("Batch", ["inputs", "targets"])
 
 
 class BaseIterator(object):

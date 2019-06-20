@@ -28,7 +28,7 @@ class Layer(object):
         raise NotImplementedError
 
     def set_phase(self, phase):
-        self.is_training = True if phase == 'TRAIN' else False
+        self.is_training = True if phase == "TRAIN" else False
 
     @property
     def out_dim(self):
@@ -46,32 +46,32 @@ class Linear(Layer):
                  num_out,
                  w_init=XavierNormalInit(),
                  b_init=ZerosInit()):
-        super().__init__('Linear')
-        # self.params['w'] = w_init((num_in, num_out))
-        # self.params['b'] = b_init((1, num_out))
+        super().__init__("Linear")
+        # self.params["w"] = w_init((num_in, num_out))
+        # self.params["b"] = b_init((1, num_out))
         self.w_shape = (num_in, num_out)
         self.b_shape = (1, num_out)
         self.w_init = w_init
         self.b_init = b_init
         self.shape = [self.w_shape, self.b_shape]
 
-        self.params = {'w': None, 'b': None}
+        self.params = {"w": None, "b": None}
         self.is_init = False
 
     def forward(self, inputs):
         if not self.is_init:
-            raise ValueError('Parameters unintialized error!')
+            raise ValueError("Parameters unintialized error!")
         self.inputs = inputs
-        return inputs @ self.params['w'] + self.params['b']
+        return inputs @ self.params["w"] + self.params["b"]
 
     def backward(self, grad):
-        self.grads['w'] = self.inputs.T @ grad
-        self.grads['b'] = np.sum(grad, axis=0)
-        return grad @ self.params['w'].T
+        self.grads["w"] = self.inputs.T @ grad
+        self.grads["b"] = np.sum(grad, axis=0)
+        return grad @ self.params["w"].T
 
     def initialize(self):
-        self.params['w'] = self.w_init(self.w_shape)
-        self.params['b'] = self.b_init(self.b_shape)
+        self.params["w"] = self.w_init(self.w_shape)
+        self.params["b"] = self.b_init(self.b_shape)
         self.is_init = True
 
 
@@ -82,13 +82,13 @@ class Linear(Layer):
 #                  channels,
 #                  kernel_size,
 #                  stride=1,
-#                  padding='SAME',
+#                  padding="SAME",
 #                  w_init=XavierNormalInit(),
 #                  b_init=ZerosInit()):
-#         super().__init__('Conv2D')
+#         super().__init__("Conv2D")
 #         self.h_in, self.w_in, self.d_in = in_dim
 #         # https://www.tensorflow.org/api_guides/python/nn#convolution
-#         if padding == 'SAME':
+#         if padding == "SAME":
 #             self.h_out = np.ceil(self.h_in / stride)
 #             self.w_out = np.ceil(self.w_in / stride)
 #             h_pad_needed = int((self.h_out - 1) * stride + kernel_size - self.h_in)
@@ -98,17 +98,17 @@ class Linear(Layer):
 #             pad_left = int(w_pad_needed / 2)
 #             pad_right = w_pad_needed - pad_left
 #             self.pad_needed = (pad_top, pad_bottom, pad_left, pad_right)
-#         elif padding == 'VALID':
+#         elif padding == "VALID":
 #             self.h_out = np.ceil((self.h_in - kernel_size + 1) / stride)
 #             self.w_out = np.ceil((self.w_in - kernel_size + 1) / stride)
 #             self.pad_needed = (0, 0, 0, 0)
 #         else:
-#             raise ValueError('Invalid padding mode.')
+#             raise ValueError("Invalid padding mode.")
 #
 #         self.h_f, self.w_f, self.n_f = kernel_size, kernel_size, channels
 #         self.strde, self.padding = stride, padding
 #
-#         self.params = {'w': None, 'b': None}
+#         self.params = {"w": None, "b": None}
 #
 #     def forward(self, inputs):
 #         pass
@@ -117,8 +117,8 @@ class Linear(Layer):
 #         pass
 #
 #     def initialize(self):
-#         self.params['w'] = w_init((self.h_f, self.w_f, self.n_f))
-#         self.params['b'] = b_init((self.n_f, 1))
+#         self.params["w"] = w_init((self.h_f, self.w_f, self.n_f))
+#         self.params["b"] = b_init((self.n_f, 1))
 #
 #     @property
 #     def out_dim(self):
@@ -128,7 +128,7 @@ class Linear(Layer):
 # class Flatten(Layer):
 #
 #     def __init__(self, in_dim):
-#         super().__init__('Flatten')
+#         super().__init__("Flatten")
 #         self._out_dim = np.prod(in_dim)
 #
 #     def forward(self, inputs):
@@ -170,25 +170,25 @@ class Activation(Layer):
 class Sigmoid(Activation):
 
     def __init__(self):
-        super().__init__(sigmoid, sigmoid_prime, 'Sigmoid')
+        super().__init__(sigmoid, sigmoid_prime, "Sigmoid")
 
 
 class Tanh(Activation):
 
     def __init__(self):
-        super().__init__(tanh, tanh_prime, 'Tanh')
+        super().__init__(tanh, tanh_prime, "Tanh")
 
 
 class ReLU(Activation):
 
     def __init__(self):
-        super().__init__(relu, relu_prime, 'ReLU')
+        super().__init__(relu, relu_prime, "ReLU")
 
 
 class LeakyReLU(Activation):
 
     def __init__(self, negative_slope=0.01):
-        super().__init__(leaky_relu, leaky_relu_prime, 'LeakyReLU')
+        super().__init__(leaky_relu, leaky_relu_prime, "LeakyReLU")
         self._negative_slope = negative_slope
 
     def forward(self, inputs):
@@ -206,7 +206,7 @@ class LeakyReLU(Activation):
 class Dropout(Layer):
 
     def __init__(self, keep_prob=0.5):
-        super().__init__('Dropout')
+        super().__init__("Dropout")
         self._keep_prob = keep_prob
 
     def forward(self, inputs):

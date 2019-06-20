@@ -24,11 +24,11 @@ from data_processor.data_iterator import BatchIterator
 
 def main(args):
     # data preparing
-    filename = 'origin.jpg'
+    filename = "origin.jpg"
     img_path = os.path.join(args.dir, filename)
     if not os.path.isfile(img_path):
-        raise FileExistsError('Image \'origin.jpg\' not exist in %s' % args.dir)
-    img = np.asarray(Image.open(img_path), dtype='float32') / 255.0
+        raise FileExistsError("Image \"origin.jpg\" not exist in %s" % args.dir)
+    img = np.asarray(Image.open(img_path), dtype="float32") / 255.0
 
     train_X, train_Y = [], []
     h, w, _ = img.shape
@@ -74,19 +74,19 @@ def main(args):
         if args.paint:
             # generate painting
             preds = preds.reshape(h, w, -1)
-            preds = (preds * 255.0).astype('uint8')
-            output_filename = 'painting.jpg'
+            preds = (preds * 255.0).astype("uint8")
+            output_filename = "painting.jpg"
             Image.fromarray(preds).save(os.path.join(args.dir, output_filename))
 
-        print('Epoch %d time cost: %.2f' % (epoch, time.time() - t_start))
+        print("Epoch %d time cost: %.2f" % (epoch, time.time() - t_start))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dir', default='./examples/data', type=str)
-    parser.add_argument('--seed', default=0, type=int)
-    parser.add_argument('--batch_size', default=32, type=int)
-    parser.add_argument('--num_ep', default=100, type=int)
-    parser.add_argument('--paint', default=True, type=bool)
+    parser.add_argument("--dir", default="./examples/data", type=str)
+    parser.add_argument("--seed", default=0, type=int)
+    parser.add_argument("--batch_size", default=32, type=int)
+    parser.add_argument("--num_ep", default=100, type=int)
+    parser.add_argument("--paint", default=True, type=bool)
     args = parser.parse_args()
     main(args)

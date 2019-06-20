@@ -27,8 +27,8 @@ class MNIST(Dataset):
 
     def __init__(self, dir, transform=None):
         super().__init__(dir, transform)
-        URL = 'http://deeplearning.net/data/mnist/mnist.pkl.gz'
-        path = os.path.join(self.dir, URL.split('/')[-1])
+        URL = "http://deeplearning.net/data/mnist/mnist.pkl.gz"
+        path = os.path.join(self.dir, URL.split("/")[-1])
         self._download(path, URL)
         self._load(path)
 
@@ -47,20 +47,20 @@ class MNIST(Dataset):
     def _download(self, path, url):
         try:
             if os.path.exists(path):
-                print('{} already exists.'.format(path))
+                print("{} already exists.".format(path))
             else:
-                print('Downloading {}.'.format(url))
+                print("Downloading {}.".format(url))
                 try:
                     urlretrieve(url, path)
                 except URLError:
-                    raise RuntimeError('Error downloading resource!')
+                    raise RuntimeError("Error downloading resource!")
                 finally:
                     print()
         except KeyboardInterrupt:
-            print('Interrupted')
+            print("Interrupted")
 
     def _load(self, path):
-        print('Loading MNIST dataset.')
-        with gzip.open(path, 'rb') as f:
+        print("Loading MNIST dataset.")
+        with gzip.open(path, "rb") as f:
             self._train_set, self._valid_set, self._test_set = \
-                pickle.load(f, encoding='latin1')
+                pickle.load(f, encoding="latin1")

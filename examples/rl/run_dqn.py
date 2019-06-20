@@ -20,7 +20,7 @@ from utils.seeder import random_seed
 
 def main(args):
     random_seed(args.seed)
-    env = gym.make('CartPole-v0')
+    env = gym.make("CartPole-v0")
     env.seed(args.seed)
 
     agent = DQN(env, args)
@@ -36,7 +36,7 @@ def main(args):
         ep_rewards = 0
         for step in range(env.spec.timestep_limit):
             # pick action
-            action = agent.sample_action(state, policy='egreedy')
+            action = agent.sample_action(state, policy="egreedy")
             # Execution action.
             next_state, reward, done, debug = env.step(action)
             train_steps += 1
@@ -65,50 +65,50 @@ def main(args):
             for i in range(args.test_ep):
                 state = env.reset()
                 for j in range(env.spec.timestep_limit):
-                    action = agent.sample_action(state, policy='greedy')
+                    action = agent.sample_action(state, policy="greedy")
                     state, reward, done, _ = env.step(action)
                     total_reward += reward
                     if done:
                         break
             current_mean_rewards = total_reward / args.test_ep
-            print('Episode: %d Average Reward: %.2f' %
+            print("Episode: %d Average Reward: %.2f" %
                   (ep + 1, current_mean_rewards))
 
     # plot training rewards
     plt.plot(steps_history, rewards_history)
-    plt.xlabel('steps')
-    plt.ylabel('running avg rewards')
+    plt.xlabel("steps")
+    plt.ylabel("running avg rewards")
     plt.show()
 
 
 def args_parse():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--log_every', default=20, help='Log and save model every x episodes')
+        "--log_every", default=20, help="Log and save model every x episodes")
     parser.add_argument(
-        '--seed', default=0, help='random seed')
+        "--seed", default=0, help="random seed")
 
     parser.add_argument(
-        '--max_ep', type=int, default=10000, help='Number of training episodes')
+        "--max_ep", type=int, default=10000, help="Number of training episodes")
     parser.add_argument(
-        '--test_ep', type=int, default=50, help='Number of test episodes')
+        "--test_ep", type=int, default=50, help="Number of test episodes")
     parser.add_argument(
-        '--init_epsilon', type=float, default=0.75, help='initial epsilon')
+        "--init_epsilon", type=float, default=0.75, help="initial epsilon")
     parser.add_argument(
-        '--final_epsilon', type=float, default=0.2, help='final epsilon')
+        "--final_epsilon", type=float, default=0.2, help="final epsilon")
     parser.add_argument(
-        '--buffer_size', type=int, default=50000, help='Size of memory buffer')
+        "--buffer_size", type=int, default=50000, help="Size of memory buffer")
     parser.add_argument(
-        '--lr', type=float, default=1e-4, help='Learning rate')
+        "--lr", type=float, default=1e-4, help="Learning rate")
     parser.add_argument(
-        '--batch_size', type=int, default=128, help='Size of training batch')
+        "--batch_size", type=int, default=128, help="Size of training batch")
     parser.add_argument(
-        '--gamma', type=float, default=0.99, help='Discounted factor')
+        "--gamma", type=float, default=0.99, help="Discounted factor")
     parser.add_argument(
-        '--target_network_update', type=int, default=1000,
-        help='update frequency of target network.')
+        "--target_network_update", type=int, default=1000,
+        help="update frequency of target network.")
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(args_parse())

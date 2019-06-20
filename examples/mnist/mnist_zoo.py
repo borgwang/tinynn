@@ -9,10 +9,10 @@ from core.layers import Linear, Sigmoid, ReLU
 
 
 ZOO = {
-    'linear': [
+    "linear": [
         Linear(num_in=784, num_out=10)
     ],
-    '5-layers-sigmoid': [
+    "5-layers-sigmoid": [
         Linear(num_in=784, num_out=200),
         Sigmoid(),
         Linear(num_in=200, num_out=100),
@@ -23,7 +23,7 @@ ZOO = {
         Sigmoid(),
         Linear(num_in=30, num_out=10)
     ],
-    '5-layers-relu': [
+    "5-layers-relu": [
         Linear(num_in=784, num_out=200),
         ReLU(),
         Linear(num_in=200, num_out=100),

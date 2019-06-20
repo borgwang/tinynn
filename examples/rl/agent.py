@@ -57,14 +57,14 @@ class DQN(object):
         # Q value of all actions
         output_q = self.model.forward([state])[0]
 
-        if policy == 'egreedy':
+        if policy == "egreedy":
             if random.random() <= self.epsilon:  # random action
                 return random.randint(0, self.action_dim - 1)
             else:   # greedy action
                 return np.argmax(output_q)
-        elif policy == 'greedy':
+        elif policy == "greedy":
             return np.argmax(output_q)
-        elif policy == 'random':
+        elif policy == "random":
             return random.randint(0, self.action_dim - 1)
 
     def learn(self, state, action, reward, next_state, done):
