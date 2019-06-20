@@ -5,9 +5,8 @@
 # Description: Network layers and Activation layers...
 
 
-import numpy as np
-
-from core.initializer import XavierNormalInit, ZerosInit
+from core.initializer import XavierNormalInit
+from core.initializer import ZerosInit
 from core.math import *
 
 

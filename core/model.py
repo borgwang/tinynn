@@ -5,10 +5,7 @@
 # Description: Model class handles network, loss function and optimizer
 
 
-import numpy as np
 import pickle
-
-from utils.timing import Timer
 
 
 class Model(object):
