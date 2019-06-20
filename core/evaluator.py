@@ -13,9 +13,9 @@ class BaseEvaluator(object):
     @classmethod
     def eval(cls, preds, targets):
         '''
-        'preds' and 'targets' must be numpy arrays.
+        "preds" and "targets" must be numpy arrays.
         '''
-        raise NotImplementedError('Must specipy evaluator.')
+        raise NotImplementedError("Must specipy evaluator.")
 
 
 # ----------
@@ -29,9 +29,9 @@ class AccEvaluator(BaseEvaluator):
         assert len(preds) == len(targets)
         total_num = len(preds)
         hit_num = int((preds == targets).sum())
-        result = {'total_num': total_num,
-                  'hit_num': hit_num,
-                  'accuracy': 1.0 * hit_num / total_num}
+        result = {"total_num": total_num,
+                  "hit_num": hit_num,
+                  "accuracy": 1.0 * hit_num / total_num}
 
         return result
 
@@ -79,7 +79,7 @@ class EVEvaluator(BaseEvaluator):
         non_zero_idx = np.where(target_var != 0)[0]
 
         ev = np.mean(1.0 - diff_var[non_zero_idx] / target_var[non_zero_idx])
-        res = {'mean_ev': ev}
+        res = {"mean_ev": ev}
         return res
 
 
@@ -93,8 +93,8 @@ class MSEEvaluator(BaseEvaluator):
         elif preds.ndim == 2:
             mse = np.mean(np.sum(np.square(preds - targets), axis=1))
         else:
-            raise ValueError('predision supposes to have 1 or 2 dim.')
-        res = {'mse': mse}
+            raise ValueError("predision supposes to have 1 or 2 dim.")
+        res = {"mse": mse}
         return res
 
 
@@ -108,8 +108,8 @@ class MAEEvaluator(BaseEvaluator):
         elif preds.ndim == 2:
             mse = np.mean(np.sum(np.abs(preds - targets), axis=1))
         else:
-            raise ValueError('predision supposes to have 1 or 2 dim.')
-        res = {'mse': mse}
+            raise ValueError("predision supposes to have 1 or 2 dim.")
+        res = {"mse": mse}
         return res
 
 
