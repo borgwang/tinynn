@@ -2,7 +2,7 @@
 # Date: 2018-05-05
 #
 # Filename: nn.py
-# Description: Feedforwad Neural Network class.
+# Description: Feed-forward Neural Network class.
 
 
 class NeuralNet(object):
