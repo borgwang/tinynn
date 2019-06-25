@@ -12,9 +12,9 @@ class BaseEvaluator(object):
 
     @classmethod
     def eval(cls, preds, targets):
-        '''
+        """
         "preds" and "targets" must be numpy arrays.
-        '''
+        """
         raise NotImplementedError("Must specipy evaluator.")
 
 
@@ -57,7 +57,7 @@ class ROCEvaluator(BaseEvaluator):
 # ----------
 
 class EVEvaluator(BaseEvaluator):
-    '''
+    """
     Explained variance evaluator computes fraction of variance that pred_y explains about y.
     Returns 1 - Var[y-pred_y] / Var[y]
 
@@ -65,7 +65,7 @@ class EVEvaluator(BaseEvaluator):
         EV=0  =>  might as well have predicted zero
         EV=1  =>  perfect prediction
         EV<0  =>  worse than just predicting zero
-    '''
+    """
     @classmethod
     def eval(cls, preds, targets):
         assert preds.shape == targets.shape
@@ -84,7 +84,7 @@ class EVEvaluator(BaseEvaluator):
 
 
 class MSEEvaluator(BaseEvaluator):
-    ''' Mean square error evaluator'''
+    """ Mean square error evaluator"""
     @classmethod
     def eval(cls, preds, targets):
         assert preds.shape == targets.shape
@@ -99,7 +99,7 @@ class MSEEvaluator(BaseEvaluator):
 
 
 class MAEEvaluator(BaseEvaluator):
-    ''' Mean absolute error evaluator'''
+    """ Mean absolute error evaluator"""
     @classmethod
     def eval(cls, preds, targets):
         assert preds.shape == targets.shape
@@ -114,5 +114,5 @@ class MAEEvaluator(BaseEvaluator):
 
 
 class R2Evaluator(BaseEvaluator):
-    ''' R-square Evalutor'''
+    """ R-square Evalutor"""
     pass

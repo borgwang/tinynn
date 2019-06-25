@@ -84,13 +84,13 @@ class Adam(BaseOptimizer):
 
 
 class RMSProp(BaseOptimizer):
-    '''
+    """
     RMSProp maintain a moving (discouted) average of the square of gradients.
     Then divide gradients by the root of this average.
 
     mean_square = decay * mean_square{t-1} + (1-decay) * grad_t**2
     mom = momentum * mom{t-1} + lr * grad_t / sqrt(mean_square + epsilon)
-    '''
+    """
     def __init__(self,
                  lr=0.01,
                  decay=0.99,
@@ -115,10 +115,10 @@ class RMSProp(BaseOptimizer):
 
 
 class Momentum(BaseOptimizer):
-    '''
+    """
      accumulation = momentum * accumulation + gradient
      variable -= learning_rate * accumulation
-    '''
+    """
     def __init__(self, lr, momentum=0.9, weight_decay=0.0):
         super().__init__(lr, weight_decay)
         self._momentum = momentum
@@ -135,10 +135,10 @@ class Momentum(BaseOptimizer):
 # ----------
 
 class BaseScheduler(object):
-    '''
+    """
     BaseScheduler model receive a optimizer and Adjust the lr by calling
     step() method during training.
-    '''
+    """
     def __init__(self, optimizer):
         self._optim = optimizer
         self._initial_lr = self.curr_lr
@@ -159,9 +159,9 @@ class BaseScheduler(object):
 
 
 class StepLR(BaseScheduler):
-    '''
+    """
     LR decayed by gamma every "step_size" epochs.
-    '''
+    """
     def __init__(self,
                  optimizer,
                  step_size,
@@ -177,10 +177,10 @@ class StepLR(BaseScheduler):
 
 
 class MultiStepLR(BaseScheduler):
-    '''
+    """
     LR decayed by gamma when the number of epoch reaches one of the milestones.
     Argument "milestones" must be a int list and be increasing.
-    '''
+    """
     def __init__(self,
                  optimizer,
                  milestones,
@@ -200,11 +200,11 @@ class MultiStepLR(BaseScheduler):
 
 
 class ExponentialLR(BaseScheduler):
-    '''
+    """
     ExponentialLR is computed by:
 
     lr_decayed = lr * decay_rate ^ (current_steps / decay_steps)
-    '''
+    """
     def __init__(self,
                  optimizer,
                  decay_steps,
@@ -222,10 +222,10 @@ class ExponentialLR(BaseScheduler):
 
 
 class LinearLR(BaseScheduler):
-    '''
+    """
     Linear decay learning rate when the number of the epoche is in
     [start_step, start_step + decay_steps]
-    '''
+    """
     def __init__(self,
                  optimizer,
                  decay_steps,
@@ -248,10 +248,10 @@ class LinearLR(BaseScheduler):
 
 
 class CyclicalLR(BaseScheduler):
-    '''
+    """
     Cyclical increase and decrease learning rate within a reasonable range.
     See https://arxiv.org/pdf/1506.01186.pdf for details.
-    '''
+    """
     def __init__(self,
                  optimizer,
                  cyclical_steps,
