@@ -12,6 +12,7 @@ import numpy as np
 # Optimizer
 # ----------
 
+
 class BaseOptimizer(object):
 
     def __init__(self, lr, weight_decay):

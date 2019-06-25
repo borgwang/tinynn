@@ -2,7 +2,7 @@
 # Date: 2018-05-05
 #
 # Filename: loss.py
-# Description: Implementation of loss funtions in neural network.
+# Description: Implementation of loss functions in neural network.
 
 
 import numpy as np
