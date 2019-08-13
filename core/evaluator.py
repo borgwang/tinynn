@@ -11,11 +11,8 @@ import numpy as np
 class BaseEvaluator(object):
 
     @classmethod
-    def eval(cls, preds, targets):
-        """
-        "preds" and "targets" must be numpy arrays.
-        """
-        raise NotImplementedError("Must specipy evaluator.")
+    def evaluate(cls, predictions, targets):
+        raise NotImplementedError("Must specify evaluator.")
 
 
 # ----------
@@ -25,10 +22,9 @@ class BaseEvaluator(object):
 class AccEvaluator(BaseEvaluator):
 
     @classmethod
-    def eval(cls, preds, targets):
-        assert len(preds) == len(targets)
-        total_num = len(preds)
-        hit_num = int((preds == targets).sum())
+    def evaluate(cls, predictions, targets):
+        total_num = len(predictions)
+        hit_num = int(np.sum(predictions == targets))
         result = {"total_num": total_num,
                   "hit_num": hit_num,
                   "accuracy": 1.0 * hit_num / total_num}
@@ -67,13 +63,13 @@ class EVEvaluator(BaseEvaluator):
         EV<0  =>  worse than just predicting zero
     """
     @classmethod
-    def eval(cls, preds, targets):
-        assert preds.shape == targets.shape
-        if preds.ndim == 1:
-            diff_var = np.var(targets - preds)
+    def evaluate(cls, predictions, targets):
+        assert predictions.shape == targets.shape
+        if predictions.ndim == 1:
+            diff_var = np.var(targets - predictions)
             target_var = np.var(targets)
-        elif preds.ndim == 2:
-            diff_var = np.var(targets - preds, axis=0)
+        elif predictions.ndim == 2:
+            diff_var = np.var(targets - predictions, axis=0)
             target_var = np.var(targets, axis=0)
 
         non_zero_idx = np.where(target_var != 0)[0]
@@ -86,12 +82,12 @@ class EVEvaluator(BaseEvaluator):
 class MSEEvaluator(BaseEvaluator):
     """ Mean square error evaluator"""
     @classmethod
-    def eval(cls, preds, targets):
-        assert preds.shape == targets.shape
-        if preds.ndim == 1:
-            mse = np.mean(np.square(preds - targets))
-        elif preds.ndim == 2:
-            mse = np.mean(np.sum(np.square(preds - targets), axis=1))
+    def evaluate(cls, predictions, targets):
+        assert predictions.shape == targets.shape
+        if predictions.ndim == 1:
+            mse = np.mean(np.square(predictions - targets))
+        elif predictions.ndim == 2:
+            mse = np.mean(np.sum(np.square(predictions - targets), axis=1))
         else:
             raise ValueError("predision supposes to have 1 or 2 dim.")
         res = {"mse": mse}
@@ -101,12 +97,12 @@ class MSEEvaluator(BaseEvaluator):
 class MAEEvaluator(BaseEvaluator):
     """ Mean absolute error evaluator"""
     @classmethod
-    def eval(cls, preds, targets):
-        assert preds.shape == targets.shape
-        if preds.ndim == 1:
-            mse = np.mean(np.abs(preds - targets))
-        elif preds.ndim == 2:
-            mse = np.mean(np.sum(np.abs(preds - targets), axis=1))
+    def evaluate(cls, predictions, targets):
+        assert predictions.shape == targets.shape
+        if predictions.ndim == 1:
+            mse = np.mean(np.abs(predictions - targets))
+        elif predictions.ndim == 2:
+            mse = np.mean(np.sum(np.abs(predictions - targets), axis=1))
         else:
             raise ValueError("predision supposes to have 1 or 2 dim.")
         res = {"mse": mse}
@@ -114,5 +110,5 @@ class MAEEvaluator(BaseEvaluator):
 
 
 class R2Evaluator(BaseEvaluator):
-    """ R-square Evalutor"""
+    """ R-square Evaluator"""
     pass

@@ -67,8 +67,8 @@ def main(args):
 
         # evaluate
         preds = net.forward(train_X)
-        ev = ev_evaluator.eval(preds, train_Y)
-        mse = mse_evaluator.eval(preds, train_Y)
+        ev = ev_evaluator.evaluate(preds, train_Y)
+        mse = mse_evaluator.evaluate(preds, train_Y)
         print(ev, mse)
 
         if args.paint:

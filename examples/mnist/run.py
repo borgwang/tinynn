@@ -85,7 +85,7 @@ def main(args):
         test_pred = model.forward(test_X)
         test_pred_idx = np.argmax(test_pred, axis=1)
         test_Y_idx = np.asarray(test_Y)
-        res = evaluator.eval(test_pred_idx, test_Y_idx)
+        res = evaluator.evaluate(test_pred_idx, test_Y_idx)
         print(res)
         model.set_phase("TRAIN")
     # model.save("../data/model.pk")
