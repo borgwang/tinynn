@@ -186,29 +186,29 @@ class Conv2D(Layer):
             print("Invalid mode")
         return pad
 
-# class Flatten(Layer):
-#
-#     def __init__(self, in_dim):
-#         super().__init__("Flatten")
-#         self._out_dim = np.prod(in_dim)
-#
-#     def forward(self, inputs):
-#         self.input_shape = inputs.shape
-#         out = inputs.ravel().reshape(self.input_shape[0], -1)
-#         return out
-#
-#     def backward(self, grad):
-#         grad = grad.reshape(self.input_shape)
-#         return grad
-#
-#     @property
-#     def out_dim(self):
-#         return self._out_dim
-#
+
+class Flatten(Layer):
+
+    def __init__(self):
+        super().__init__("Flatten")
+        self.input_shape = None
+
+    def forward(self, inputs):
+        self.input_shape = inputs.shape
+        outputs = inputs.ravel().reshape(inputs.shape[0], -1)
+        return outputs
+
+    def backward(self, grad):
+        grad = grad.reshape(self.input_shape)
+        return grad
+
+    def initialize(self):
+        pass
 
 # ----------
 # Non-linear Activation Layers
 # ----------
+
 
 class Activation(Layer):
 
