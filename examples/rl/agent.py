@@ -51,7 +51,6 @@ class DQN(object):
         self.target_q_net = self.build_net()
         self.target_q_net.initialize()
 
-
     def sample_action(self, state, policy):
         self.global_step += 1
         # Q value of all actions
