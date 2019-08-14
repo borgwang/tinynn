@@ -19,7 +19,7 @@ import numpy as np
 from core.evaluator import AccEvaluator
 from core.layers import Linear
 from core.layers import ReLU
-from core.loss import CrossEntropyLoss
+from core.losses import CrossEntropyLoss
 from core.model import Model
 from core.nn import NeuralNet
 from core.optimizer import SGD
@@ -126,7 +126,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_ep", default=10, type=int)
-    parser.add_argument("--data_dir", default="./example/mnist/data", type=str)
+    parser.add_argument("--data_dir", default="./examples/mnist/data", type=str)
     parser.add_argument("--optim", default="adam", type=str)
     parser.add_argument("--lr", default=3e-3, type=float)
     parser.add_argument("--batch_size", default=64, type=int)
