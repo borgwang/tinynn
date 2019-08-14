@@ -10,10 +10,10 @@ import pickle
 
 class Model(object):
 
-    def __init__(self, net, loss_fn, optimizer):
+    def __init__(self, net, loss, optimizer):
         self.net = net
-        self.loss_fn = loss_fn
-        self.optim = optimizer
+        self.loss = loss
+        self.optimizer = optimizer
 
         self._phase = "TRAIN"
 
@@ -21,11 +21,11 @@ class Model(object):
         return self.net.forward(inputs)
 
     def backward(self, preds, targets):
-        loss = self.loss_fn.loss(preds, targets)
-        grad = self.loss_fn.grad(preds, targets)
+        loss = self.loss.loss(preds, targets)
+        grad = self.loss.grad(preds, targets)
         grads = self.net.backward(grad)
         params = self.net.get_parameters()
-        step = self.optim.compute_step(grads, params)
+        step = self.optimizer.compute_step(grads, params)
         return loss, step
 
     def apply_grad(self, grads):

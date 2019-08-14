@@ -97,7 +97,7 @@ def main(args):
     else:
         raise ValueError("Invalid Optimizer!!")
 
-    model = Model(net=net, loss_fn=loss_fn, optimizer=optimizer)
+    model = Model(net=net, loss=loss_fn, optimizer=optimizer)
     model.initialize()
     # model.load("../data/model.pk")
 
