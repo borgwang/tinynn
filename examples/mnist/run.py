@@ -5,24 +5,28 @@
 # Description: Example MNIST code for tinynn.
 
 
-import sys
-import os
-sys.path.append(os.getcwd())
-
-import time
 import argparse
+import os
+import sys
+import time
+
 import numpy as np
 
-from core.nn import NeuralNet
-from core.layers import Linear, ReLU
-from core.optimizer import SGD, Adam, RMSProp, Momentum, LinearLR, CyclicalLR
+from core.evaluator import AccEvaluator
+from core.layers import Linear
+from core.layers import ReLU
 from core.loss import CrossEntropyLoss
 from core.model import Model
-from core.evaluator import AccEvaluator
+from core.nn import NeuralNet
+from core.optimizer import SGD
+from core.optimizer import Adam
+from core.optimizer import Momentum
+from core.optimizer import RMSProp
+from data_processor.data_iterator import BatchIterator
+from data_processor.dataset import MNISTDataset
 from utils.seeder import random_seed
 
-from data_processor.dataset import MNIST
-from data_processor.data_iterator import BatchIterator
+sys.path.append(os.getcwd())
 
 
 def get_one_hot(targets, nb_classes):
@@ -31,7 +35,7 @@ def get_one_hot(targets, nb_classes):
 
 def main(args):
     # data preparing
-    mnist = MNIST(args.data_path, transform=None)
+    mnist = MNISTDataset(args.data_path)
     train_X, train_Y = mnist.train_data
     valid_X, valid_Y = mnist.valid_data
     test_X, test_Y = mnist.test_data
