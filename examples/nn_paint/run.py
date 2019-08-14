@@ -19,7 +19,7 @@ from core.layers import ReLU
 from core.layers import Sigmoid
 from core.losses import MSELoss
 from core.model import Model
-from core.nn import NeuralNet
+from core.nn import Net
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
 
@@ -43,7 +43,7 @@ def main(args):
     data_path = os.path.join(args.data_dir, args.file_name)
     train_x, train_y, img_shape = prepare_dataset(data_path)
 
-    net = NeuralNet([
+    net = Net([
         Linear(2, 30),
         ReLU(),
         Linear(30, 60),

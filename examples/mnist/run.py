@@ -21,7 +21,7 @@ from core.layers import Linear
 from core.layers import ReLU
 from core.losses import CrossEntropyLoss
 from core.model import Model
-from core.nn import NeuralNet
+from core.nn import Net
 from core.optimizer import SGD
 from core.optimizer import Adam
 from core.optimizer import Momentum
@@ -72,7 +72,7 @@ def main(args):
 
     random_seed(args.seed)
 
-    net = NeuralNet([
+    net = Net([
         Linear(784, 200),
         ReLU(),
         # Dropout(),
@@ -111,7 +111,7 @@ def main(args):
             loss, grads = model.backward(pred, batch.targets)
             model.apply_grad(grads)
             loss_list.append(loss)
-        print("Epoch %d timecost: %.4f" % (epoch, time.time() - t_start))
+        print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
         # evaluate
         model.set_phase("TEST")
         test_pred = model.forward(test_x)

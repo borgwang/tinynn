@@ -65,9 +65,9 @@ class Adam(BaseOptimizer):
         self._b2 = beta2
         self._eps = eps
 
-        self._t= 0
-        self._m= 0
-        self._v= 0
+        self._t = 0
+        self._m = 0
+        self._v = 0
 
     def _compute_step(self, grad):
         self._t += 1
@@ -181,10 +181,7 @@ class MultiStepLR(BaseScheduler):
     LR decayed by gamma when the number of epoch reaches one of the milestones.
     Argument "milestones" must be a int list and be increasing.
     """
-    def __init__(self,
-                 optimizer,
-                 milestones,
-                 gamma=0.1):
+    def __init__(self, optimizer, milestones, gamma=0.1):
         super().__init__(optimizer)
         milestones = [int(m) for m in milestones]
         assert all(x < y for x, y in zip(milestones[:-1], milestones[1:])) and \
