@@ -54,7 +54,7 @@ def main(args):
         Sigmoid()
     ])
 
-    model = Model(net=net, loss_fn=MSELoss(), optimizer=Adam())
+    model = Model(net=net, loss=MSELoss(), optimizer=Adam())
     model.initialize()
     ev_evaluator = EVEvaluator()
     mse_evaluator = MSEEvaluator()
