@@ -13,7 +13,6 @@ import time
 import numpy as np
 from PIL import Image
 
-from core.evaluator import EVEvaluator
 from core.evaluator import MSEEvaluator
 from core.layers import Linear
 from core.layers import ReLU
@@ -36,13 +35,13 @@ def prepare_dataset(img_path):
         for c in range(w):
             train_x.append([(r - h / 2.0) / h, (c - w / 2.0) / w])
             train_y.append(img[r][c])
-    return np.asarray(train_x), np.asarray(train_y)
+    return np.asarray(train_x), np.asarray(train_y), (h, w)
 
 
 def main(args):
     # data preparing
     data_path = os.path.join(args.data_dir, args.file_name)
-    train_x, train_y = prepare_dataset(data_path)
+    train_x, train_y, img_shape = prepare_dataset(data_path)
 
     net = NeuralNet([
         Linear(2, 30),
@@ -59,7 +58,6 @@ def main(args):
 
     model = Model(net=net, loss=MSELoss(), optimizer=Adam())
     model.initialize()
-    ev_evaluator = EVEvaluator()
     mse_evaluator = MSEEvaluator()
     iterator = BatchIterator(batch_size=args.batch_size)
     for epoch in range(args.num_ep):
@@ -71,13 +69,12 @@ def main(args):
 
         # evaluate
         preds = net.forward(train_x)
-        ev = ev_evaluator.evaluate(preds, train_y)
         mse = mse_evaluator.evaluate(preds, train_y)
-        print(ev, mse)
+        print(mse)
 
         if args.paint:
             # generate painting
-            preds = preds.reshape(h, w, -1)
+            preds = preds.reshape(img_shape[0], img_shape[1], -1)
             preds = (preds * 255.0).astype("uint8")
             filename, ext = os.path.splitext(args.file_name)
             output_filename = "output" + ext
