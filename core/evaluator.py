@@ -33,19 +33,30 @@ class AccEvaluator(BaseEvaluator):
 
 
 class PrecisionEvaluator(BaseEvaluator):
-    pass
+
+    @classmethod
+    def evaluate(cls, predictions, targets):
+        pass
 
 
 class RecallEvaluator(BaseEvaluator):
-    pass
+    @classmethod
+    def evaluate(cls, predictions, targets):
+        pass
 
 
 class F1Evaluator(BaseEvaluator):
-    pass
+
+    @classmethod
+    def evaluate(cls, predictions, targets):
+        pass
 
 
 class ROCEvaluator(BaseEvaluator):
-    pass
+
+    @classmethod
+    def evaluate(cls, predictions, targets):
+        pass
 
 
 # ----------
@@ -111,4 +122,7 @@ class MAEEvaluator(BaseEvaluator):
 
 class R2Evaluator(BaseEvaluator):
     """ R-square Evaluator"""
-    pass
+
+    @classmethod
+    def evaluate(cls, predictions, targets):
+        pass

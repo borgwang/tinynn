@@ -60,7 +60,7 @@ class ConstantInit(Initializer):
 
 class XavierUniformInit(Initializer):
     """
-    Implement the Xavier method descripted in
+    Implement the Xavier method described in
     "Understanding the difficulty of training deep feedforward neural networks”
     Glorot, X. & Bengio, Y. (2010)
 
@@ -80,7 +80,7 @@ class XavierUniformInit(Initializer):
 
 class XavierNormalInit(Initializer):
     """
-    Implement the Xavier method descripted in
+    Implement the Xavier method described in
     "Understanding the difficulty of training deep feedforward neural networks”
     Glorot, X. & Bengio, Y. (2010)
 
@@ -99,7 +99,7 @@ class XavierNormalInit(Initializer):
 
 class HeUniformInit(Initializer):
     """
-    Implement the He initialization method descripted in
+    Implement the He initialization method described in
     “Delving deep into rectifiers: Surpassing human-level performance
     on ImageNet classification” He, K. et al. (2015)
 
@@ -117,7 +117,7 @@ class HeUniformInit(Initializer):
 
 class HeNormalInit(Initializer):
     """
-    Implement the He initialization method descripted in
+    Implement the He initialization method described in
     “Delving deep into rectifiers: Surpassing human-level performance
     on ImageNet classification” He, K. et al. (2015)
 
@@ -135,7 +135,7 @@ class HeNormalInit(Initializer):
 
 class OrthogonalInit(Initializer):
     """
-    Implement the initialization method descripted in
+    Implement the initialization method described in
     “Exact solutions to the nonlinear dynamics of learning in deep linear neural networks”
     Saxe, A. et al. (2013)
 

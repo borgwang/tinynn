@@ -37,6 +37,7 @@ def leaky_relu(x, slope=0.01):
     x[x < 0] *= slope
     return x
 
+
 def leaky_relu_prime(x, slope=0.01):
     x[x < 0] = slope
     return x

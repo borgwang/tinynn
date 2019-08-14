@@ -17,16 +17,17 @@ class Dataset(object):
     def __init__(self, dir, transform=None):
         if not os.path.exists(dir):
             os.makedirs(dir)
-        self.dir: str = dir
+        self.dir = dir
+        self.transform = transform
 
 
-class MNIST(Dataset):
+class MNISTDataset(Dataset):
 
     def __init__(self, dir, transform=None):
         super().__init__(dir, transform)
-        URL = "http://deeplearning.net/data/mnist/mnist.pkl.gz"
-        path = os.path.join(self.dir, URL.split("/")[-1])
-        self._download(path, URL)
+        url = "http://deeplearning.net/data/mnist/mnist.pkl.gz"
+        path = os.path.join(self.dir, url.split("/")[-1])
+        self._download(path, url)
         self._load(path)
 
     @property
@@ -41,7 +42,8 @@ class MNIST(Dataset):
     def valid_data(self):
         return self._valid_set
 
-    def _download(self, path, url):
+    @staticmethod
+    def _download(path, url):
         try:
             if os.path.exists(path):
                 print("{} already exists.".format(path))
