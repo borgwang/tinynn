@@ -18,7 +18,7 @@ from core.evaluator import MSEEvaluator
 from core.layers import Linear
 from core.layers import ReLU
 from core.layers import Sigmoid
-from core.loss import MSELoss
+from core.losses import MSELoss
 from core.model import Model
 from core.nn import NeuralNet
 from core.optimizer import Adam

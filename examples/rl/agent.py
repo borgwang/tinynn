@@ -11,7 +11,7 @@ from collections import deque
 from core.nn import NeuralNet
 from core.layers import Linear, ReLU
 from core.model import Model
-from core.loss import MSELoss
+from core.losses import MSELoss
 from core.optimizer import RMSProp
 
 
