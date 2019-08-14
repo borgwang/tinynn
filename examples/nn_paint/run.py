@@ -19,7 +19,7 @@ from core.optimizer import Adam
 from core.loss import MSELoss
 from core.model import Model
 from core.evaluator import EVEvaluator, MSEEvaluator
-from data_processor.data_iterator import BatchIterator
+from utils.data_iterator import BatchIterator
 
 
 def main(args):

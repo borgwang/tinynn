@@ -32,7 +32,7 @@ class CrossEntropyLoss(BaseLoss):
     """
     L = weight[class] * (-log(exp(x[class]) / sum(exp(x))))
 
-    weight is a 1D tensor assignning weight to each of the classes.
+    weight is a 1D tensor assigning weight to each of the classes.
     """
     def __init__(self, weight=None, sparse=True):
         self._sparse = sparse
