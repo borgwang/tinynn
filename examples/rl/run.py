@@ -1,20 +1,18 @@
 # Author: borgwang <borgwang@126.com>
 # Date: 2018-05-22
 #
-# Filename: run_dqn.py
+# Filename: run.py
 # Description: DQN example code for demonstration
 
 
-import os
-import sys
-sys.path.append(os.getcwd())
+import runtime_path  # isort:skip
+
+import argparse
+
+import matplotlib.pyplot as plt
 
 import gym
-import numpy as np
-import argparse
-import matplotlib.pyplot as plt
-from agent import DQN
-
+from examples.rl.agent import DQN
 from utils.seeder import random_seed
 
 
@@ -25,8 +23,6 @@ def main(args):
 
     agent = DQN(env, args)
     agent.construct_model()
-
-    best_mean_rewards = None
 
     rewards_history, steps_history = [], []
     train_steps = 0
@@ -65,6 +61,8 @@ def main(args):
             for i in range(args.test_ep):
                 state = env.reset()
                 for j in range(env.spec.timestep_limit):
+                    if args.render:
+                        env.render()
                     action = agent.sample_action(state, policy="greedy")
                     state, reward, done, _ = env.step(action)
                     total_reward += reward
@@ -84,14 +82,14 @@ def main(args):
 def args_parse():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--log_every", default=20, help="Log and save model every x episodes")
+        "--log_every", default=100, help="Log and save model every x episodes")
     parser.add_argument(
         "--seed", default=0, help="random seed")
 
     parser.add_argument(
-        "--max_ep", type=int, default=10000, help="Number of training episodes")
+        "--max_ep", type=int, default=1000, help="Number of training episodes")
     parser.add_argument(
-        "--test_ep", type=int, default=50, help="Number of test episodes")
+        "--test_ep", type=int, default=5, help="Number of test episodes")
     parser.add_argument(
         "--init_epsilon", type=float, default=0.75, help="initial epsilon")
     parser.add_argument(
@@ -104,6 +102,8 @@ def args_parse():
         "--batch_size", type=int, default=128, help="Size of training batch")
     parser.add_argument(
         "--gamma", type=float, default=0.99, help="Discounted factor")
+    parser.add_argument(
+        "--render", type=bool, default=True, help="Render evaluation")
     parser.add_argument(
         "--target_network_update", type=int, default=1000,
         help="update frequency of target network.")
