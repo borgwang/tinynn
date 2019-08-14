@@ -25,12 +25,9 @@ from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
 
 
-def main(args):
-    # data preparing
-    img_path = os.path.join(args.data_dir, args.file_name)
+def prepare_dataset(img_path):
     if not os.path.isfile(img_path):
-        raise FileExistsError("Image %s not exist in %s" %
-                              (args.file_name, args.data_dir))
+        raise FileExistsError("Image %s not exist" % img_path)
     img = np.asarray(Image.open(img_path), dtype="float32") / 255.0
 
     train_x, train_y = [], []
@@ -39,7 +36,13 @@ def main(args):
         for c in range(w):
             train_x.append([(r - h / 2.0) / h, (c - w / 2.0) / w])
             train_y.append(img[r][c])
-    train_x, train_y = np.asarray(train_x), np.asarray(train_y)
+    return np.asarray(train_x), np.asarray(train_y)
+
+
+def main(args):
+    # data preparing
+    data_path = os.path.join(args.data_dir, args.file_name)
+    train_x, train_y = prepare_dataset(data_path)
 
     net = NeuralNet([
         Linear(2, 30),
