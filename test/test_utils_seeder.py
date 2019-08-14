@@ -5,12 +5,9 @@
 # Description: test unit for utils/seeder.py
 
 
-import os
-import sys
-sys.path.append(os.getcwd())
+import runtime_path  # isort:skip
 
 import pytest
-
 from utils.seeder import random_seed
 
 

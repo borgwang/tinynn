@@ -4,15 +4,10 @@
 # Filename: test_utils_timing.py
 # Description: test unit for utils/timer.py
 
-
-import os
-import sys
-sys.path.append(os.getcwd())
-
+import runtime_path  # isort:skip
 import time
 
 import pytest
-
 from utils.timer import Timer
 
 
