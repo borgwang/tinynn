@@ -75,56 +75,88 @@ class Linear(Layer):
         self.is_init = True
 
 
-# class Conv2D(Layer):
-#
-#     def __init__(self,
-#                  in_dim,
-#                  channels,
-#                  kernel_size,
-#                  stride=1,
-#                  padding="SAME",
-#                  w_init=XavierNormalInit(),
-#                  b_init=ZerosInit()):
-#         super().__init__("Conv2D")
-#         self.h_in, self.w_in, self.d_in = in_dim
-#         # https://www.tensorflow.org/api_guides/python/nn#convolution
-#         if padding == "SAME":
-#             self.h_out = np.ceil(self.h_in / stride)
-#             self.w_out = np.ceil(self.w_in / stride)
-#             h_pad_needed = int((self.h_out - 1) * stride + kernel_size - self.h_in)
-#             pad_top = int(h_pad_needed / 2)
-#             pad_bottom = h_pad_needed - pad_top
-#             w_pad_needed = int((self.w_out - 1) * stride + kernel_size - self.h_in)
-#             pad_left = int(w_pad_needed / 2)
-#             pad_right = w_pad_needed - pad_left
-#             self.pad_needed = (pad_top, pad_bottom, pad_left, pad_right)
-#         elif padding == "VALID":
-#             self.h_out = np.ceil((self.h_in - kernel_size + 1) / stride)
-#             self.w_out = np.ceil((self.w_in - kernel_size + 1) / stride)
-#             self.pad_needed = (0, 0, 0, 0)
-#         else:
-#             raise ValueError("Invalid padding mode.")
-#
-#         self.h_f, self.w_f, self.n_f = kernel_size, kernel_size, channels
-#         self.strde, self.padding = stride, padding
-#
-#         self.params = {"w": None, "b": None}
-#
-#     def forward(self, inputs):
-#         pass
-#
-#     def backward(self):
-#         pass
-#
-#     def initialize(self):
-#         self.params["w"] = w_init((self.h_f, self.w_f, self.n_f))
-#         self.params["b"] = b_init((self.n_f, 1))
-#
-#     @property
-#     def out_dim(self):
-#         return (self.h_out, self.w_out, self.n_f)
-#
-#
+class Conv2D(Layer):
+
+    def __init__(self,
+                 kernel,
+                 stride,
+                 padding="SAME",
+                 w_init=XavierNormalInit(),
+                 b_init=ZerosInit()):
+        """
+        :param kernel: A list of int that has length 4 (height, width, in_channels, out_channels)
+        :param stride: A list of int that has length 2 (height, width)
+        :param padding: String ["SAME", "VALID", "FULL"]
+        :param w_init: weight initializer
+        :param b_init: bias initializer
+        """
+        super().__init__("Linear")
+
+        # verify arguments
+        assert len(kernel) == 4
+        assert len(stride) == 2
+        assert padding in ["FULL", "SAME", "VALID"]
+
+        self.padding_mode = padding
+        self.kernel = kernel
+        self.stride = stride
+        self.w_init = w_init
+        self.b_init = b_init
+
+        self.params = {"w": None, "b": None}
+        self.is_init = False
+
+    def forward(self, inputs):
+        ks = self.kernel[:2]  # kernel size
+        pad = self._get_padding(ks, self.padding_mode)
+        pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
+        padded = np.pad(inputs, pad_width=pad_width, mode="constant")
+
+        in_n, in_h, in_w, in_c = inputs.shape
+        out_h = int((in_h + pad[0] + pad[1] - ks[0]) / self.stride[0] + 1)
+        out_w = int((in_w + pad[2] + pad[3] - ks[1]) / self.stride[1] + 1)
+        out_c = self.kernel[-1]
+
+        kernel = np.repeat(self.params["w"][np.newaxis, :, :, :, :], in_n, axis=0)
+        outputs = np.empty(shape=(in_n, out_h, out_w, out_c))
+        for i, col in enumerate(range(0, padded.shape[1] - ks[0] + 1, self.stride[0])):
+            for j, row in enumerate(range(0, padded.shape[2] - ks[1] + 1, self.stride[1])):
+                patch = padded[:, col:col+ks[0], row:row+ks[1], :]
+                patch = np.repeat(patch[:, :, :, :, np.newaxis], out_c, axis=-1)
+                outputs[:, i, j] = np.sum(patch * kernel, axis=(1, 2, 3))
+        outputs += self.params["b"]
+        return outputs
+
+    def backward(self, grad):
+        pass
+
+    def initialize(self):
+        self.params["w"] = self.w_init(shape=self.kernel)
+        self.params["b"] = self.b_init(shape=self.kernel[-1])
+        self.is_init = True
+
+    @staticmethod
+    def _get_padding(ks, mode):
+        """
+        params: ks (kernel size) [p, q]
+        return: list of padding (top, bottom, left, right) in different modes
+        """
+        pad = None
+        if mode == "FULL":
+            pad = [ks[0] - 1, ks[1] - 1, ks[0] - 1, ks[1] - 1]
+        elif mode == "VALID":
+            pad = [0, 0, 0, 0]
+        elif mode == "SAME":
+            pad = [(ks[0] - 1) // 2, (ks[0] - 1) // 2,
+                   (ks[1] - 1) // 2, (ks[1] - 1) // 2]
+            if ks[0] % 2 == 0:
+                pad[1] += 1
+            if ks[1] % 2 == 0:
+                pad[3] += 1
+        else:
+            print("Invalid mode")
+        return pad
+
 # class Flatten(Layer):
 #
 #     def __init__(self, in_dim):
