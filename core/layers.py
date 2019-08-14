@@ -58,6 +58,8 @@ class Linear(Layer):
         self.params = {"w": None, "b": None}
         self.is_init = False
 
+        self.inputs = None
+
     def forward(self, inputs):
         if not self.is_init:
             raise ValueError("Parameters uninitialized error!")
@@ -106,7 +108,11 @@ class Conv2D(Layer):
         self.params = {"w": None, "b": None}
         self.is_init = False
 
-    def forward(self, inputs):
+        self.inputs = None
+
+    def forward_v1(self, inputs):
+        self.inputs = inputs
+
         ks = self.kernel[:2]  # kernel size
         pad = self._get_padding(ks, self.padding_mode)
         pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
@@ -124,6 +130,29 @@ class Conv2D(Layer):
                 patch = padded[:, col:col+ks[0], row:row+ks[1], :]
                 patch = np.repeat(patch[:, :, :, :, np.newaxis], out_c, axis=-1)
                 outputs[:, i, j] = np.sum(patch * kernel, axis=(1, 2, 3))
+        outputs += self.params["b"]
+        return outputs
+
+    def forward(self, inputs):
+        # https://zhuanlan.zhihu.com/p/46305636
+        ks = self.kernel[:2]  # kernel size
+        pad = self._get_padding(ks, self.padding_mode)
+        pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
+        padded = np.pad(inputs, pad_width=pad_width, mode="constant")
+
+        in_n, in_h, in_w, in_c = inputs.shape
+        out_h = int((in_h + pad[0] + pad[1] - ks[0]) / self.stride[0] + 1)
+        out_w = int((in_w + pad[2] + pad[3] - ks[1]) / self.stride[1] + 1)
+
+        kernel = self.params["w"]
+        col_len = np.prod(kernel.shape[:3])
+        kernel = kernel.reshape((col_len, -1))
+        patches_matrix = np.empty(shape=(in_n, out_h, out_w, col_len))
+        for i, col in enumerate(range(0, padded.shape[1] - ks[0] + 1, self.stride[0])):
+            for j, row in enumerate(range(0, padded.shape[2] - ks[1] + 1, self.stride[1])):
+                patch = padded[:, col:col+ks[0], row:row+ks[1], :]
+                patches_matrix[:, i, j, :] = patch.reshape((in_n, -1))
+        outputs = np.dot(patches_matrix, kernel)
         outputs += self.params["b"]
         return outputs
 
