@@ -5,7 +5,7 @@
 # Description: Feed-forward Neural Network class.
 
 
-class NeuralNet(object):
+class Net(object):
 
     def __init__(self, layers):
         self.layers = layers

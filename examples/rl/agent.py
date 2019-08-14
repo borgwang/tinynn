@@ -8,7 +8,7 @@ import numpy as np
 import random
 from collections import deque
 
-from core.nn import NeuralNet
+from core.nn import Net
 from core.layers import Linear, ReLU
 from core.model import Model
 from core.losses import MSELoss
@@ -35,7 +35,7 @@ class DQN(object):
         self.target_network_update_interval = args.target_network_update
 
     def build_net(self):
-        q_net = NeuralNet([
+        q_net = Net([
             Linear(self.state_dim, 100),
             ReLU(),
             Linear(100, self.action_dim)

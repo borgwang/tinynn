@@ -4,10 +4,10 @@
 # Filename: layers.py
 # Description: Network layers and Activation layers...
 
+import numpy as np
 
 from core.initializer import XavierNormalInit
 from core.initializer import ZerosInit
-from core.math import *
 
 
 class Layer(object):
@@ -32,7 +32,7 @@ class Layer(object):
 
     @property
     def out_dim(self):
-        raise NotImplementedError
+        pass
 
 
 # ----------
@@ -60,7 +60,7 @@ class Linear(Layer):
 
     def forward(self, inputs):
         if not self.is_init:
-            raise ValueError("Parameters unintialized error!")
+            raise ValueError("Parameters uninitialized error!")
         self.inputs = inputs
         return inputs @ self.params["w"] + self.params["b"]
 
@@ -151,74 +151,99 @@ class Linear(Layer):
 
 class Activation(Layer):
 
-    def __init__(self, f, f_prime, name):
+    def __init__(self, name):
         super().__init__(name)
-        self.f = f
-        self.f_prime = f_prime
+        self.inputs = None
 
     def forward(self, inputs):
         self.inputs = inputs
-        return self.f(inputs)
+        return self.func(inputs)
 
     def backward(self, grad):
-        return self.f_prime(self.inputs) * grad
+        return self.derivative_func(self.inputs) * grad
 
     def initialize(self):
         return
+
+    def func(self, x):
+        raise NotImplementedError
+
+    def derivative_func(self, x):
+        raise NotImplementedError
 
 
 class Sigmoid(Activation):
 
     def __init__(self):
-        super().__init__(sigmoid, sigmoid_prime, "Sigmoid")
+        super().__init__("Sigmoid")
+
+    def func(self, x):
+        return 1.0 / (1.0 + np.exp(-x))
+
+    def derivative_func(self, x):
+        return self.func(x) * (1.0 - self.func(x))
 
 
 class Tanh(Activation):
 
     def __init__(self):
-        super().__init__(tanh, tanh_prime, "Tanh")
+        super().__init__("Tanh")
+
+    def func(self, x):
+        return np.tanh(x)
+
+    def derivative_func(self, x):
+        return 1.0 - self.func(x) ** 2
 
 
 class ReLU(Activation):
 
     def __init__(self):
-        super().__init__(relu, relu_prime, "ReLU")
+        super().__init__("ReLU")
+
+    def func(self, x):
+        return np.maximum(x, 0.0)
+
+    def derivative_func(self, x):
+        return x > 0.0
 
 
 class LeakyReLU(Activation):
 
-    def __init__(self, negative_slope=0.01):
-        super().__init__(leaky_relu, leaky_relu_prime, "LeakyReLU")
-        self._negative_slope = negative_slope
+    def __init__(self, slope=0.01):
+        super().__init__("LeakyReLU")
+        self._slope = slope
 
-    def forward(self, inputs):
-        self.inputs = inputs
-        return self.f(inputs, self._negative_slope)
+    def func(self, x):
+        # TODO: maybe a litter bit slow due to the copy
+        x = x.copy()
+        x[x < 0.0] *= self._slope
+        return x
 
-    def backward(self, grad):
-        return self.f_prime(self.inputs, self._negative_slope) * grad
+    def derivative_func(self, x):
+        x[x < 0.0] = self._slope
+        return x
 
-
-# ----------
-# Function Layers
-# ----------
 
 class Dropout(Layer):
 
     def __init__(self, keep_prob=0.5):
         super().__init__("Dropout")
         self._keep_prob = keep_prob
+        self._multiplier = None
 
     def forward(self, inputs):
         if self.is_training:
-            self._mask = np.random.binomial(1, self._keep_prob, size=inputs.shape) / self._keep_prob
-            return inputs * self._mask
+            multiplier = np.random.binomial(
+                1, self._keep_prob, size=inputs.shape)
+            self._multiplier = multiplier / self._keep_prob
+            return inputs * self._multiplier
         else:
             return inputs
 
     def backward(self, grad):
         assert self.is_training is True
-        return grad * self._mask
+        return grad * self._multiplier
 
     def initialize(self):
         return
