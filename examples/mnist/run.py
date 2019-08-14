@@ -4,12 +4,12 @@
 # Filename: run.py
 # Description: Example MNIST code for tinynn.
 
+import runtime_path  # isort:skip
 
 import argparse
 import gzip
 import os
 import pickle
-import sys
 import time
 from urllib.error import URLError
 from urllib.request import urlretrieve
@@ -29,14 +29,15 @@ from core.optimizer import RMSProp
 from utils.data_iterator import BatchIterator
 from utils.seeder import random_seed
 
-sys.path.append(os.getcwd())
-
 
 def get_one_hot(targets, nb_classes):
     return np.eye(nb_classes)[np.array(targets).reshape(-1)]
 
 
 def prepare_dataset(data_dir):
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+
     url = "http://deeplearning.net/data/mnist/mnist.pkl.gz"
     path = os.path.join(data_dir, url.split("/")[-1])
 
@@ -125,7 +126,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_ep", default=10, type=int)
-    parser.add_argument("--data_dir", default="./examples/mnist/data", type=str)
+    parser.add_argument("--data_dir", default="./data", type=str)
     parser.add_argument("--optim", default="adam", type=str)
     parser.add_argument("--lr", default=3e-3, type=float)
     parser.add_argument("--batch_size", default=64, type=int)
