@@ -9,7 +9,7 @@ import random
 from collections import deque
 
 from core.nn import Net
-from core.layers import Linear, ReLU
+from core.layers import Dense, ReLU
 from core.model import Model
 from core.losses import MSELoss
 from core.optimizer import RMSProp
@@ -36,9 +36,9 @@ class DQN(object):
 
     def build_net(self):
         q_net = Net([
-            Linear(self.state_dim, 100),
+            Dense(self.state_dim, 100),
             ReLU(),
-            Linear(100, self.action_dim)
+            Dense(100, self.action_dim)
         ])
         return q_net
 

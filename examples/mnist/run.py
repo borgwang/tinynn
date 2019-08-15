@@ -17,7 +17,7 @@ from urllib.request import urlretrieve
 import numpy as np
 
 from core.evaluator import AccEvaluator
-from core.layers import Linear
+from core.layers import Dense
 from core.layers import ReLU
 from core.losses import CrossEntropyLoss
 from core.model import Model
@@ -73,16 +73,16 @@ def main(args):
     random_seed(args.seed)
 
     net = Net([
-        Linear(784, 200),
+        Dense(784, 200),
         ReLU(),
         # Dropout(),
-        Linear(200, 100),
+        Dense(200, 100),
         ReLU(),
-        Linear(100, 70),
+        Dense(100, 70),
         ReLU(),
-        Linear(70, 30),
+        Dense(70, 30),
         ReLU(),
-        Linear(30, 10)
+        Dense(30, 10)
     ])
     loss_fn = CrossEntropyLoss()
 

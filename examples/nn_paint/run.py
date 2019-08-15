@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image
 
 from core.evaluator import MSEEvaluator
-from core.layers import Linear
+from core.layers import Dense
 from core.layers import ReLU
 from core.layers import Sigmoid
 from core.losses import MSELoss
@@ -44,15 +44,15 @@ def main(args):
     train_x, train_y, img_shape = prepare_dataset(data_path)
 
     net = Net([
-        Linear(2, 30),
+        Dense(2, 30),
         ReLU(),
-        Linear(30, 60),
+        Dense(30, 60),
         ReLU(),
-        Linear(60, 60),
+        Dense(60, 60),
         ReLU(),
-        Linear(60, 30),
+        Dense(60, 30),
         ReLU(),
-        Linear(30, 3),
+        Dense(30, 3),
         Sigmoid()
     ])
 
