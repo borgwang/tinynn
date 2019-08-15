@@ -8,6 +8,12 @@ import numpy as np
 import scipy.stats as stats
 
 
+def get_fans(shape):
+    fan_in = shape[0] if len(shape) == 2 else np.prod(shape[1:])
+    fan_out = shape[1] if len(shape) == 2 else shape[0]
+    return fan_in, fan_out
+
+
 class Initializer(object):
     def __call__(self, shape):
         raise NotImplementedError
@@ -74,7 +80,8 @@ class XavierUniformInit(Initializer):
 
     def __call__(self, shape):
         assert len(shape) >= 2
-        a = self._gain * np.sqrt(6.0 / (shape[0] + shape[1]))
+        fan_in, fan_out = get_fans(shape)
+        a = self._gain * np.sqrt(6.0 / (fan_in + fan_out))
         return np.random.uniform(low=-a, high=a, size=shape)
 
 
@@ -93,7 +100,8 @@ class XavierNormalInit(Initializer):
 
     def __call__(self, shape):
         assert len(shape) >= 2
-        std = self._gain * np.sqrt(2.0 / (shape[0] + shape[1]))
+        fan_in, fan_out = get_fans(shape)
+        std = self._gain * np.sqrt(2.0 / (fan_in + fan_out))
         return np.random.normal(loc=0.0, scale=std, size=shape)
 
 
@@ -111,7 +119,8 @@ class HeUniformInit(Initializer):
         self._gain = gain
 
     def __call__(self, shape):
-        a = self._gain * np.sqrt(6.0 / shape[0])
+        fan_in, _ = get_fans(shape)
+        a = self._gain * np.sqrt(6.0 / fan_in)
         return np.random.uniform(low=-a, high=a, size=shape)
 
 
@@ -129,26 +138,6 @@ class HeNormalInit(Initializer):
         self._gain = gain
 
     def __call__(self, shape):
-        std = self._gain * np.sqrt(2.0 / shape[0])
+        fan_in, _ = get_fans(shape)
+        std = self._gain * np.sqrt(2.0 / fan_in)
         return np.random.normal(loc=0.0, scale=std, size=shape)
-
-
-class OrthogonalInit(Initializer):
-    """
-    Implement the initialization method described in
-    “Exact solutions to the nonlinear dynamics of learning in deep linear neural networks”
-    Saxe, A. et al. (2013)
-
-    The shape must be at least 2 dimensional.
-    """
-
-    def __init__(self, gain=1.0):
-        self._gain = gain
-
-    def __call__(self, shape):
-        assert len(shape) == 2  # only support 2 dimension tensor for now
-        a = np.random.normal(0.0, 1.0, shape)
-        u, _, v = np.linalg.svd(a, full_matrices=False)
-        q = u if u.shape == shape else v
-        q = q.reshape(shape)
-        return (self._gain * q[:shape[0], :shape[1]]).astype(np.float32)
