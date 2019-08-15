@@ -30,14 +30,6 @@ class Layer(object):
     def set_phase(self, phase):
         self.is_training = True if phase == "TRAIN" else False
 
-    @property
-    def out_dim(self):
-        pass
-
-
-# ----------
-# Network Layers
-# ----------
 
 class Dense(Layer):
 
@@ -108,7 +100,7 @@ class Conv2D(Layer):
         self.is_init = False
 
         self.inputs = None
-        self.c = {}
+        self.cache = dict()  # cache
 
     def forward(self, inputs):
         k_h, k_w = self.kernel[:2]  # kernel size
@@ -131,41 +123,40 @@ class Conv2D(Layer):
             for j, row in enumerate(range(0, pad_w - k_w + 1, s_w)):
                 patch = padded[:, col:col+k_h, row:row+k_w, :]
                 patches_list.append(patch.reshape((in_n, -1)))
+        # shape of X_matrix [in_n, out_h, out_w, in_h * in_w * in_c]
         X_matrix = np.asarray(patches_list).reshape(
             (out_h, out_w, in_n, col_len)).transpose([2, 0, 1, 3])
 
         # shape of W_matrix [in_h * in_w * in_c, out_c]
-        # shape of X_matrix [in_n, out_h, out_w, in_h * in_w * in_c]
         W_matrix = kernel.reshape((col_len, -1))
         outputs = X_matrix @ W_matrix
 
-        self.c.update({
+        self.cache.update({
             "in_n": in_n, "in_img_size": (in_h, in_w, in_c),
             "kernel_size": (k_h, k_w, in_c), "stride": (s_h, s_w), "pad": pad,
             "pad_img_size": (pad_h, pad_w, in_c),
-            "out_img_size": (out_h, out_w, out_c)})
-
-        self.c["X_matrix"] = X_matrix
-        self.c["W_matrix"] = W_matrix
+            "out_img_size": (out_h, out_w, out_c),
+            "X_matrix": X_matrix, "W_matrix": W_matrix})
 
         # add bias
         outputs += self.params["b"]
         return outputs
 
     def backward(self, grad):
-        in_n = self.c["in_n"]
-        in_h, in_w, in_c = self.c["in_img_size"]
-        k_h, k_w, _ = self.c["kernel_size"]
-        s_h, s_w = self.c["stride"]
-        out_h, out_w, out_c = self.c["out_img_size"]
-        pad_h, pad_w, _ = self.c["pad_img_size"]
+        in_n = self.cache["in_n"]
+        in_h, in_w, in_c = self.cache["in_img_size"]
+        k_h, k_w, _ = self.cache["kernel_size"]
+        s_h, s_w = self.cache["stride"]
+        out_h, out_w, out_c = self.cache["out_img_size"]
+        pad_h, pad_w, _ = self.cache["pad_img_size"]
         col_len = k_h * k_w * in_c
-        pad = self.c["pad"]
+        pad = self.cache["pad"]
 
-        d_w = (self.c["X_matrix"].reshape((-1, col_len)).T @ grad.reshape((-1, out_c)))
+        d_w = (self.cache["X_matrix"].reshape((-1, col_len)).T @
+               grad.reshape((-1, out_c)))
         self.grads["w"] = d_w.reshape(self.params["w"].shape)
         self.grads["b"] = np.sum(grad, axis=(0, 1, 2))
-        d_X_matrix = grad @ self.c["W_matrix"].T
+        d_X_matrix = grad @ self.cache["W_matrix"].T
 
         d_in = np.zeros(shape=(in_n, pad_h, pad_w, in_c))
         for i, col in enumerate(range(0, pad_h - k_h + 1, s_h)):
@@ -223,9 +214,29 @@ class Flatten(Layer):
     def initialize(self):
         pass
 
-# ----------
-# Non-linear Activation Layers
-# ----------
+
+class Dropout(Layer):
+
+    def __init__(self, keep_prob=0.5):
+        super().__init__("Dropout")
+        self._keep_prob = keep_prob
+        self._multiplier = None
+
+    def forward(self, inputs):
+        if self.is_training:
+            multiplier = np.random.binomial(
+                1, self._keep_prob, size=inputs.shape)
+            self._multiplier = multiplier / self._keep_prob
+            return inputs * self._multiplier
+        else:
+            return inputs
+
+    def backward(self, grad):
+        assert self.is_training is True
+        return grad * self._multiplier
+
+    def initialize(self):
+        return
 
 
 class Activation(Layer):
@@ -304,25 +315,3 @@ class LeakyReLU(Activation):
         return x
 
 
-class Dropout(Layer):
-
-    def __init__(self, keep_prob=0.5):
-        super().__init__("Dropout")
-        self._keep_prob = keep_prob
-        self._multiplier = None
-
-    def forward(self, inputs):
-        if self.is_training:
-            multiplier = np.random.binomial(
-                1, self._keep_prob, size=inputs.shape)
-            self._multiplier = multiplier / self._keep_prob
-            return inputs * self._multiplier
-        else:
-            return inputs
-
-    def backward(self, grad):
-        assert self.is_training is True
-        return grad * self._multiplier
-
-    def initialize(self):
-        return
