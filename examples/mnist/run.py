@@ -18,7 +18,10 @@ import numpy as np
 
 from core.evaluator import AccEvaluator
 from core.layers import Dense
+from core.layers import Conv2D
+from core.layers import Flatten
 from core.layers import ReLU
+from core.layers import Dropout
 from core.losses import CrossEntropyLoss
 from core.model import Model
 from core.nn import Net
@@ -65,25 +68,39 @@ def prepare_dataset(data_dir):
 def main(args):
     train_set, valid_set, test_set = prepare_dataset(args.data_dir)
     train_x, train_y = train_set
-    valid_x, valid_y = valid_set
     test_x, test_y = test_set
     train_y = get_one_hot(train_y, 10)
-    valid_y = get_one_hot(valid_y, 10)
 
-    random_seed(args.seed)
+    if args.model_type == "cnn":
+        train_x = train_x.reshape((-1, 28, 28, 1))
+        test_x = test_x.reshape((-1, 28, 28, 1))
 
-    net = Net([
-        Dense(784, 200),
-        ReLU(),
-        # Dropout(),
-        Dense(200, 100),
-        ReLU(),
-        Dense(100, 70),
-        ReLU(),
-        Dense(70, 30),
-        ReLU(),
-        Dense(30, 10)
-    ])
+    if args.model_type == "cnn":
+        net = Net([
+            Conv2D(kernel=[5, 5, 1, 8], stride=[2, 2], padding="SAME"),
+            ReLU(),
+            Conv2D(kernel=[5, 5, 8, 16], stride=[2, 2], padding="SAME"),
+            ReLU(),
+            Conv2D(kernel=[5, 5, 16, 32], stride=[2, 2], padding="SAME"),
+            ReLU(),
+            Flatten(),
+            Dense(512, 10)
+        ])
+    elif args.model_type == "dense":
+        net = Net([
+            Dense(784, 200),
+            ReLU(),
+            Dense(200, 100),
+            ReLU(),
+            Dense(100, 70),
+            ReLU(),
+            Dense(70, 30),
+            ReLU(),
+            Dense(30, 10)
+        ])
+    else:
+        raise ValueError("Invalid argument model_type! Must be 'cnn' or 'dense'")
+
     loss_fn = CrossEntropyLoss()
 
     if args.optim == "adam":
@@ -125,11 +142,12 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--num_ep", default=10, type=int)
+    parser.add_argument("--model_type", default="cnn", type=str, help="cnn or dense")
+    parser.add_argument("--num_ep", default=50, type=int)
     parser.add_argument("--data_dir", default="./examples/mnist/data", type=str)
     parser.add_argument("--optim", default="adam", type=str)
     parser.add_argument("--lr", default=3e-3, type=float)
-    parser.add_argument("--batch_size", default=64, type=int)
+    parser.add_argument("--batch_size", default=128, type=int)
     parser.add_argument("--seed", default=0, type=int)
     args = parser.parse_args()
     main(args)
