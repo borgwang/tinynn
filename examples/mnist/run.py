@@ -101,22 +101,8 @@ def main(args):
     else:
         raise ValueError("Invalid argument model_type! Must be 'cnn' or 'dense'")
 
-    loss_fn = CrossEntropyLoss()
-
-    if args.optim == "adam":
-        optimizer = Adam(lr=args.lr)
-    elif args.optim == "sgd":
-        optimizer = SGD(lr=args.lr)
-    elif args.optim == "momentum":
-        optimizer = Momentum(lr=args.lr)
-    elif args.optim == "rmsprop":
-        optimizer = RMSProp(lr=args.lr)
-    else:
-        raise ValueError("Invalid Optimizer!!")
-
-    model = Model(net=net, loss=loss_fn, optimizer=optimizer)
+    model = Model(net=net, loss=CrossEntropyLoss(), optimizer=Adam(lr=args.lr))
     model.initialize()
-    # model.load("../data/model.pk")
 
     iterator = BatchIterator(batch_size=args.batch_size)
     evaluator = AccEvaluator()
@@ -137,7 +123,6 @@ def main(args):
         res = evaluator.evaluate(test_pred_idx, test_y_idx)
         print(res)
         model.set_phase("TRAIN")
-    # model.save("../data/model.pk")
 
 
 if __name__ == "__main__":
@@ -145,8 +130,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_type", default="cnn", type=str, help="cnn or dense")
     parser.add_argument("--num_ep", default=50, type=int)
     parser.add_argument("--data_dir", default="./examples/mnist/data", type=str)
-    parser.add_argument("--optim", default="adam", type=str)
-    parser.add_argument("--lr", default=3e-3, type=float)
+    parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--batch_size", default=128, type=int)
     parser.add_argument("--seed", default=0, type=int)
     args = parser.parse_args()
