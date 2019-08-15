@@ -73,23 +73,24 @@ class Conv2D(Layer):
 
     def __init__(self,
                  kernel,
-                 stride,
+                 stride=(1, 1),
                  padding="SAME",
                  w_init=XavierNormalInit(),
                  b_init=ZerosInit()):
         """
-        :param kernel: A list of int that has length 4 (height, width, in_channels, out_channels)
-        :param stride: A list of int that has length 2 (height, width)
-        :param padding: String ["SAME", "VALID", "FULL"]
+        Implement 2D convolutional layer
+        :param kernel: A list/tuple of int that has length 4 (height, width, in_channels, out_channels)
+        :param stride: A list/tuple of int that has length 2 (height, width)
+        :param padding: String ["SAME", "VALID"]
         :param w_init: weight initializer
         :param b_init: bias initializer
         """
-        super().__init__("Linear")
+        super().__init__("Conv2D")
 
         # verify arguments
         assert len(kernel) == 4
         assert len(stride) == 2
-        assert padding in ["FULL", "SAME", "VALID"]
+        assert padding in ("SAME", "VALID")
 
         self.padding_mode = padding
         self.kernel = kernel
@@ -131,12 +132,11 @@ class Conv2D(Layer):
         W_matrix = kernel.reshape((col_len, -1))
         outputs = X_matrix @ W_matrix
 
-        self.cache.update({
-            "in_n": in_n, "in_img_size": (in_h, in_w, in_c),
-            "kernel_size": (k_h, k_w, in_c), "stride": (s_h, s_w), "pad": pad,
-            "pad_img_size": (pad_h, pad_w, in_c),
-            "out_img_size": (out_h, out_w, out_c),
-            "X_matrix": X_matrix, "W_matrix": W_matrix})
+        self.cache = {"in_n": in_n, "in_img_size": (in_h, in_w, in_c),
+                      "kernel_size": (k_h, k_w, in_c), "stride": (s_h, s_w),
+                      "pad": pad, "pad_img_size": (pad_h, pad_w, in_c),
+                      "out_img_size": (out_h, out_w, out_c),
+                      "X_matrix": X_matrix, "W_matrix": W_matrix}
 
         # add bias
         outputs += self.params["b"]
@@ -165,7 +165,7 @@ class Conv2D(Layer):
                     (in_n, k_h, k_w, in_c))
                 d_in[:, col:col+k_h, row:row+k_w, :] += patch
         # cut off padding
-        d_in = d_in[:, pad[0]:-pad[1], pad[2]:-pad[3], :]
+        d_in = d_in[:, pad[0]:pad_h-pad[1], pad[2]:pad_w-pad[3], :]
         return d_in
 
     def initialize(self):
