@@ -196,6 +196,101 @@ class Conv2D(Layer):
         return pad
 
 
+class MaxPooling2D(Layer):
+
+    def __init__(self,
+                 pool_size,
+                 stride,
+                 padding="VALID"):
+        """
+        Implement 2D max-pooling layer
+        :param pool_size: A list/tuple of 2 integers (pool_height, pool_width)
+        :param stride: A list/tuple of 2 integers (stride_height, stride_width)
+        :param padding: A string ("SAME", "VALID")
+        """
+        super().__init__("MaxPooling2D")
+        # validate arguments
+        assert len(pool_size) == 2
+        assert len(stride) == 2
+        assert padding in ("VALID", "SAME")
+
+        self.pool_size = pool_size
+        self.stride = stride
+        self.padding_mode = padding
+
+        self.cache = dict()
+
+    def forward(self, inputs):
+        in_n, in_h, in_w, in_c = inputs.shape
+        pad = self._get_padding([in_h, in_w], self.pool_size, self.stride,
+                                self.padding_mode)
+        pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
+        padded = np.pad(inputs, pad_width=pad_width, mode="constant")
+        pad_h, pad_w = padded.shape[1:3]
+        (s_h, s_w), (pool_h, pool_w) = self.stride, self.pool_size
+        out_h, out_w = pad_h // s_h, pad_w // s_w
+        patches_list, max_pos_list = list(), list()
+        for col in range(0, pad_h, s_h):
+            for row in range(0, pad_w, s_w):
+                pool = padded[:, col:col+pool_h, row:row+pool_w, :]
+                max_pos = np.argmax(pool.reshape((in_n, -1, in_c)), axis=1)
+                max_pos_list.append(max_pos[:, np.newaxis, :])
+                patch = np.max(pool, axis=(1, 2))[:, np.newaxis, :]
+                patches_list.append(patch)
+        outputs = np.concatenate(patches_list, axis=1).reshape(
+            (in_n, out_h, out_w, in_c))
+        max_pos = np.concatenate(max_pos_list, axis=1).reshape(
+            (in_n, out_h, out_w, in_c))
+
+        self.cache = {"in_n": in_n, "in_img_size": (in_h, in_w, in_c),
+                      "stride": (s_h, s_w), "pad": (pad_h, pad_w),
+                      "pool": (pool_h, pool_w), "max_pos": max_pos,
+                      "out_img_size": (out_h, out_w, in_c)}
+        return outputs
+
+    def backward(self, grad):
+        in_n, (in_h, in_w, in_c) = self.cache["in_n"], self.cache["in_img_size"]
+        s_h, s_w = self.cache["stride"]
+        pad_h, pad_w = self.cache["pad"]
+        pool_h, pool_w = self.cache["pool"]
+
+        d_in = np.zeros(shape=(in_n, pad_h, pad_w, in_c))
+        for i, col in enumerate(range(0, pad_h, s_h)):
+            for j, row in enumerate(range(0, pad_w, s_w)):
+                _max_pos = self.cache["max_pos"][:, i, j, :]
+                _grad = grad[:, i, j, :]
+                mask = np.eye(pool_h * pool_w)[_max_pos].transpose((0, 2, 1))
+                region = np.repeat(_grad[:, np.newaxis, :],
+                                   pool_h * pool_w, axis=1) * mask
+                region = region.reshape((in_n, pool_h, pool_w, in_c))
+                d_in[:, col:col + pool_h, row:row + pool_w, :] = region
+        return d_in
+
+    def initialize(self):
+        pass
+
+    def _get_padding(self, input_size, pool_size, stride, mode):
+        h_pad = self._get_padding_1d(
+            input_size[0], pool_size[0], stride[0], mode)
+        w_pad = self._get_padding_1d(
+            input_size[1], pool_size[1], stride[1], mode)
+        return h_pad + w_pad
+
+    @staticmethod
+    def _get_padding_1d(input_size, pool_size, stride, mode):
+        if mode == "SAME":
+            r = input_size % stride
+            if r == 0:
+                n_pad = max(pool_size - stride, 0)
+            else:
+                n_pad = max(pool_size, stride) - r
+        else:
+            n_pad = 0
+        half = n_pad // 2
+        pad = [half, half] if n_pad % 2 == 0 else [half, half + 1]
+        return pad
+
+
 class Flatten(Layer):
 
     def __init__(self):
