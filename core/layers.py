@@ -39,7 +39,7 @@ class Layer(object):
 # Network Layers
 # ----------
 
-class Linear(Layer):
+class Dense(Layer):
 
     def __init__(self,
                  num_in,
