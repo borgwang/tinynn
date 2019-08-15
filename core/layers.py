@@ -111,67 +111,71 @@ class Conv2D(Layer):
         self.c = {}
 
     def forward(self, inputs):
-        ks = self.kernel[:2]  # kernel size
-        st = self.stride
+        k_h, k_w = self.kernel[:2]  # kernel size
+        s_h, s_w = self.stride
 
-        pad = self._get_padding(ks, self.padding_mode)
+        pad = self._get_padding([k_h, k_w], self.padding_mode)
         pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
         padded = np.pad(inputs, pad_width=pad_width, mode="constant")
         pad_h, pad_w = padded.shape[1:3]
 
         in_n, in_h, in_w, in_c = inputs.shape
-        out_h = int((in_h + pad[0] + pad[1] - ks[0]) / st[0] + 1)
-        out_w = int((in_w + pad[2] + pad[3] - ks[1]) / st[1] + 1)
+        out_h = int((in_h + pad[0] + pad[1] - k_h) / s_h + 1)
+        out_w = int((in_w + pad[2] + pad[3] - k_w) / s_w + 1)
+        out_c = self.kernel[-1]
 
         kernel = self.params["w"]
         col_len = np.prod(kernel.shape[:3])
         patches_list = list()
-        for i, col in enumerate(range(0, padded.shape[1] - ks[0] + 1, st[0])):
-            for j, row in enumerate(range(0, padded.shape[2] - ks[1] + 1, st[1])):
-                patch = padded[:, col:col+ks[0], row:row+ks[1], :]
+        for i, col in enumerate(range(0, pad_h - k_h + 1, s_h)):
+            for j, row in enumerate(range(0, pad_w - k_w + 1, s_w)):
+                patch = padded[:, col:col+k_h, row:row+k_w, :]
                 patches_list.append(patch.reshape((in_n, -1)))
-        patches_matrix = np.asarray(patches_list).reshape(
+        X_matrix = np.asarray(patches_list).reshape(
             (out_h, out_w, in_n, col_len)).transpose([2, 0, 1, 3])
 
-        # shape of kernel_matrix [in_h * in_w * in_c, out_c]
-        # shape of patches_matrix [in_n, out_h, out_w, in_h * in_w * in_c]
-        kernel_matrix = kernel.reshape((col_len, -1))
-        outputs = patches_matrix @ kernel_matrix
+        # shape of W_matrix [in_h * in_w * in_c, out_c]
+        # shape of X_matrix [in_n, out_h, out_w, in_h * in_w * in_c]
+        W_matrix = kernel.reshape((col_len, -1))
+        outputs = X_matrix @ W_matrix
 
-        self.c.update({"in_n": in_n, "in_w": in_w, "in_h": in_h,
-                       "in_c": in_c, "out_h": out_h, "out_w": out_w,
-                       "col_len": col_len, "ks": ks, "st": self.stride,
-                       "pad": pad})
+        self.c.update({
+            "in_n": in_n, "in_img_size": (in_h, in_w, in_c),
+            "kernel_size": (k_h, k_w, in_c), "stride": (s_h, s_w), "pad": pad,
+            "pad_img_size": (pad_h, pad_w, in_c),
+            "out_img_size": (out_h, out_w, out_c)})
 
-        self.c["inputs"] = inputs
-        self.c["padded_shape"] = padded.shape
-        self.c["output_shape"] = outputs.shape
-        self.c["patches_matrix"] = patches_matrix
-        self.c["kernel_matrix"] = kernel_matrix
+        self.c["X_matrix"] = X_matrix
+        self.c["W_matrix"] = W_matrix
 
+        # add bias
         outputs += self.params["b"]
         return outputs
 
     def backward(self, grad):
-
-        st, ks = self.c["st"], self.c["ks"]
-        padded_shape = self.c["padded_shape"]
-
-        dw = (self.c["patches_matrix"].reshape((-1, self.c["col_len"])).T @
-              grad.reshape((-1, self.c["output_shape"][-1])))
-        self.grads["w"] = dw.reshape(self.params["w"].shape)
-        self.grads["b"] = np.sum(grad, axis=(0, 1, 2))
-        d_patches_matrix = grad @ self.c["kernel_matrix"].T
-
-        d_inputs = np.zeros(shape=padded_shape)
-        for i, col in enumerate(range(0, padded_shape[1] - ks[0] + 1, st[0])):
-            for j, row in enumerate(range(0, padded_shape[2] - ks[1] + 1, st[1])):
-                patch = d_patches_matrix[:, i, j, :].reshape((self.c["in_n"], *self.params["w"].shape[:3]))
-                d_inputs[:, col:col+ks[0], row:row+ks[1], :] += patch
+        in_n = self.c["in_n"]
+        in_h, in_w, in_c = self.c["in_img_size"]
+        k_h, k_w, _ = self.c["kernel_size"]
+        s_h, s_w = self.c["stride"]
+        out_h, out_w, out_c = self.c["out_img_size"]
+        pad_h, pad_w, _ = self.c["pad_img_size"]
+        col_len = k_h * k_w * in_c
         pad = self.c["pad"]
-        # clip padding
-        d_inputs = d_inputs[:, pad[0]:-pad[1], pad[2]:-pad[3], :]
-        return d_inputs
+
+        d_w = (self.c["X_matrix"].reshape((-1, col_len)).T @ grad.reshape((-1, out_c)))
+        self.grads["w"] = d_w.reshape(self.params["w"].shape)
+        self.grads["b"] = np.sum(grad, axis=(0, 1, 2))
+        d_X_matrix = grad @ self.c["W_matrix"].T
+
+        d_in = np.zeros(shape=(in_n, pad_h, pad_w, in_c))
+        for i, col in enumerate(range(0, pad_h - k_h + 1, s_h)):
+            for j, row in enumerate(range(0, pad_w - k_w + 1, s_w)):
+                patch = d_X_matrix[:, i, j, :].reshape(
+                    (in_n, k_h, k_w, in_c))
+                d_in[:, col:col+k_h, row:row+k_w, :] += patch
+        # cut off padding
+        d_in = d_in[:, pad[0]:-pad[1], pad[2]:-pad[3], :]
+        return d_in
 
     def initialize(self):
         self.params["w"] = self.w_init(shape=self.kernel)
