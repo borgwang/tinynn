@@ -6,7 +6,7 @@
 
 import numpy as np
 
-from core.initializer import XavierNormalInit
+from core.initializer import XavierUniformInit
 from core.initializer import ZerosInit
 
 
@@ -36,7 +36,7 @@ class Dense(Layer):
     def __init__(self,
                  num_in,
                  num_out,
-                 w_init=XavierNormalInit(),
+                 w_init=XavierUniformInit(),
                  b_init=ZerosInit()):
         super().__init__("Linear")
         self.w_shape = (num_in, num_out)
@@ -71,7 +71,7 @@ class Conv2D(Layer):
                  kernel,
                  stride=(1, 1),
                  padding="SAME",
-                 w_init=XavierNormalInit(),
+                 w_init=XavierUniformInit(),
                  b_init=ZerosInit()):
         """
         Implement 2D convolution layer
