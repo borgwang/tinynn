@@ -15,7 +15,11 @@ def get_fans(shape):
 
 
 class Initializer(object):
+
     def __call__(self, shape):
+        return self.init(shape).astype(np.float32)
+
+    def init(self, shape):
         raise NotImplementedError
 
 
@@ -25,17 +29,16 @@ class NormalInit(Initializer):
         self._mean = mean
         self._std = std
 
-    def __call__(self, shape):
+    def init(self, shape):
         return np.random.normal(loc=self._mean, scale=self._std, size=shape)
 
 
 class TruncatedNormalInit(Initializer):
 
     def __init__(self, mean=0.0, std=1.0):
-        self._tn = stats.truncnorm(
-            - 2 * std, 2 * std, loc=mean, scale=std)
+        self._tn = stats.truncnorm(- 2 * std, 2 * std, loc=mean, scale=std)
 
-    def __call__(self, shape):
+    def init(self, shape):
         return self._tn.rvs(size=shape)
 
 
@@ -45,14 +48,14 @@ class UniformInit(Initializer):
         self._a = a
         self._b = b
 
-    def __call__(self, shape):
+    def init(self, shape):
         return np.random.uniform(low=self._a, high=self._b, size=shape)
 
 
 class ZerosInit(Initializer):
 
-    def __call__(self, shape):
-        return np.zeros(shape=shape, dtype=float)
+    def init(self, shape):
+        return np.zeros(shape=shape)
 
 
 class ConstantInit(Initializer):
@@ -60,8 +63,8 @@ class ConstantInit(Initializer):
     def __init__(self, val):
         self._val = val
 
-    def __call__(self, shape):
-        return np.full(shape=shape, fill_value=self._val, dtype=float)
+    def init(self, shape):
+        return np.full(shape=shape, fill_value=self._val)
 
 
 class XavierUniformInit(Initializer):
@@ -78,8 +81,7 @@ class XavierUniformInit(Initializer):
     def __init__(self, gain=1.0):
         self._gain = gain
 
-    def __call__(self, shape):
-        assert len(shape) >= 2
+    def init(self, shape):
         fan_in, fan_out = get_fans(shape)
         a = self._gain * np.sqrt(6.0 / (fan_in + fan_out))
         return np.random.uniform(low=-a, high=a, size=shape)
@@ -98,8 +100,7 @@ class XavierNormalInit(Initializer):
     def __init__(self, gain=1.0):
         self._gain = gain
 
-    def __call__(self, shape):
-        assert len(shape) >= 2
+    def init(self, shape):
         fan_in, fan_out = get_fans(shape)
         std = self._gain * np.sqrt(2.0 / (fan_in + fan_out))
         return np.random.normal(loc=0.0, scale=std, size=shape)
@@ -118,7 +119,7 @@ class HeUniformInit(Initializer):
     def __init__(self, gain=1.0):
         self._gain = gain
 
-    def __call__(self, shape):
+    def init(self, shape):
         fan_in, _ = get_fans(shape)
         a = self._gain * np.sqrt(6.0 / fan_in)
         return np.random.uniform(low=-a, high=a, size=shape)
@@ -137,7 +138,7 @@ class HeNormalInit(Initializer):
     def __init__(self, gain=1.0):
         self._gain = gain
 
-    def __call__(self, shape):
+    def init(self, shape):
         fan_in, _ = get_fans(shape)
         std = self._gain * np.sqrt(2.0 / fan_in)
         return np.random.normal(loc=0.0, scale=std, size=shape)
