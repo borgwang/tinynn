@@ -14,7 +14,7 @@ class Layer(object):
 
     def __init__(self, name):
         self.params, self.grads = {}, {}
-        self.shape = None
+
         self.name = name
         self.is_training = True
 
@@ -34,23 +34,26 @@ class Layer(object):
 class Dense(Layer):
 
     def __init__(self,
-                 num_in,
                  num_out,
                  w_init=XavierUniformInit(),
                  b_init=ZerosInit()):
         super().__init__("Linear")
-        self.w_shape = (num_in, num_out)
-        self.b_shape = (1, num_out)
-        self.w_init = w_init
-        self.b_init = b_init
-        self.shape = [self.w_shape, self.b_shape]
-
+        self.initializers = {"w": w_init, "b": b_init}
+        self.shapes = {"w": [None, num_out], "b": [1, num_out]}
         self.params = {"w": None, "b": None}
+
         self.is_init = False
 
         self.inputs = None
 
     def forward(self, inputs):
+        # lazy initialize
+        if not self.is_init:
+            self.shapes["w"][0] = inputs.shape[1]
+            for i in ("w", "b"):
+                self.params[i] = self.initializers[i](shape=self.shapes[i])
+            self.is_init = True
+
         self.inputs = inputs
         return inputs @ self.params["w"] + self.params["b"]
 
@@ -60,9 +63,7 @@ class Dense(Layer):
         return grad @ self.params["w"].T
 
     def initialize(self):
-        self.params["w"] = self.w_init(self.w_shape)
-        self.params["b"] = self.b_init(self.b_shape)
-        self.is_init = True
+        pass
 
 
 class Conv2D(Layer):
