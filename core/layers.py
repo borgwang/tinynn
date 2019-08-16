@@ -92,8 +92,7 @@ class Conv2D(Layer):
         self.padding_mode = padding
         self.kernel = kernel
         self.stride = stride
-        self.w_init = w_init
-        self.b_init = b_init
+        self.initializers = {"w": w_init, "b": b_init}
 
         self.is_init = False
 
@@ -120,7 +119,7 @@ class Conv2D(Layer):
         for i, col in enumerate(range(0, pad_h - k_h + 1, s_h)):
             for j, row in enumerate(range(0, pad_w - k_w + 1, s_w)):
                 patch = padded[:, col:col+k_h, row:row+k_w, :]
-                patches_list.append(patch.reshape((in_n, -1)))
+                patches_list.append(patch)
         # shape of X_matrix [in_n, out_h, out_w, in_h * in_w * in_c]
         X_matrix = np.asarray(patches_list).reshape(
             (out_h, out_w, in_n, col_len)).transpose([2, 0, 1, 3])
@@ -134,7 +133,6 @@ class Conv2D(Layer):
                       "pad": pad, "pad_img_size": (pad_h, pad_w, in_c),
                       "out_img_size": (out_h, out_w, out_c),
                       "X_matrix": X_matrix, "W_matrix": W_matrix}
-
         # add bias
         outputs += self.params["b"]
         return outputs
@@ -153,8 +151,8 @@ class Conv2D(Layer):
                grad.reshape((-1, out_c)))
         self.grads["w"] = d_w.reshape(self.params["w"].shape)
         self.grads["b"] = np.sum(grad, axis=(0, 1, 2))
-        d_X_matrix = grad @ self.cache["W_matrix"].T
 
+        d_X_matrix = grad @ self.cache["W_matrix"].T
         d_in = np.zeros(shape=(in_n, pad_h, pad_w, in_c))
         for i, col in enumerate(range(0, pad_h - k_h + 1, s_h)):
             for j, row in enumerate(range(0, pad_w - k_w + 1, s_w)):
@@ -166,8 +164,8 @@ class Conv2D(Layer):
         return d_in
 
     def initialize(self):
-        self.params["w"] = self.w_init(shape=self.kernel)
-        self.params["b"] = self.b_init(shape=self.kernel[-1])
+        self.params["w"] = self.initializers["w"](self.kernel)
+        self.params["b"] = self.initializers["b"](self.kernel[-1])
         self.is_init = True
 
     @staticmethod
@@ -229,14 +227,13 @@ class MaxPooling2D(Layer):
         patches_list, max_pos_list = list(), list()
         for col in range(0, pad_h, s_h):
             for row in range(0, pad_w, s_w):
-                pool = padded[:, col:col+pool_h, row:row+pool_w, :]
-                max_pos = np.argmax(pool.reshape((in_n, -1, in_c)), axis=1)
-                max_pos_list.append(max_pos[:, np.newaxis, :])
-                patch = np.max(pool, axis=(1, 2))[:, np.newaxis, :]
-                patches_list.append(patch)
-        outputs = np.concatenate(patches_list, axis=1).reshape(
+                pool = padded[:, col:col + pool_h, row:row + pool_w, :]
+                pool = pool.reshape((in_n, -1, in_c))
+                max_pos_list.append(np.argmax(pool, axis=1))
+                patches_list.append(np.max(pool, axis=1))
+        outputs = np.array(patches_list).transpose((1, 0, 2)).reshape(
             (in_n, out_h, out_w, in_c))
-        max_pos = np.concatenate(max_pos_list, axis=1).reshape(
+        max_pos = np.array(max_pos_list).transpose((1, 0, 2)).reshape(
             (in_n, out_h, out_w, in_c))
 
         self.cache = {"in_n": in_n, "in_img_size": (in_h, in_w, in_c),
@@ -317,9 +314,10 @@ class Dropout(Layer):
             multiplier = np.random.binomial(
                 1, self._keep_prob, size=inputs.shape)
             self._multiplier = multiplier / self._keep_prob
-            return inputs * self._multiplier
+            outputs = inputs * self._multiplier
         else:
-            return inputs
+            outputs = inputs
+        return outputs
 
     def backward(self, grad):
         assert self.is_training is True
