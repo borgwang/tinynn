@@ -72,20 +72,21 @@ class Adam(BaseOptimizer):
     def _compute_step(self, grad):
         self._t += 1
 
-        lr_t = self.lr * (1 - self._b2 ** self._t) ** 0.5 / \
-            (1 - self._b1 ** self._t)
-
         self._m = self._b1 * self._m + (1 - self._b1) * grad
         self._v = self._b2 * self._v + (1 - self._b2) * (grad ** 2)
 
-        step = -lr_t * self._m / ((self._v ** 0.5) + self._eps)
+        # bias correction
+        _m = self._m / (1 - self._b1 ** self._t)
+        _v = self._v / (1 - self._b2 ** self._t)
+
+        step = -self.lr * _m / (_v ** 0.5 + self._eps)
 
         return step
 
 
 class RMSProp(BaseOptimizer):
     """
-    RMSProp maintain a moving (discouted) average of the square of gradients.
+    RMSProp maintain a moving (discounted) average of the square of gradients.
     Then divide gradients by the root of this average.
 
     mean_square = decay * mean_square{t-1} + (1-decay) * grad_t**2
