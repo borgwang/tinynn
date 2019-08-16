@@ -21,16 +21,11 @@ from core.layers import Dense
 from core.layers import Conv2D
 from core.layers import Flatten
 from core.layers import ReLU
-from core.layers import Dropout
 from core.losses import CrossEntropyLoss
 from core.model import Model
 from core.nn import Net
-from core.optimizer import SGD
 from core.optimizer import Adam
-from core.optimizer import Momentum
-from core.optimizer import RMSProp
 from utils.data_iterator import BatchIterator
-from utils.seeder import random_seed
 
 
 def get_one_hot(targets, nb_classes):

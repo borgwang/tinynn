@@ -39,8 +39,6 @@ class Dense(Layer):
                  w_init=XavierNormalInit(),
                  b_init=ZerosInit()):
         super().__init__("Linear")
-        # self.params["w"] = w_init((num_in, num_out))
-        # self.params["b"] = b_init((1, num_out))
         self.w_shape = (num_in, num_out)
         self.b_shape = (1, num_out)
         self.w_init = w_init
@@ -53,8 +51,6 @@ class Dense(Layer):
         self.inputs = None
 
     def forward(self, inputs):
-        if not self.is_init:
-            raise ValueError("Parameters uninitialized error!")
         self.inputs = inputs
         return inputs @ self.params["w"] + self.params["b"]
 
@@ -78,7 +74,7 @@ class Conv2D(Layer):
                  w_init=XavierNormalInit(),
                  b_init=ZerosInit()):
         """
-        Implement 2D convolutional layer
+        Implement 2D convolution layer
         :param kernel: A list/tuple of int that has length 4 (height, width, in_channels, out_channels)
         :param stride: A list/tuple of int that has length 2 (height, width)
         :param padding: String ["SAME", "VALID"]
@@ -101,7 +97,7 @@ class Conv2D(Layer):
         self.is_init = False
 
         self.inputs = None
-        self.cache = dict()  # cache
+        self.cache = None  # cache
 
     def forward(self, inputs):
         k_h, k_w = self.kernel[:2]  # kernel size
@@ -218,7 +214,7 @@ class MaxPooling2D(Layer):
         self.stride = stride
         self.padding_mode = padding
 
-        self.cache = dict()
+        self.cache = None
 
     def forward(self, inputs):
         in_n, in_h, in_w, in_c = inputs.shape
@@ -299,12 +295,10 @@ class Flatten(Layer):
 
     def forward(self, inputs):
         self.input_shape = inputs.shape
-        outputs = inputs.ravel().reshape(inputs.shape[0], -1)
-        return outputs
+        return inputs.ravel().reshape(inputs.shape[0], -1)
 
     def backward(self, grad):
-        grad = grad.reshape(self.input_shape)
-        return grad
+        return grad.reshape(self.input_shape)
 
     def initialize(self):
         pass
@@ -331,7 +325,7 @@ class Dropout(Layer):
         return grad * self._multiplier
 
     def initialize(self):
-        return
+        pass
 
 
 class Activation(Layer):
@@ -408,5 +402,3 @@ class LeakyReLU(Activation):
     def derivative_func(self, x):
         x[x < 0.0] = self._slope
         return x
-
-
