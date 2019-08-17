@@ -14,10 +14,6 @@ class BaseEvaluator(object):
         raise NotImplementedError("Must specify evaluator.")
 
 
-# ----------
-# Classification evaluators
-# ----------
-
 class AccEvaluator(BaseEvaluator):
 
     @classmethod
@@ -57,10 +53,6 @@ class ROCEvaluator(BaseEvaluator):
     def evaluate(cls, predictions, targets):
         pass
 
-
-# ----------
-# Regression evaluators
-# ----------
 
 class EVEvaluator(BaseEvaluator):
     """
@@ -121,7 +113,6 @@ class MAEEvaluator(BaseEvaluator):
 
 class R2Evaluator(BaseEvaluator):
     """ R-square Evaluator"""
-
     @classmethod
     def evaluate(cls, predictions, targets):
         pass
