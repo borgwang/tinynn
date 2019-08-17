@@ -46,10 +46,7 @@ class Dense(Layer):
     def forward(self, inputs):
         # lazy initialize
         if not self.is_init:
-            self.shapes["w"][0] = inputs.shape[1]
-            for i in ("w", "b"):
-                self.params[i] = self.initializers[i](shape=self.shapes[i])
-            self.is_init = True
+            self._init_parameters(inputs.shape[1])
 
         self.inputs = inputs
         return inputs @ self.params["w"] + self.params["b"]
@@ -58,6 +55,12 @@ class Dense(Layer):
         self.grads["w"] = self.inputs.T @ grad
         self.grads["b"] = np.sum(grad, axis=0)
         return grad @ self.params["w"].T
+
+    def _init_parameters(self, input_size):
+        self.shapes["w"][0] = input_size
+        self.params["w"] = self.initializers["w"](shape=self.shapes["w"])
+        self.params["b"] = self.initializers["b"](shape=self.shapes["b"])
+        self.is_init = True
 
 
 class Conv2D(Layer):
@@ -95,9 +98,7 @@ class Conv2D(Layer):
 
     def forward(self, inputs):
         if not self.is_init:
-            self.params["w"] = self.initializers["w"](self.kernel)
-            self.params["b"] = self.initializers["b"](self.kernel[-1])
-            self.is_init = True
+            self._init_parameters()
 
         k_h, k_w = self.kernel[:2]  # kernel size
         s_h, s_w = self.stride
@@ -183,6 +184,11 @@ class Conv2D(Layer):
         else:
             print("Invalid mode")
         return pad
+
+    def _init_parameters(self):
+        self.params["w"] = self.initializers["w"](self.kernel)
+        self.params["b"] = self.initializers["b"](self.kernel[-1])
+        self.is_init = True
 
 
 class MaxPooling2D(Layer):
