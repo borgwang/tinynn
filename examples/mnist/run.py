@@ -97,7 +97,6 @@ def main(args):
         raise ValueError("Invalid argument model_type! Must be 'cnn' or 'dense'")
 
     model = Model(net=net, loss=CrossEntropyLoss(), optimizer=Adam(lr=args.lr))
-    model.initialize()
 
     iterator = BatchIterator(batch_size=args.batch_size)
     evaluator = AccEvaluator()

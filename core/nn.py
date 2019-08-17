@@ -23,10 +23,6 @@ class Net(object):
             all_grads.append(layer.grads)
         return all_grads[::-1]
 
-    def initialize(self):
-        for layer in self.layers:
-            layer.initialize()
-
     def get_params_and_grads(self):
         for layer in self.layers:
             yield layer.params, layer.grads

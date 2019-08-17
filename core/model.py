@@ -50,9 +50,6 @@ class Model(object):
         self.net = net
         print("Restored model from %s." % path)
 
-    def initialize(self):
-        self.net.initialize()
-
     def get_phase(self):
         return self._phase
 
