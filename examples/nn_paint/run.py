@@ -44,15 +44,15 @@ def main(args):
     train_x, train_y, img_shape = prepare_dataset(data_path)
 
     net = Net([
-        Dense(2, 30),
+        Dense(30),
         ReLU(),
-        Dense(30, 60),
+        Dense(60),
         ReLU(),
-        Dense(60, 60),
+        Dense(60),
         ReLU(),
-        Dense(60, 30),
+        Dense(30),
         ReLU(),
-        Dense(30, 3),
+        Dense(3),
         Sigmoid()
     ])
 
