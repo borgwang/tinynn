@@ -1,9 +1,8 @@
 # Author: borgwang <borgwang@126.com>
-# Date: 2018-05-05
 #
 # Filename: BaseOptimizer.py
 # Description:
-#   Implement multiple optimization algorithms and learning rate scheduler.
+#   Implement multiple optimization algorithms and learning rate schedulers.
 
 
 import numpy as np

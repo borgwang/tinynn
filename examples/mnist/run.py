@@ -1,8 +1,11 @@
 # Author: borgwang <borgwang@126.com>
-# Date: 2018-05-08
 #
 # Filename: run.py
-# Description: Example MNIST code for tinynn.
+# Description:
+#   Tinynn usage demonstration on MNIST (a classic multi-label classification
+# task). A fully-connected network and a convolutional neural network were
+# implemented.
+
 
 import runtime_path  # isort:skip
 

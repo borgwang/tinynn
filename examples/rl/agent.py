@@ -1,5 +1,4 @@
 # Author: borgwang <borgwang@126.com>
-# Date: 2018-05-22
 #
 # Filename: agent.py
 # Description: DQN agent class

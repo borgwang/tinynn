@@ -1,8 +1,7 @@
 # Author: borgwang <borgwang@126.com>
-# Date: 2018-05-05
 #
 # Filename: losses.py
-# Description: Implementation of loss functions in neural network.
+# Description: Implementation of common loss functions in neural network.
 
 
 import numpy as np

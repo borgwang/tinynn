@@ -1,5 +1,4 @@
 # Author: borgwang <borgwang@126.com>
-# Date: 2018-05-29
 #
 # Filename: evaluator.py
 # Description: model evaluating class

@@ -1,8 +1,9 @@
 # Author: borgwang <borgwang@126.com>
-# Date: 2018-05-05
 #
 # Filename: layers.py
-# Description: Network layers and Activation layers...
+# Description:
+#   Various network layers including dense layer, convolution layer,
+# pooling layers and common activation layers
 
 import numpy as np
 
@@ -13,9 +14,9 @@ from core.initializer import ZerosInit
 class Layer(object):
 
     def __init__(self, name):
-        self.params, self.grads = {}, {}
-
         self.name = name
+
+        self.params, self.grads = {}, {}
         self.is_training = True
 
     def forward(self, inputs):
@@ -191,7 +192,7 @@ class Conv2D(Layer):
         self.is_init = True
 
 
-class MaxPooling2D(Layer):
+class MaxPool2D(Layer):
 
     def __init__(self,
                  pool_size,

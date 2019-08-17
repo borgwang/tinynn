@@ -1,8 +1,7 @@
 # Author: borgwang <borgwang@126.com>
-# Date: 2018-05-23
 #
 # Filename: initializer.py
-# Description: Weight initializer class
+# Description: Network parameter initializer.
 
 import numpy as np
 import scipy.stats as stats
