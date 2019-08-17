@@ -36,9 +36,9 @@ class DQN(object):
 
     def build_net(self):
         q_net = Net([
-            Dense(self.state_dim, 100),
+            Dense(100),
             ReLU(),
-            Dense(100, self.action_dim)
+            Dense(self.action_dim)
         ])
         return q_net
 

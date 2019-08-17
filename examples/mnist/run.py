@@ -79,19 +79,19 @@ def main(args):
             Conv2D(kernel=[5, 5, 16, 32], stride=[2, 2], padding="SAME"),
             ReLU(),
             Flatten(),
-            Dense(512, 10)
+            Dense(10)
         ])
     elif args.model_type == "dense":
         net = Net([
-            Dense(784, 200),
+            Dense(200),
             ReLU(),
-            Dense(200, 100),
+            Dense(100),
             ReLU(),
-            Dense(100, 70),
+            Dense(70),
             ReLU(),
-            Dense(70, 30),
+            Dense(30),
             ReLU(),
-            Dense(30, 10)
+            Dense(10)
         ])
     else:
         raise ValueError("Invalid argument model_type! Must be 'cnn' or 'dense'")
