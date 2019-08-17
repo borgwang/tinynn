@@ -90,7 +90,6 @@ ENV/
 
 # Costomize
 core/__pycache__/
-examples/data/
 examples/mnist/data/*
 examples/nn_paint/data/*
-cython_module/
+examples/mnist/compare_tf.py
