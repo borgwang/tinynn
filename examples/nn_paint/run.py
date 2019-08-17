@@ -57,7 +57,6 @@ def main(args):
     ])
 
     model = Model(net=net, loss=MSELoss(), optimizer=Adam())
-    model.initialize()
     mse_evaluator = MSEEvaluator()
     iterator = BatchIterator(batch_size=args.batch_size)
     for epoch in range(args.num_ep):

@@ -12,7 +12,7 @@ import numpy as np
 
 class Timer(object):
 
-    def __init__(self, task_name):
+    def __init__(self, task_name="UntitledTask"):
         self.task_name = task_name
         self._duration_list = []
         self.now = None

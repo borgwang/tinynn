@@ -24,9 +24,6 @@ class Layer(object):
     def backward(self, grad):
         raise NotImplementedError
 
-    def initialize(self):
-        raise NotImplementedError
-
     def set_phase(self, phase):
         self.is_training = True if phase == "TRAIN" else False
 
@@ -61,9 +58,6 @@ class Dense(Layer):
         self.grads["w"] = self.inputs.T @ grad
         self.grads["b"] = np.sum(grad, axis=0)
         return grad @ self.params["w"].T
-
-    def initialize(self):
-        pass
 
 
 class Conv2D(Layer):
@@ -100,6 +94,11 @@ class Conv2D(Layer):
         self.cache = None  # cache
 
     def forward(self, inputs):
+        if not self.is_init:
+            self.params["w"] = self.initializers["w"](self.kernel)
+            self.params["b"] = self.initializers["b"](self.kernel[-1])
+            self.is_init = True
+
         k_h, k_w = self.kernel[:2]  # kernel size
         s_h, s_w = self.stride
 
@@ -162,11 +161,6 @@ class Conv2D(Layer):
         # cut off padding
         d_in = d_in[:, pad[0]:pad_h-pad[1], pad[2]:pad_w-pad[3], :]
         return d_in
-
-    def initialize(self):
-        self.params["w"] = self.initializers["w"](self.kernel)
-        self.params["b"] = self.initializers["b"](self.kernel[-1])
-        self.is_init = True
 
     @staticmethod
     def _get_padding(ks, mode):
@@ -260,9 +254,6 @@ class MaxPooling2D(Layer):
                 d_in[:, col:col + pool_h, row:row + pool_w, :] = region
         return d_in
 
-    def initialize(self):
-        pass
-
     def _get_padding(self, input_size, pool_size, stride, mode):
         h_pad = self._get_padding_1d(
             input_size[0], pool_size[0], stride[0], mode)
@@ -298,9 +289,6 @@ class Flatten(Layer):
     def backward(self, grad):
         return grad.reshape(self.input_shape)
 
-    def initialize(self):
-        pass
-
 
 class Dropout(Layer):
 
@@ -323,9 +311,6 @@ class Dropout(Layer):
         assert self.is_training is True
         return grad * self._multiplier
 
-    def initialize(self):
-        pass
-
 
 class Activation(Layer):
 
@@ -339,9 +324,6 @@ class Activation(Layer):
 
     def backward(self, grad):
         return self.derivative_func(self.inputs) * grad
-
-    def initialize(self):
-        return
 
     def func(self, x):
         raise NotImplementedError
