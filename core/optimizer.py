@@ -7,10 +7,6 @@
 
 import numpy as np
 
-# ----------
-# Optimizer
-# ----------
-
 
 class BaseOptimizer(object):
 
@@ -130,9 +126,6 @@ class Momentum(BaseOptimizer):
         return step
 
 
-# ----------
-# Learning Rate Scheduler
-# ----------
 
 class BaseScheduler(object):
     """

@@ -16,7 +16,7 @@ class Layer(object):
     def __init__(self, name):
         self.name = name
 
-        self.params, self.grads = {}, {}
+        self.params, self.grads = None, None
         self.is_training = True
 
     def forward(self, inputs):
