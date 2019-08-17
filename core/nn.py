@@ -1,5 +1,4 @@
 # Author: borgwang <borgwang@126.com>
-# Date: 2018-05-05
 #
 # Filename: nn.py
 # Description: Feed-forward Neural Network class.

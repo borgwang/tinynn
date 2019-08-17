@@ -1,5 +1,4 @@
 # Author: borgwang <borgwang@126.com>
-# Date: 2018-05-20
 #
 # Filename: run.py
 # Description: Use a neural network to mimic images.
