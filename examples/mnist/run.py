@@ -24,7 +24,7 @@ from core.layers import Dense
 from core.layers import Conv2D
 from core.layers import Flatten
 from core.layers import ReLU
-from core.losses import CrossEntropyLoss
+from core.losses import SoftmaxCrossEntropyLoss
 from core.model import Model
 from core.nn import Net
 from core.optimizer import Adam
@@ -99,7 +99,7 @@ def main(args):
     else:
         raise ValueError("Invalid argument model_type! Must be 'cnn' or 'dense'")
 
-    model = Model(net=net, loss=CrossEntropyLoss(), optimizer=Adam(lr=args.lr))
+    model = Model(net=net, loss=SoftmaxCrossEntropyLoss(), optimizer=Adam(lr=args.lr))
 
     iterator = BatchIterator(batch_size=args.batch_size)
     evaluator = AccEvaluator()
