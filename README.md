@@ -30,6 +30,14 @@ python examples/nn_paint/run.py
 python examples/rl/run.py 
 ```
 
+#### Features
+
+- layers: Dense, Convolution2D, MaxPool2D, Dropout
+- activation: ReLU, LeakyReLU, Sigmoid, Tanh
+- losses: SoftmaxCrossEntropy, MAE, MSE, Huber
+- optimizer: SGD, Adam, Momentum, RMSProp
+
+
 #### License
 
 MIT
