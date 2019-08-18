@@ -63,7 +63,7 @@ class HuberLoss(BaseLoss):
         return (mae_grad * mae_mask + mse_grad * mse_mask) / m
 
 
-class CrossEntropyLoss(BaseLoss):
+class SoftmaxCrossEntropyLoss(BaseLoss):
     """
     L = weight[class] * (-log(exp(x[class]) / sum(exp(x))))
 
