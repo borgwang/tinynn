@@ -33,14 +33,17 @@ class Dense(Layer):
 
     def __init__(self,
                  num_out,
+                 num_in=None,
                  w_init=XavierUniformInit(),
                  b_init=ZerosInit()):
         super().__init__("Linear")
         self.initializers = {"w": w_init, "b": b_init}
-        self.shapes = {"w": [None, num_out], "b": [1, num_out]}
+        self.shapes = {"w": [num_in, num_out], "b": [1, num_out]}
         self.params = {"w": None, "b": None}
 
         self.is_init = False
+        if num_in is not None:
+            self._init_parameters(num_in)
 
         self.inputs = None
 
