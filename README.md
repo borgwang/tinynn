@@ -15,7 +15,7 @@ tinynn 是一个基于 python 和 Numpy 实现的轻量级、易于扩展的深�
 ```bash
 git clone https://github.com/borgwang/tinynn.git
 cd tinynn
-pip install -r requirment.txt
+pip install -r requirements.txt
 ```
 
 #### Examples
@@ -29,6 +29,7 @@ python examples/nn_paint/run.py
  # reinforcement learning demo (gym environment required)
 python examples/rl/run.py 
 ```
+
 
 #### Features
 
