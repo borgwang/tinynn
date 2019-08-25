@@ -126,7 +126,6 @@ class Momentum(BaseOptimizer):
         return step
 
 
-
 class BaseScheduler(object):
     """
     BaseScheduler model receive a optimizer and Adjust the lr by calling
