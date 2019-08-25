@@ -18,21 +18,21 @@ def test_task_timer():
 
 def test_timer_duration(test_task_timer):
     test_task_timer.start()
-    time.sleep(2)
+    time.sleep(0.2)
     test_task_timer.pause()
-    time.sleep(1)
+    time.sleep(0.1)
     test_task_timer.start()
-    time.sleep(2)
+    time.sleep(0.2)
     test_task_timer.stop()
-    assert 2 * 2 <= test_task_timer.duration <= 2 * 2 + 0.1
+    assert 0.4 <= test_task_timer.duration <= 0.4 + 1e-1
 
 
 def test_timer_count(test_task_timer):
     test_task_timer.start()
-    time.sleep(2)
+    time.sleep(0.2)
     test_task_timer.pause()
-    time.sleep(1)
+    time.sleep(0.1)
     test_task_timer.start()
-    time.sleep(2)
+    time.sleep(0.2)
     test_task_timer.stop()
     assert test_task_timer.count == 2
