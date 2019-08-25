@@ -51,12 +51,6 @@ class UniformInit(Initializer):
         return np.random.uniform(low=self._a, high=self._b, size=shape)
 
 
-class ZerosInit(Initializer):
-
-    def init(self, shape):
-        return np.zeros(shape=shape)
-
-
 class ConstantInit(Initializer):
 
     def __init__(self, val):
@@ -64,6 +58,12 @@ class ConstantInit(Initializer):
 
     def init(self, shape):
         return np.full(shape=shape, fill_value=self._val)
+
+
+class ZerosInit(ConstantInit):
+
+    def __init__(self):
+        super(ZerosInit, self).__init__(0.0)
 
 
 class XavierUniformInit(Initializer):
