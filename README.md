@@ -4,13 +4,14 @@
 
 ### Basic
 
-tinynn 是一个基于 python 和 Numpy 实现的轻量级、易于扩展的深度学习框架。相关介绍看[这篇文章](https://borgwang.github.io/dl/2019/08/18/tinynn.html)
-
-这个代码库有主要有两个分支，`mini` 分支实现了最基本最核心的框架组件，`master` 分支在 `mini` 分支的基础上进行扩展，支持更多的功能
+tinynn is a lightweight deep learning framework build with pure Python3 and NumPy.
 
 <p align="center">
   <img src="http://ww4.sinaimg.cn/large/006tNc79gy1g63tkgdh1pj30to0fwjsk.jpg" width="80%" alt="tinynn-architecture" referrerPolicy="no-referrer"/>
 </p>
+
+There are two branches (`master` and `mini`) in thie repo. The `mini` branch implement the minimal components to run a neural network. The `master` branch maintain the latest stable code with more components and features. See [Components](#components) down below.
+
 
 ### Getting Started
 
@@ -35,7 +36,7 @@ python examples/rl/run.py
 ```
 
 
-#### Features
+#### Components
 
 - layers: Dense, Convolution2D, MaxPool2D, Dropout
 - activation: ReLU, LeakyReLU, Sigmoid, Tanh
