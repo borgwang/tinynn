@@ -1,0 +1,121 @@
+# Author: borgwang <borgwang@126.com>
+#
+# Filename: run.py
+# Description:
+#   Tinynn usage demonstration on a bianary classification task.
+
+import runtime_path  # isort:skip
+
+import argparse
+import os
+import time
+from urllib.error import URLError
+from urllib.request import urlretrieve
+
+import numpy as np
+
+from core.evaluator import AccEvaluator
+from core.layers import Dense
+from core.layers import ReLU
+from core.losses import SigmoidCrossEntropyLoss
+from core.model import Model
+from core.nn import Net
+from core.optimizer import Adam
+from utils.data_iterator import BatchIterator
+
+
+def get_one_hot(targets, nb_classes):
+    return np.eye(nb_classes)[np.array(targets).reshape(-1)]
+
+
+def prepare_dataset(data_dir):
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+
+    url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00229/Skin_NonSkin.txt"
+    path = os.path.join(data_dir, url.split("/")[-1])
+
+    try:
+        if os.path.exists(path):
+            print("{} already exists.".format(path))
+        else:
+            print("Downloading {}.".format(url))
+            try:
+                urlretrieve(url, path)
+            except URLError:
+                raise RuntimeError("Error downloading resource!")
+            finally:
+                print()
+    except KeyboardInterrupt:
+        print("Interrupted")
+
+    data = list()
+    for line in open(path, "r").readlines():
+        data.append(line.strip("\n").split("\t"))
+    data = np.asarray(data).astype(float)
+
+    n_samples = len(data)
+    random_idx = np.arange(0, n_samples)
+    np.random.shuffle(random_idx)
+    data = data[random_idx]
+    x, y = data[:, :3], data[:, 3:]
+    y = (y - 1).astype(int)
+    train_split = int(n_samples * 0.7)
+    valid_split = int(n_samples * 0.85)
+    train_set = [x[:train_split, :], y[:train_split]]
+    valid_set = [x[train_split:valid_split, :], y[train_split:valid_split]]
+    test_set = [x[valid_split:, :], y[valid_split:]]
+    return [train_set, valid_set, test_set]
+
+
+def main(args):
+    train_set, valid_set, test_set = prepare_dataset(args.data_dir)
+    train_x, train_y = train_set
+    test_x, test_y = test_set
+    # train_y = get_one_hot(train_y, 2)
+
+    net = Net([
+        Dense(100),
+        ReLU(),
+        Dense(30),
+        ReLU(),
+        Dense(1)
+    ])
+
+    model = Model(net=net, loss=SigmoidCrossEntropyLoss(), optimizer=Adam(lr=args.lr))
+
+    iterator = BatchIterator(batch_size=args.batch_size)
+    evaluator = AccEvaluator()
+    loss_list = list()
+    for epoch in range(args.num_ep):
+        t_start = time.time()
+        for batch in iterator(train_x, train_y):
+            pred = model.forward(batch.inputs)
+            loss, grads = model.backward(pred, batch.targets)
+            model.apply_grad(grads)
+            loss_list.append(loss)
+        print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
+        for timer in model.timers.values():
+            timer.report()
+        # evaluate
+        model.set_phase("TEST")
+        test_y_idx = np.asarray(test_y).reshape(-1)
+        test_pred = model.forward(test_x)
+        test_pred[test_pred > 0] = 1
+        test_pred[test_pred <= 0] = 0
+        test_pred_idx = test_pred.reshape(-1)
+        res = evaluator.evaluate(test_pred_idx, test_y_idx)
+        print(res)
+        model.set_phase("TRAIN")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--num_ep", default=50, type=int)
+    parser.add_argument("--data_dir", default="./examples/binary_classification/data",
+                        type=str, help="dataset directory")
+    parser.add_argument("--lr", default=1e-3, type=float)
+    parser.add_argument("--batch_size", default=128, type=int)
+    parser.add_argument("--seed", default=0, type=int)
+    args = parser.parse_args()
+    main(args)
