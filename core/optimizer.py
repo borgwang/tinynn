@@ -67,8 +67,10 @@ class Adam(BaseOptimizer):
     def _compute_step(self, grad):
         self._t += 1
 
-        self._m = self._b1 * self._m + (1 - self._b1) * grad
-        self._v = self._b2 * self._v + (1 - self._b2) * (grad ** 2)
+        # self._m = self._b1 * self._m + (1 - self._b1) * grad
+        # self._v = self._b2 * self._v + (1 - self._b2) * (grad ** 2)
+        self._m += (1.0 - self._b1) * (grad - self._m)
+        self._v += (1.0 - self._b2) * (grad ** 2 - self._v)
 
         # bias correction
         _m = self._m / (1 - self._b1 ** self._t)
