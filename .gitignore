@@ -92,4 +92,5 @@ ENV/
 core/__pycache__/
 examples/mnist/data/*
 examples/nn_paint/data/*
+examples/binary_classification/data/*
 examples/mnist/compare_tf.py
