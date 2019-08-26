@@ -119,19 +119,22 @@ class Conv2D(Layer):
 
         kernel = self.params["w"]
         col_len = np.prod(kernel.shape[:3])
-        patches_list = list()
+        col_patches = list()
         for i, col in enumerate(range(0, pad_h - k_h + 1, s_h)):
+            row_patches = list()
             for j, row in enumerate(range(0, pad_w - k_w + 1, s_w)):
                 patch = padded[:, col:col+k_h, row:row+k_w, :]
-                patches_list.append(patch)
+                row_patches.append(patch)
+            col_patches.append(row_patches)
         # shape of X_matrix [in_n, out_h, out_w, in_h * in_w * in_c]
-        X_matrix = np.asarray(patches_list).reshape(
-            (out_h, out_w, in_n, col_len)).transpose([2, 0, 1, 3])
+        X_matrix = np.asarray(col_patches).reshape(
+            (out_h, out_w, in_n, col_len)).transpose(
+            [2, 0, 1, 3]).reshape((-1, col_len))
 
         # shape of W_matrix [in_h * in_w * in_c, out_c]
         W_matrix = kernel.reshape((col_len, -1))
-        outputs = X_matrix @ W_matrix
-
+        # outputs = X_matrix @ W_matrix
+        outputs = (X_matrix @ W_matrix).reshape((in_n, out_h, out_w, out_c))
         self.cache = {"in_n": in_n, "in_img_size": (in_h, in_w, in_c),
                       "kernel_size": (k_h, k_w, in_c), "stride": (s_h, s_w),
                       "pad": pad, "pad_img_size": (pad_h, pad_w, in_c),
@@ -148,11 +151,9 @@ class Conv2D(Layer):
         s_h, s_w = self.cache["stride"]
         out_h, out_w, out_c = self.cache["out_img_size"]
         pad_h, pad_w, _ = self.cache["pad_img_size"]
-        col_len = k_h * k_w * in_c
         pad = self.cache["pad"]
 
-        d_w = (self.cache["X_matrix"].reshape((-1, col_len)).T @
-               grad.reshape((-1, out_c)))
+        d_w = self.cache["X_matrix"].T @ grad.reshape((-1, out_c))
         self.grads["w"] = d_w.reshape(self.params["w"].shape)
         self.grads["b"] = np.sum(grad, axis=(0, 1, 2))
 
