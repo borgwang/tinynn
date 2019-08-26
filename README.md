@@ -8,6 +8,14 @@ tinynn 是一个基于 python 和 Numpy 实现的轻量级、易于扩展的深�
 
 这个代码库有主要有两个分支，`mini` 分支实现了最基本最核心的框架组件，`master` 分支在 `mini` 分支的基础上进行扩展，支持更多的功能
 
+<!--START figure-->
+<div class="figure">
+  <a href="http://ww4.sinaimg.cn/large/006tNc79gy1g63tkgdh1pj30to0fwjsk.jpg" data-lightbox="tinynn-architecture">
+    <img src="http://ww4.sinaimg.cn/large/006tNc79gy1g63tkgdh1pj30to0fwjsk.jpg" width="100%" alt="tinynn-architecture" referrerPolicy="no-referrer"/>
+  </a>
+</div>
+<!--END figure-->
+
 ### Getting Started
 
 #### Install
@@ -27,7 +35,7 @@ python examples/mnist/run.py
 # a toy regression task
 python examples/nn_paint/run.py  
  # reinforcement learning demo (gym environment required)
-python examples/rl/run.py 
+python examples/rl/run.py
 ```
 
 
@@ -35,11 +43,10 @@ python examples/rl/run.py
 
 - layers: Dense, Convolution2D, MaxPool2D, Dropout
 - activation: ReLU, LeakyReLU, Sigmoid, Tanh
-- losses: SoftmaxCrossEntropy, MAE, MSE, Huber
+- losses: SoftmaxCrossEntropy, SigmoidCrossEntropy, MAE, MSE, Huber
 - optimizer: SGD, Adam, Momentum, RMSProp
 
 
 #### License
 
 MIT
-
