@@ -93,10 +93,6 @@ class SoftmaxCrossEntropyLoss(BaseLoss):
 class SparseSoftmaxCrossEntropyLoss(BaseLoss):
 
     def __init__(self, weight=None):
-        """
-        L = weight[class] * (-log(exp(x[class]) / sum(exp(x))))
-        :param weight: A 1D tensor [n_classes] assigning weight to each corresponding sample.
-        """
         weight = np.asarray(weight) if weight is not None else weight
         self._weight = weight
 
@@ -116,3 +112,23 @@ class SparseSoftmaxCrossEntropyLoss(BaseLoss):
         grad[range(m), actual] -= 1.0
         return grad / m
 
+
+class SigmoidCrossEntropyLoss(BaseLoss):
+    """
+    logits = a, label = y
+    L = -y * log(1 / (1 + exp(-a)) - (1-y) * log(exp(-a) / (1 + exp(-a))
+      = -y * a + log(1 + exp(a))
+    """
+    def __init__(self, weight=None):
+        weight = np.asarray(weight) if weight is not None else weight
+        self._weight = weight
+
+    def loss(self, logits, labels):
+        m = logits.shape[0]
+        cost = - labels * logits + np.log(1 + np.exp(logits))
+        return np.sum(cost) / m
+
+    def grad(self, logits, labels):
+        m = logits.shape[0]
+        grad = -labels + 1.0 / (1 + np.exp(-logits))
+        return grad / m
