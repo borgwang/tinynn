@@ -4,13 +4,13 @@
 
 ### Basic
 
-tinynn is a lightweight deep learning framework build with pure Python3 and NumPy.
+tinynn is a lightweight deep learning framework build with Python3 and NumPy.
 
 <p align="center">
   <img src="http://ww4.sinaimg.cn/large/006tNc79gy1g63tkgdh1pj30to0fwjsk.jpg" width="80%" alt="tinynn-architecture" referrerPolicy="no-referrer"/>
 </p>
 
-There are two branches (`master` and `mini`) in thie repo. The `mini` branch implement the minimal components to run a neural network. The `master` branch maintain the latest stable code with more components and features. See [Components](#components) down below.
+There are two branches (`master` and `mini`) in thie repo. The `mini` branch contains the minimal components to run a neural network. The `master` branch holds the latest stable code with more components and features. See [Components](#components) down below.
 
 
 ### Getting Started
