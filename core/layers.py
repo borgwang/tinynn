@@ -108,6 +108,7 @@ class Conv2D(Layer):
         s_h, s_w = self.stride
 
         pad = self._get_padding([k_h, k_w], self.padding_mode)
+
         pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
         padded = np.pad(inputs, pad_width=pad_width, mode="constant")
         pad_h, pad_w = padded.shape[1:3]
@@ -126,7 +127,7 @@ class Conv2D(Layer):
                 patch = padded[:, col:col+k_h, row:row+k_w, :]
                 row_patches.append(patch)
             col_patches.append(row_patches)
-        # shape of X_matrix [in_n, out_h, out_w, in_h * in_w * in_c]
+        # shape of X_matrix [in_n * out_h * out_w, in_h * in_w * in_c]
         X_matrix = np.asarray(col_patches).reshape(
             (out_h, out_w, in_n, col_len)).transpose(
             [2, 0, 1, 3]).reshape((-1, col_len))
