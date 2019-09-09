@@ -67,8 +67,6 @@ class Adam(BaseOptimizer):
     def _compute_step(self, grad):
         self._t += 1
 
-        # self._m = self._b1 * self._m + (1 - self._b1) * grad
-        # self._v = self._b2 * self._v + (1 - self._b2) * (grad ** 2)
         self._m += (1.0 - self._b1) * (grad - self._m)
         self._v += (1.0 - self._b2) * (grad ** 2 - self._v)
 
@@ -104,7 +102,7 @@ class RMSProp(BaseOptimizer):
         self._mom = 0
 
     def _compute_step(self, grad):
-        self._ms = self._decay * self._ms + (1 - self._decay) * np.square(grad)
+        self._ms += (1 - self._decay) * (grad ** 2 - self._ms)
         self._mom = self._momentum * self._mom + \
             self.lr * grad / np.sqrt(self._ms + self._eps)
 
