@@ -126,6 +126,44 @@ class Momentum(BaseOptimizer):
         return step
 
 
+class Adagrad(BaseOptimizer):
+    """
+    AdaGrad optimizer (http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf)
+    accumulation = - (learning_rate / sqrt(G + epsilon)) * gradient
+    where G is the element-wise sum of square gradient
+    """
+    def __init__(self, lr, weight_decay=0.0, epsilon=1e-8):
+        super().__init__(lr, weight_decay)
+        self._G = 0
+        self._eps = epsilon
+
+    def _compute_step(self, grad):
+        self._G += grad ** 2
+        adjust_lr = self.lr / (self._G + self._eps) ** 0.5
+        step = -adjust_lr * grad
+        return step
+
+
+class Adadelta(BaseOptimizer):
+    """
+    Adadelta algorithm (https://arxiv.org/abs/1212.5701)
+    """
+    def __init__(self, lr=1.0, weight_decay=0.0, decay=0.9, epsilon=1e-8):
+        super().__init__(lr, weight_decay)
+        self._eps = epsilon
+        self._decay = decay
+        self._Eg = 0  # running average of square gradient
+        self._delta = 0  # running average of delta
+
+    def _compute_step(self, grad):
+        self._Eg += (1 - self._decay) * (grad ** 2 - self._Eg)
+        std = (self._delta + self._eps) ** 0.5
+        delta = grad * (std / (self._Eg + self._eps) ** 0.5)
+        step = - self.lr * delta
+        self._delta += (1 - self._decay) * (delta ** 2 - self._delta)
+        return step
+
+
 class BaseScheduler(object):
     """
     BaseScheduler model receive a optimizer and Adjust the lr by calling
