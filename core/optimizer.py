@@ -53,12 +53,12 @@ class Adam(BaseOptimizer):
                  lr=0.001,
                  beta1=0.9,
                  beta2=0.999,
-                 eps=1e-8,
+                 epsilon=1e-8,
                  weight_decay=0.0):
         super().__init__(lr, weight_decay)
         self._b1 = beta1
         self._b2 = beta2
-        self._eps = eps
+        self._eps = epsilon
 
         self._t = 0
         self._m = 0
@@ -93,12 +93,12 @@ class RMSProp(BaseOptimizer):
                  lr=0.01,
                  decay=0.99,
                  momentum=0.0,
-                 eps=1e-8,
+                 epsilon=1e-8,
                  weight_decay=0.0):
         super().__init__(lr, weight_decay)
         self._decay = decay
         self._momentum = momentum
-        self._eps = eps
+        self._eps = epsilon
 
         self._ms = 0
         self._mom = 0
@@ -207,7 +207,7 @@ class ExponentialLR(BaseScheduler):
     def _compute_lr(self):
         if self._t <= self._decay_steps:
             return self._initial_lr * \
-                self._decay_rate ** (self._t  / self._decay_steps)
+                self._decay_rate ** (self._t / self._decay_steps)
         else:
             return self.curr_lr
 
