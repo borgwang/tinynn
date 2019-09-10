@@ -4,9 +4,11 @@ import os
 from urllib.error import URLError
 from urllib.request import urlretrieve
 
+
 def show_progress(blk_num, blk_sz, tot_sz):
     percentage = 100. * blk_num * blk_sz / tot_sz
     print('Progress: %.1f %%' % percentage, end='\r', flush=True)
+
 
 def download_url(url, file_path):
     # create directory if needed

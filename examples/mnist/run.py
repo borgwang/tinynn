@@ -13,23 +13,20 @@ import argparse
 import gzip
 import os
 import pickle
-import time
 import sys
+import time
 
 import numpy as np
 
 from core.evaluator import AccEvaluator
-from core.layers import Dense
-from core.layers import Conv2D
-from core.layers import Flatten
-from core.layers import ReLU
+from core.layers import Conv2D, Dense, Flatten, ReLU
 from core.losses import SoftmaxCrossEntropyLoss
 from core.model import Model
 from core.nn import Net
 from core.optimizer import Adam
-
 from utils.data_iterator import BatchIterator
 from utils.downloader import download_url
+
 
 def get_one_hot(targets, nb_classes):
     return np.eye(nb_classes)[np.array(targets).reshape(-1)]
