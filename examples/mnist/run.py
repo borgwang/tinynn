@@ -13,15 +13,14 @@ import argparse
 import gzip
 import os
 import pickle
+import sys
 import time
-from urllib.error import URLError
-from urllib.request import urlretrieve
 
 import numpy as np
 
 from core.evaluator import AccEvaluator
-from core.layers import Dense
 from core.layers import Conv2D
+from core.layers import Dense
 from core.layers import Flatten
 from core.layers import ReLU
 from core.losses import SoftmaxCrossEntropyLoss
@@ -29,39 +28,24 @@ from core.model import Model
 from core.nn import Net
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
+from utils.downloader import download_url
 
 
 def get_one_hot(targets, nb_classes):
     return np.eye(nb_classes)[np.array(targets).reshape(-1)]
 
-
 def prepare_dataset(data_dir):
-    if not os.path.exists(data_dir):
-        os.makedirs(data_dir)
-
     url = "http://deeplearning.net/data/mnist/mnist.pkl.gz"
-    path = os.path.join(data_dir, url.split("/")[-1])
-
-    # download
+    save_path = os.path.join(data_dir, url.split("/")[-1])
+    print("Preparing MNIST dataset ...")
     try:
-        if os.path.exists(path):
-            print("{} already exists.".format(path))
-        else:
-            print("Downloading {}.".format(url))
-            try:
-                urlretrieve(url, path)
-            except URLError:
-                raise RuntimeError("Error downloading resource!")
-            finally:
-                print()
-    except KeyboardInterrupt:
-        print("Interrupted")
-
-    # load
-    print("Loading MNIST dataset.")
-    with gzip.open(path, "rb") as f:
+        download_url(url, save_path)
+    except Exception as e:
+        print('Error downloading dataset: %s' % str(e))
+        sys.exit(1)
+    # load the dataset
+    with gzip.open(save_path, "rb") as f:
         return pickle.load(f, encoding="latin1")
-
 
 def main(args):
     train_set, valid_set, test_set = prepare_dataset(args.data_dir)
