@@ -19,7 +19,10 @@ import time
 import numpy as np
 
 from core.evaluator import AccEvaluator
-from core.layers import Conv2D, Dense, Flatten, ReLU
+from core.layers import Conv2D
+from core.layers import Dense
+from core.layers import Flatten
+from core.layers import ReLU
 from core.losses import SoftmaxCrossEntropyLoss
 from core.model import Model
 from core.nn import Net
