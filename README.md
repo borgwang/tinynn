@@ -47,7 +47,7 @@ python examples/rl/run.py
 
 Please follow the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) for Python coding style.
 
-In addition, please sort the module import order alphabetically in each file. To do this, one can use tools like [isort](https://github.com/timothycrosley/isort).
+In addition, please sort the module import order alphabetically in each file. To do this, one can use tools like [isort](https://github.com/timothycrosley/isort) (be sure to use `--force-single-line-imports` option to enforce the coding style).
 
 ### License
 
