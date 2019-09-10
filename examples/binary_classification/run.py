@@ -8,6 +8,7 @@ import runtime_path  # isort:skip
 
 import argparse
 import os
+import sys
 import time
 from urllib.error import URLError
 from urllib.request import urlretrieve
@@ -22,35 +23,24 @@ from core.model import Model
 from core.nn import Net
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
+from utils.downloader import download_url
 
 
 def get_one_hot(targets, nb_classes):
     return np.eye(nb_classes)[np.array(targets).reshape(-1)]
 
-
 def prepare_dataset(data_dir):
-    if not os.path.exists(data_dir):
-        os.makedirs(data_dir)
-
+    # download dataset
     url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00229/Skin_NonSkin.txt"
-    path = os.path.join(data_dir, url.split("/")[-1])
-
+    save_path =  os.path.join(data_dir, url.split("/")[-1])
     try:
-        if os.path.exists(path):
-            print("{} already exists.".format(path))
-        else:
-            print("Downloading {}.".format(url))
-            try:
-                urlretrieve(url, path)
-            except URLError:
-                raise RuntimeError("Error downloading resource!")
-            finally:
-                print()
-    except KeyboardInterrupt:
-        print("Interrupted")
-
+        download_url(url, save_path)
+    except Exception as e:
+        print('Error downloading dataset: %s' % str(e))
+        sys.exit(1)
+    # read the dataset
     data = list()
-    for line in open(path, "r").readlines():
+    for line in open(save_path, "r").readlines():
         data.append(line.strip("\n").split("\t"))
     data = np.asarray(data).astype(float)
 
