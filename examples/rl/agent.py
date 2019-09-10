@@ -1,7 +1,4 @@
-# Author: borgwang <borgwang@126.com>
-#
-# Filename: agent.py
-# Description: DQN agent class
+"""DQN agent class"""
 
 import numpy as np
 import random

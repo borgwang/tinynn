@@ -1,7 +1,4 @@
-# Author: borgwang <borgwang@126.com>
-#
-# Filename: run.py
-# Description: Use a neural network to mimic images.
+"""Use a neural network to mimic images."""
 
 import runtime_path  # isort:skip
 

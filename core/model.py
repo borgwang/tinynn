@@ -1,8 +1,4 @@
-# Author: borgwang <borgwang@126.com>
-#
-# Filename: model.py
-# Description: Model class manage the network, loss function and optimizer.
-
+"""Model class manage the network, loss function and optimizer."""
 
 import pickle
 

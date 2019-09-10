@@ -1,9 +1,4 @@
-# Author: borgwang <borgwang@126.com>
-#
-# Filename: layers.py
-# Description:
-#   Various network layers including dense layer, convolution layer,
-# pooling layers and common activation layers
+"""Network layers and activation layers."""
 
 import numpy as np
 

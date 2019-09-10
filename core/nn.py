@@ -1,7 +1,4 @@
-# Author: borgwang <borgwang@126.com>
-#
-# Filename: nn.py
-# Description: Feed-forward Neural Network class.
+"""Feed-forward Neural Network class."""
 
 
 class Net(object):

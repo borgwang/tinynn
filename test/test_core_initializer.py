@@ -1,8 +1,4 @@
-# Author: borgwang <borgwang@126.com>
-# Date: 2019-06-20
-#
-# Filename: test_core_initializer.py
-# Description: test unit for core/initializer.py
+"""test unit for core/initializer.py"""
 
 import runtime_path  # isort:skip
 

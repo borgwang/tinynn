@@ -1,11 +1,4 @@
-# Author: borgwang <borgwang@126.com>
-#
-# Filename: run.py
-# Description:
-#   Tinynn usage demonstration on MNIST (a classic multi-label classification
-# task). A fully-connected network and a convolutional neural network were
-# implemented.
-
+"""Example code for MNIST. A fully-connected network and a convolutional neural network were implemented."""
 
 import runtime_path  # isort:skip
 
@@ -34,6 +27,7 @@ from utils.downloader import download_url
 def get_one_hot(targets, nb_classes):
     return np.eye(nb_classes)[np.array(targets).reshape(-1)]
 
+
 def prepare_dataset(data_dir):
     url = "http://deeplearning.net/data/mnist/mnist.pkl.gz"
     save_path = os.path.join(data_dir, url.split("/")[-1])
@@ -46,6 +40,7 @@ def prepare_dataset(data_dir):
     # load the dataset
     with gzip.open(save_path, "rb") as f:
         return pickle.load(f, encoding="latin1")
+
 
 def main(args):
     train_set, valid_set, test_set = prepare_dataset(args.data_dir)
