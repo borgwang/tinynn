@@ -85,8 +85,6 @@ def main(args):
             model.apply_grad(grads)
             loss_list.append(loss)
         print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
-        for timer in model.timers.values():
-            timer.report()
         # evaluate
         model.set_phase("TEST")
         test_y_idx = np.asarray(test_y).reshape(-1)
