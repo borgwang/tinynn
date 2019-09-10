@@ -43,12 +43,12 @@ python examples/rl/run.py
 - losses: SoftmaxCrossEntropy, SigmoidCrossEntropy, MAE, MSE, Huber
 - optimizer: SGD, Adam, Momentum, RMSProp
 
-#### Contribute
+### Contribute
 
-Please follow the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) for Python code style.
+Please follow the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) for Python coding style.
 
 In addition, please sort the module import order alphabetically in each file. To do this, one can use tools like [isort](https://github.com/timothycrosley/isort).
 
-#### License
+### License
 
 MIT
