@@ -43,6 +43,9 @@ python examples/rl/run.py
 - losses: SoftmaxCrossEntropy, SigmoidCrossEntropy, MAE, MSE, Huber
 - optimizer: SGD, Adam, Momentum, RMSProp
 
+#### Contribute
+
+Please follow the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) for Python code style.
 
 #### License
 
