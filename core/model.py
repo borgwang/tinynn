@@ -28,9 +28,9 @@ class Model(object):
     def apply_grad(self, grads):
         params = self.net.get_parameters()
         steps = self.optimizer.compute_step(grads, params)
-        for grad, (param, _) in zip(steps, self.net.get_params_and_grads()):
+        for step, (param, _) in zip(steps, self.net.get_params_and_grads()):
             for k, v in param.items():
-                param[k] += grad[k]
+                param[k] += step[k]
 
     def save(self, path):
         with open(path, "wb") as f:
