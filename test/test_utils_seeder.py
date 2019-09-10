@@ -1,9 +1,4 @@
-# Author: borgwang <borgwang@126.com>
-# Date: 2019-06-20
-#
-# Filename: test_utils_seeder.py
-# Description: test unit for utils/seeder.py
-
+"""test unit for utils/seeder.py"""
 
 import runtime_path  # isort:skip
 

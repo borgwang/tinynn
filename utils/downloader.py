@@ -1,5 +1,5 @@
-# File description:
-# Simple utilities to download and save a file with progress bar.
+"""Simple utilities to download and save a file with progress bar."""
+
 import os
 from urllib.error import URLError
 from urllib.request import urlretrieve

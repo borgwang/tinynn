@@ -1,10 +1,7 @@
-# Author: borgwang <borgwang@126.com>
-# Date: 2019-06-20
-#
-# Filename: test_utils_timing.py
-# Description: test unit for utils/timer.py
+"""test unit for utils/timer.py"""
 
 import runtime_path  # isort:skip
+
 import time
 
 import pytest

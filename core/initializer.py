@@ -1,7 +1,4 @@
-# Author: borgwang <borgwang@126.com>
-#
-# Filename: initializer.py
-# Description: Network parameter initializer.
+"""Various of network parameter initializers."""
 
 import numpy as np
 import scipy.stats as stats

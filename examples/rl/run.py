@@ -1,7 +1,4 @@
-# Author: borgwang <borgwang@126.com>
-#
-# Filename: run.py
-# Description: DQN example code for demonstration
+"""Vanilla Deep Q Network (https://www.nature.com/articles/nature14236?wm=book_wap_0005) with tinynn."""
 
 import runtime_path  # isort:skip
 

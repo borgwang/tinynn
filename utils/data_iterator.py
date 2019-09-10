@@ -1,9 +1,4 @@
-# Author: borgwang <borgwang@126.com>
-# Date: 2018-05-23
-#
-# Filename: data_iterator.py
-# Description: Data Iterator class
-
+"""Data Iterator class."""
 
 from collections import namedtuple
 

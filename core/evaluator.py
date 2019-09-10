@@ -1,8 +1,4 @@
-# Author: borgwang <borgwang@126.com>
-#
-# Filename: evaluator.py
-# Description: model evaluating class
-
+"""Evaluator class."""
 
 import numpy as np
 

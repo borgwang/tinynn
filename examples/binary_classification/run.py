@@ -1,8 +1,4 @@
-# Author: borgwang <borgwang@126.com>
-#
-# Filename: run.py
-# Description:
-#   Tinynn usage demonstration on a bianary classification task.
+"""tinynn example on a binary classification task."""
 
 import runtime_path  # isort:skip
 

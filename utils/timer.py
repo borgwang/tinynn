@@ -1,9 +1,4 @@
-# Author: borgwang <borgwang@126.com>
-# Date: 2018-05-28
-#
-# Filename: timer.py
-# Description: timer
-
+"""A utility for timing."""
 
 import time
 

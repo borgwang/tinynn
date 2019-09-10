@@ -1,9 +1,4 @@
-# Author: borgwang <borgwang@126.com>
-# Date: 2018-05-28
-#
-# Filename: seeder.py
-# Description: random seed
-
+"""Numpy random seeder"""
 
 import numpy as np
 
