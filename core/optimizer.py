@@ -10,24 +10,29 @@ class BaseOptimizer(object):
         self.weight_decay = weight_decay
 
     def compute_step(self, grads, params):
-        step = list()
-        # flatten all gradients
+        # flatten all gradients into 1-dim array
         flatten_grads = np.concatenate(
             [np.ravel(v) for grad in grads for v in grad.values()])
-        # compute step
+        # compute step according to derived class method
         flatten_step = self._compute_step(flatten_grads)
 
-        p = 0
+        p = 0 # linear block pointer
+        steps = list() # all layer of steps in restored shape
         for param in params:
-            layer = dict()
+            layer = dict() # one layer of steps in restored shape
             for k, v in param.items():
+                # the number of elements in v
                 block = np.prod(v.shape)
+                # restore the shape for a block of flatten_step
                 _step = flatten_step[p:p+block].reshape(v.shape)
+                # apply weight_decay if specified
                 _step -= self.weight_decay * v
+                # set the restored step to parameter key
                 layer[k] = _step
+                # count the block
                 p += block
-            step.append(layer)
-        return step
+            steps.append(layer)
+        return steps
 
     def _compute_step(self, grad):
         raise NotImplementedError
