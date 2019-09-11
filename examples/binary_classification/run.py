@@ -20,6 +20,7 @@ from core.nn import Net
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
 from utils.downloader import download_url
+from utils.seeder import random_seed
 
 
 def get_one_hot(targets, nb_classes):
@@ -55,6 +56,9 @@ def prepare_dataset(data_dir):
 
 
 def main(args):
+    if args.seed >= 0:
+        random_seed(args.seed);
+
     train_set, valid_set, test_set = prepare_dataset(args.data_dir)
     train_x, train_y = train_set
     test_x, test_y = test_set
@@ -100,6 +104,6 @@ if __name__ == "__main__":
                         type=str, help="dataset directory")
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--batch_size", default=128, type=int)
-    parser.add_argument("--seed", default=0, type=int)
+    parser.add_argument("--seed", default=-1, type=int)
     args = parser.parse_args()
     main(args)

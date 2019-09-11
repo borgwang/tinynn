@@ -12,7 +12,9 @@ from utils.seeder import random_seed
 
 
 def main(args):
-    random_seed(args.seed)
+    if args.seed >= 0:
+        random_seed(args.seed);
+
     env = gym.make("CartPole-v0")
     env.seed(args.seed)
 
@@ -79,7 +81,7 @@ def args_parse():
     parser.add_argument(
         "--log_every", default=100, help="Log and save model every x episodes")
     parser.add_argument(
-        "--seed", default=0, help="random seed")
+        "--seed", default=-1, help="random seed")
 
     parser.add_argument(
         "--max_ep", type=int, default=1000, help="Number of training episodes")
