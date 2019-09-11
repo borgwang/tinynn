@@ -18,6 +18,7 @@ from core.model import Model
 from core.nn import Net
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
+from utils.seeder import random_seed
 
 
 def prepare_dataset(img_path):
@@ -35,6 +36,9 @@ def prepare_dataset(img_path):
 
 
 def main(args):
+    if args.seed >= 0:
+        random_seed(args.seed);
+
     # data preparing
     data_path = os.path.join(args.data_dir, args.file_name)
     train_x, train_y, img_shape = prepare_dataset(data_path)
@@ -82,7 +86,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_dir", default="./examples/nn_paint/data", type=str)
     parser.add_argument("--file_name", default="input.jpg", type=str)
-    parser.add_argument("--seed", default=0, type=int)
+    parser.add_argument("--seed", default=-1, type=int)
     parser.add_argument("--batch_size", default=32, type=int)
     parser.add_argument("--num_ep", default=100, type=int)
     parser.add_argument("--paint", default=True, type=bool)
