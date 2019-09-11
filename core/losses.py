@@ -114,6 +114,10 @@ class SigmoidCrossEntropyLoss(BaseLoss):
     logits = a, label = y
     L = -y * log(1 / (1 + exp(-a)) - (1-y) * log(exp(-a) / (1 + exp(-a))
       = -y * a + log(1 + exp(a))
+
+    In order to get stable version, we can further derive
+    L = -y * a + log((1 + exp(-a)) / exp(-a))
+    L = -y * a + log(1 + exp(-a)) + a
     """
     def __init__(self, weight=None):
         weight = np.asarray(weight) if weight is not None else weight
@@ -121,7 +125,7 @@ class SigmoidCrossEntropyLoss(BaseLoss):
 
     def loss(self, logits, labels):
         m = logits.shape[0]
-        cost = - labels * logits + np.log(1 + np.exp(logits))
+        cost = - labels * logits + np.log(1 + np.exp(-logits)) + logits
         return np.sum(cost) / m
 
     def grad(self, logits, labels):
