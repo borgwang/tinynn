@@ -37,7 +37,7 @@ def prepare_dataset(img_path):
 
 def main(args):
     if args.seed >= 0:
-        random_seed(args.seed);
+        random_seed(args.seed)
 
     # data preparing
     data_path = os.path.join(args.data_dir, args.file_name)

@@ -26,6 +26,7 @@ from utils.seeder import random_seed
 def get_one_hot(targets, nb_classes):
     return np.eye(nb_classes)[np.array(targets).reshape(-1)]
 
+
 def prepare_dataset(data_dir):
     # download dataset
     url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00229/Skin_NonSkin.txt"
@@ -57,7 +58,7 @@ def prepare_dataset(data_dir):
 
 def main(args):
     if args.seed >= 0:
-        random_seed(args.seed);
+        random_seed(args.seed)
 
     train_set, valid_set, test_set = prepare_dataset(args.data_dir)
     train_x, train_y = train_set
