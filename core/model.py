@@ -10,8 +10,6 @@ class Model(object):
         self.loss = loss
         self.optimizer = optimizer
 
-        self._phase = "TRAIN"
-
     def forward(self, inputs):
         return self.net.forward(inputs)
 
@@ -48,9 +46,7 @@ class Model(object):
         print("Restored model from %s." % path)
 
     def get_phase(self):
-        return self._phase
+        return self.net.get_phase()
 
     def set_phase(self, phase):
-        assert phase in ("TRAIN", "TEST")
         self.net.set_phase(phase)
-        self._phase = phase
