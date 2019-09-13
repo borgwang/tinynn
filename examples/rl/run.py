@@ -13,7 +13,7 @@ from utils.seeder import random_seed
 
 def main(args):
     if args.seed >= 0:
-        random_seed(args.seed);
+        random_seed(args.seed)
 
     env = gym.make("CartPole-v0")
     env.seed(args.seed)

@@ -45,7 +45,7 @@ def prepare_dataset(data_dir):
 
 def main(args):
     if args.seed >= 0:
-        random_seed(args.seed);
+        random_seed(args.seed)
 
     train_set, valid_set, test_set = prepare_dataset(args.data_dir)
     train_x, train_y = train_set
