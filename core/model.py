@@ -85,3 +85,20 @@ class AutoEncoder(Model):
         en_grads, de_grads = (grads[0], grads[1])
         self._apply_grad(self.decoder, self.de_opt, de_grads)
         self._apply_grad(self.encoder, self.en_opt, en_grads)
+
+    def save(self, path):
+        with open(path, "wb") as f:
+            pickle.dump((self.encoder, self.decoder), f, -1)
+
+    def load(self, path):
+        with open(path, "rb") as f:
+            encoder, decoder = pickle.load(f)
+        self.encoder = encoder
+        self.decoder = decoder
+
+    def get_phase(self):
+        return self.encoder.get_phase()
+
+    def set_phase(self, phase):
+        self.encoder.set_phase(phase)
+        self.decoder.set_phase(phase)
