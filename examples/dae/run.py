@@ -58,6 +58,13 @@ def prepare_dataset(data_dir):
     with gzip.open(save_path, "rb") as f:
         return pickle.load(f, encoding="latin1")
 
+def transition(code1, code2, n):
+    # transition from code1 to code2 in n steps
+    steps = (code2 - code1) / (n - 1)
+    c = code1.copy()
+    for _ in range(n):
+        yield c
+        c += steps # towards code2 ...
 
 def main(args):
     if args.seed >= 0:
@@ -70,6 +77,7 @@ def main(args):
     # prepare and read dataset
     train_set, valid_set, test_set = prepare_dataset(args.data_dir)
     train_x, train_y = train_set
+    test_x, test_y = test_set
 
     # batch iterator
     iterator = BatchIterator(batch_size=args.batch_size)
@@ -78,11 +86,11 @@ def main(args):
     encoder = Net([
         Dense(256),
         ReLU(),
-        Dense(64),
-        ReLU()
+        Dense(64)
     ])
 
     decoder = Net([
+        ReLU(),
         Dense(256),
         Tanh(),
         Dense(784),
@@ -93,16 +101,33 @@ def main(args):
     model = AutoEncoder(encoder=encoder, decoder=decoder,
                         loss=MSELoss(), optimizer=Adam(args.lr))
 
-    # for pretrained model, print the generated images from latent space
+    # for pretrained model, test generated images from latent space
     if args.load_model is not None:
+        # load pretrained model
         model.load(args.load_model)
         print('Loaded model from %s' % args.load_model)
-        for batch in iterator(train_x, train_y):
-            origin_in = batch.inputs
-            genn = model.forward(origin_in)
-            save_batch_as_images('output/genn.png',
-                genn, titles=batch.targets)
-            break
+        # transition from test[from_idx] to test[to_idx] in n steps
+        idx_arr, n = [2, 4, 32, 12, 82], 160
+        print("Transition in numbers", [test_y[i] for i in idx_arr],
+            "in %d steps ..." % n)
+        stops = [model.encoder.forward(test_x[i]) for i in idx_arr]
+        k = int(n / (len(idx_arr) - 1)) # number of code per transition
+        # generate all transition codes
+        code_arr = []
+        for i in range(len(stops) - 1):
+            t = [c.copy() for c in transition(stops[i], stops[i+1], k)]
+            code_arr += t
+        # apply transition in n steps...
+        batch = None
+        for code in code_arr:
+            # translate latent space to code space
+            genn = model.decoder.forward(code)
+            # save decoded results in a batch
+            if batch is None:
+                batch = np.array(genn)
+            else:
+                batch = np.concatenate((batch, genn))
+        save_batch_as_images('output/genn-latent.png', batch)
         quit()
 
     # train the autoencoder
