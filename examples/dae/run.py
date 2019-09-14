@@ -11,6 +11,8 @@ import pickle
 import sys
 
 import numpy as np
+from matplotlib import cm as cm
+from matplotlib import pyplot as plt
 
 from core.layers import Dense
 from core.layers import ReLU
