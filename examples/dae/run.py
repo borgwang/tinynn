@@ -91,6 +91,18 @@ def main(args):
     model = AutoEncoder(encoder=encoder, decoder=decoder,
                         loss=MSELoss(), optimizer=Adam(args.lr))
 
+    # for pretrained model, print the generated images from latent space
+    if args.load_model is not None:
+        model.load(args.load_model)
+        print('Loaded model from %s' % args.load_model)
+        for batch in iterator(train_x, train_y):
+            origin_in = batch.inputs
+            genn = model.forward(origin_in)
+            save_batch_as_images('output/genn.png',
+                genn, titles=batch.targets)
+            break
+        quit()
+
     # train the autoencoder
     for epoch in range(args.num_ep):
         print('epoch %d ...' % epoch)
@@ -113,6 +125,9 @@ def main(args):
         save_batch_as_images('output/ep%d-genn.png' % epoch,
             genn, titles=batch.targets)
 
+    # save the model after training
+    model.save('output/model.pkl')
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_ep", default=50, type=int)
@@ -121,6 +136,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", default=128, type=int)
     parser.add_argument("--guassian_mean", default=0.3, type=float)
     parser.add_argument("--guassian_std", default=0.2, type=float)
+    parser.add_argument("--load_model", default=None, type=str)
     parser.add_argument("--seed", default=-1, type=int)
     args = parser.parse_args()
     main(args)
