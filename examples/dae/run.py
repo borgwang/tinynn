@@ -117,10 +117,10 @@ def main(args):
         for i in range(len(stops) - 1):
             t = [c.copy() for c in transition(stops[i], stops[i+1], k)]
             code_arr += t
-        # apply transition in n steps...
+        # apply decoding all n "code" from latent space...
         batch = None
         for code in code_arr:
-            # translate latent space to code space
+            # translate latent space to image
             genn = model.decoder.forward(code)
             # save decoded results in a batch
             if batch is None:
