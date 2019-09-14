@@ -25,22 +25,22 @@ from utils.data_iterator import BatchIterator
 from utils.downloader import download_url
 from utils.seeder import random_seed
 
-from matplotlib import cm as cm
-from matplotlib import pyplot as plt
 
 def save_batch_as_images(path, batch, titles=None):
     m = batch.shape[0] # batch size
     batch_copy = batch[:]
     batch_copy.resize(m, 28, 28)
     fig, ax = plt.subplots(int(m / 16), 16, figsize=(28,28))
+    cnt = 0
     for i in range(int(m/16)):
         for j in range(16):
             ax[i][j].set_xticks([])
             ax[i][j].set_yticks([])
-            ax[i][j].imshow(batch_copy[i*j], cmap='gray',
+            ax[i][j].imshow(batch_copy[cnt], cmap='gray',
                 interpolation='nearest', vmin=0, vmax=1)
             if titles is not None:
-                ax[i][j].set_title(titles[i*j], fontsize=20)
+                ax[i][j].set_title(titles[cnt], fontsize=20)
+            cnt += 1
     print('Saving', path)
     plt.savefig(path)
     plt.close(fig)
