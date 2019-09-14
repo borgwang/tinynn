@@ -23,17 +23,25 @@ from utils.data_iterator import BatchIterator
 from utils.downloader import download_url
 from utils.seeder import random_seed
 
-### will modulize this part later
 from matplotlib import cm as cm
 from matplotlib import pyplot as plt
-def disp_mnist_array(arr, label='unknown'):
-    arr_copy = arr[:]
-    arr_copy.resize(28,28)
-    fig, ax = plt.subplots(1)
-    ax.imshow(arr_copy, cmap='gray', interpolation='nearest', vmin=0, vmax=1)
-    ax.text(0.5, 1.5, 'label: %s' % label, bbox={'facecolor': 'white'})
-    plt.show()
-###
+
+def save_batch_as_images(path, batch, titles=None):
+    m = batch.shape[0] # batch size
+    batch_copy = batch[:]
+    batch_copy.resize(m, 28, 28)
+    fig, ax = plt.subplots(int(m / 16), 16, figsize=(28,28))
+    for i in range(int(m/16)):
+        for j in range(16):
+            ax[i][j].set_xticks([])
+            ax[i][j].set_yticks([])
+            ax[i][j].imshow(batch_copy[i*j], cmap='gray',
+                interpolation='nearest', vmin=0, vmax=1)
+            if titles is not None:
+                ax[i][j].set_title(titles[i*j], fontsize=20)
+    print('Saving', path)
+    plt.savefig(path)
+    plt.close(fig)
 
 def prepare_dataset(data_dir):
     url = "http://deeplearning.net/data/mnist/mnist.pkl.gz"
@@ -52,6 +60,10 @@ def prepare_dataset(data_dir):
 def main(args):
     if args.seed >= 0:
         random_seed(args.seed)
+
+    # create output directory for saving result images
+    if not os.path.exists('./output'):
+        os.mkdir('./output')
 
     # prepare and read dataset
     train_set, valid_set, test_set = prepare_dataset(args.data_dir)
@@ -90,15 +102,16 @@ def main(args):
             sigma = args.guassian_std # standard deviation
             noises = np.random.normal(mu, sigma, (m, 784))
             noises_in = origin_in + noises # noisy inputs
-            # forward pass
+            # train the representation
             genn = model.forward(noises_in)
             loss, grads = model.backward(genn, origin_in)
             model.apply_grad(grads)
-        print(loss)
-        for i in range(3):
-            print(batch.targets[i])
-            disp_mnist_array(noises_in[i])
-            disp_mnist_array(genn[i])
+        print('Loss: %.3f' % loss)
+        # save all the generated images and original inputs for this batch
+        save_batch_as_images('output/ep%d-input.png' % epoch,
+            noises_in, titles=batch.targets)
+        save_batch_as_images('output/ep%d-genn.png' % epoch,
+            genn, titles=batch.targets)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
