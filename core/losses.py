@@ -117,7 +117,7 @@ class SigmoidCrossEntropyLoss(BaseLoss):
 
     In order to get stable version, we can further derive
     L = -y * a + log((1 + exp(-a)) / exp(-a))
-    L = -y * a + log(1 + exp(-a)) + a
+      = -y * a + log(1 + exp(-a)) + a
     """
     def __init__(self, weight=None):
         weight = np.asarray(weight) if weight is not None else weight
