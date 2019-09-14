@@ -1,6 +1,9 @@
 """Model class manage the network, loss function and optimizer."""
 
+import copy
 import pickle
+
+import numpy as np
 
 
 class Model(object):
@@ -16,15 +19,19 @@ class Model(object):
     def backward(self, preds, targets):
         loss = self.loss.loss(preds, targets)
         grad = self.loss.grad(preds, targets)
-        grads = self.net.backward(grad)
+        grads, _ = self.net.backward(grad)
         return loss, grads
 
-    def apply_grad(self, grads):
-        params = self.net.get_parameters()
-        steps = self.optimizer.compute_step(grads, params)
+    @staticmethod
+    def _apply_grad(net, optimizer, grads):
+        params = net.get_parameters()
+        steps = optimizer.compute_step(grads, params)
         for step, param in zip(steps, params):
             for k, v in param.items():
                 param[k] += step[k]
+
+    def apply_grad(self, grads):
+        _apply_grad(self.net, self.optimizer, grads)
 
     def save(self, path):
         with open(path, "wb") as f:
@@ -50,3 +57,31 @@ class Model(object):
 
     def set_phase(self, phase):
         self.net.set_phase(phase)
+
+
+class AutoEncoder(Model):
+    def __init__(self, encoder, decoder, loss, optimizer):
+        super().__init__(net=None, loss=loss, optimizer=None)
+        self.encoder = encoder
+        self.decoder = decoder
+        self.en_opt = optimizer
+        self.de_opt = copy.deepcopy(optimizer)
+
+    def forward(self, inputs):
+        code = self.encoder.forward(inputs)
+        genn = self.decoder.forward(code)
+        return genn
+
+    def backward(self, preds, targets):
+        # calculate loss
+        loss = self.loss.loss(preds, targets)
+        grad = self.loss.grad(preds, targets)
+        # backprop gradients through decoder and encoder
+        de_grads, de_grad = self.decoder.backward(grad)
+        en_grads, _ = self.encoder.backward(de_grad)
+        return loss, np.array([en_grads, de_grads])
+
+    def apply_grad(self, grads):
+        en_grads, de_grads = (grads[0], grads[1])
+        self._apply_grad(self.decoder, self.de_opt, de_grads)
+        self._apply_grad(self.encoder, self.en_opt, en_grads)
