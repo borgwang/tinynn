@@ -17,7 +17,7 @@ class Net(object):
         for layer in reversed(self.layers):
             grad = layer.backward(grad)
             all_grads.append(layer.grads)
-        return (all_grads[::-1], grad)
+        return all_grads[::-1], grad
 
     def get_parameters(self):
         return [layer.params for layer in self.layers]
