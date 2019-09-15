@@ -31,7 +31,7 @@ class Model(object):
                 param[k] += step[k]
 
     def apply_grad(self, grads):
-        _apply_grad(self.net, self.optimizer, grads)
+        self._apply_grad(self.net, self.optimizer, grads)
 
     def save(self, path):
         with open(path, "wb") as f:
