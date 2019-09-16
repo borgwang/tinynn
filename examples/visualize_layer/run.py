@@ -14,6 +14,7 @@ import runtime_path  # isort:skip
 
 import argparse
 import gzip
+import math
 import os
 import pickle
 
@@ -32,6 +33,29 @@ from core.model import Model
 from core.nn import Net
 from core.optimizer import Adam
 from utils.seeder import random_seed
+
+
+def save_batch_as_images(path, batch, title=None, subs=None):
+    m = batch.shape[0] # batch size
+    batch_copy = batch[:]
+    batch_copy.resize(m, 28, 28)
+    w = math.floor(math.sqrt(m))
+    h = math.ceil(m / float(w))
+    fig, ax = plt.subplots(w, h, figsize=(28, 28))
+    if title is not None: fig.suptitle(title, fontsize=60)
+    cnt = 0
+    for i in range(w):
+        for j in range(h):
+            ax[i][j].set_xticks([])
+            ax[i][j].set_yticks([])
+            ax[i][j].imshow(batch_copy[cnt], cmap='gray',
+                interpolation='nearest', vmin=0, vmax=1)
+            if subs is not None:
+                ax[i][j].set_title(subs[cnt], fontsize=40)
+            cnt += 1
+    print('Saving', path)
+    plt.savefig(path, facecolor='grey')
+    plt.close(fig)
 
 
 def disp_mnist_batch(batch, fig=None):
@@ -83,6 +107,7 @@ def activation_maximazation(model, init_grads, layer_idx, fig):
             print('Iteration#%d, loss: %.3f' % (iteration, loss), end=" ")
             print('image: u=%.3f, std=%.3f, range=(%.3f, %.3f)' % stats)
             disp_mnist_batch(img, fig)
+    return img
 
 
 def am_visualize_conv_layer(model, layer_idx, fig):
@@ -90,14 +115,18 @@ def am_visualize_conv_layer(model, layer_idx, fig):
     grads = np.zeros(model.net.layers[layer_idx].cache['out_img_size'])
     grads = np.array([grads]) # adjust dimension
     n = grads.shape[3] # number of channels
+    # collect preferred images for all feature maps
+    images = []
     # for each feature map in this layer
     for idx in range(n):
         # fix the gradients for the cells we are interested to maximize
         fixed_grads = grads.copy()
         fixed_grads[:,:,:, idx] = -1
         # generate the image that maximizes the target cell(s)
-        print('AM for feature map', idx)
+        print('AM for feature map [%d / %d]' % (idx + 1, n))
         img = activation_maximazation(model, fixed_grads, layer_idx, fig)
+        images.append(img[0])
+    return np.array(images)
 
 
 def main(args):
@@ -123,6 +152,11 @@ def main(args):
         Dense(10)
     ])
 
+    # img = np.zeros((6, 28, 28, 1))
+    # save_batch_as_images('output/a.png', img, title='test',
+    #     subs=[str(i) for i in range(6)])
+    # quit()
+
     # load the model
     model = Model(
         net=net,
@@ -136,11 +170,19 @@ def main(args):
     img = np.ones((1, 28, 28, 1))
     fig = disp_mnist_batch(img)
 
-    print('[ conv-layer-1 ]')
-    am_visualize_conv_layer(model, 0, fig)
+    # actual visualization generations
 
-    print('[ conv-layer-2 ]')
-    am_visualize_conv_layer(model, 3, fig)
+    layer_name = 'conv-layer-1'
+    print('[ ' + layer_name + ' ]')
+    images = am_visualize_conv_layer(model, 0, fig)
+    save_batch_as_images('output/{}.png'.format(layer_name),
+        images, title='visualized feature maps for ' + layer_name)
+
+    layer_name = 'conv-layer-2'
+    print('[ ' + layer_name + ' ]')
+    images = am_visualize_conv_layer(model, 3, fig)
+    save_batch_as_images('output/{}.png'.format(layer_name),
+        images, title='visualized feature maps for ' + layer_name)
 
 
 if __name__ == "__main__":
