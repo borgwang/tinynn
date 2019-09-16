@@ -15,6 +15,7 @@ from core.evaluator import AccEvaluator
 from core.layers import Conv2D
 from core.layers import Dense
 from core.layers import Flatten
+from core.layers import MaxPool2D
 from core.layers import ReLU
 from core.losses import SoftmaxCrossEntropyLoss
 from core.model import Model
@@ -57,14 +58,19 @@ def main(args):
         test_x = test_x.reshape((-1, 28, 28, 1))
 
     if args.model_type == "cnn":
+        # a LeNet-5 model with activation function changed to ReLU
         net = Net([
-            Conv2D(kernel=[5, 5, 1, 8], stride=[2, 2], padding="SAME"),
+            Conv2D(kernel=[5, 5, 1, 6], stride=[1, 1], padding="SAME"),
             ReLU(),
-            Conv2D(kernel=[5, 5, 8, 16], stride=[2, 2], padding="SAME"),
+            MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
+            Conv2D(kernel=[5, 5, 6, 16], stride=[1, 1], padding="SAME"),
             ReLU(),
-            Conv2D(kernel=[5, 5, 16, 32], stride=[2, 2], padding="SAME"),
-            ReLU(),
+            MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
             Flatten(),
+            Dense(120),
+            ReLU(),
+            Dense(84),
+            ReLU(),
             Dense(10)
         ])
     elif args.model_type == "dense":
@@ -80,7 +86,7 @@ def main(args):
             Dense(10)
         ])
     else:
-        raise ValueError("Invalid argument model_type! Must be 'cnn' or 'dense'")
+        raise ValueError("Invalid argument: model_type")
 
     model = Model(net=net, loss=SoftmaxCrossEntropyLoss(), optimizer=Adam(lr=args.lr))
 
@@ -107,7 +113,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_type", default="cnn", type=str, help="cnn or dense")
+    parser.add_argument("--model_type", default="cnn", type=str,
+        help="cnn or dense")
     parser.add_argument("--num_ep", default=50, type=int)
     parser.add_argument("--data_dir", default="./examples/mnist/data", type=str)
     parser.add_argument("--lr", default=1e-3, type=float)
