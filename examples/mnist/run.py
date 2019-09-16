@@ -53,22 +53,12 @@ def main(args):
     test_x, test_y = test_set
     train_y = get_one_hot(train_y, 10)
 
-    if args.model_type.startswith("cnn"):
+    if args.model_type == "cnn":
         train_x = train_x.reshape((-1, 28, 28, 1))
         test_x = test_x.reshape((-1, 28, 28, 1))
 
     if args.model_type == "cnn":
-        net = Net([
-            Conv2D(kernel=[5, 5, 1, 8], stride=[2, 2], padding="SAME"),
-            ReLU(),
-            Conv2D(kernel=[5, 5, 8, 16], stride=[2, 2], padding="SAME"),
-            ReLU(),
-            Conv2D(kernel=[5, 5, 16, 32], stride=[2, 2], padding="SAME"),
-            ReLU(),
-            Flatten(),
-            Dense(10)
-        ])
-    elif args.model_type == "cnn-lenet5":
+        # a LeNet-5 model with activation function changed to ReLU
         net = Net([
             Conv2D(kernel=[5, 5, 1, 6], stride=[1, 1], padding="SAME"),
             ReLU(),
@@ -124,7 +114,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_type", default="cnn", type=str,
-        help="cnn, cnn-lenet5 or dense")
+        help="cnn or dense")
     parser.add_argument("--num_ep", default=50, type=int)
     parser.add_argument("--data_dir", default="./examples/mnist/data", type=str)
     parser.add_argument("--lr", default=1e-3, type=float)
