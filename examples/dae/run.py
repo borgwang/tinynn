@@ -45,6 +45,7 @@ def save_batch_as_images(path, batch, titles=None):
     plt.savefig(path)
     plt.close(fig)
 
+
 def prepare_dataset(data_dir):
     url = "http://deeplearning.net/data/mnist/mnist.pkl.gz"
     save_path = os.path.join(data_dir, url.split("/")[-1])
@@ -58,13 +59,18 @@ def prepare_dataset(data_dir):
     with gzip.open(save_path, "rb") as f:
         return pickle.load(f, encoding="latin1")
 
+
 def transition(code1, code2, n):
-    # transition from code1 to code2 in n steps
+    """
+    Make intermediate latent-space transition
+    from code1 to code2 in n steps.
+    """
     steps = (code2 - code1) / (n - 1)
     c = code1.copy()
     for _ in range(n):
         yield c
         c += steps # towards code2 ...
+
 
 def main(args):
     if args.seed >= 0:
@@ -154,6 +160,7 @@ def main(args):
 
     # save the model after training
     model.save('output/model.pkl')
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
