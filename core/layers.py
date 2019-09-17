@@ -377,16 +377,16 @@ class ReLU(Activation):
 
 class LeakyReLU(Activation):
 
-    def __init__(self, slope=0.01):
+    def __init__(self, slope=0.2):
         super().__init__("LeakyReLU")
         self._slope = slope
 
     def func(self, x):
-        # TODO: maybe a litter bit slow due to the copy
         x = x.copy()
         x[x < 0.0] *= self._slope
         return x
 
     def derivative_func(self, x):
-        x[x < 0.0] = self._slope
-        return x
+        dx = np.ones_like(x)
+        dx[x < 0.0] = self._slope
+        return dx
