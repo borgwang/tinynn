@@ -129,6 +129,25 @@ def am_visualize_conv_layer(model, layer_idx, fig):
     return np.array(images)
 
 
+def am_visualize_dense_layer(model, layer_idx, fig):
+    # get size of layer-wise input gradients (or forward output size)
+    grads = np.zeros(model.net.layers[layer_idx].shapes['w'][1])
+    grads = np.array([grads]) # adjust dimension
+    n = grads.shape[1] # number of cells
+    # collect preferred images for all feature maps
+    images = []
+    # for each feature map in this layer
+    for idx in range(n):
+        # fix the gradients for the cells we are interested to maximize
+        fixed_grads = grads.copy()
+        fixed_grads[:,idx] = -1
+        # generate the image that maximizes the target cell(s)
+        print('AM for cell [%d / %d]' % (idx + 1, n))
+        img = activation_maximazation(model, fixed_grads, layer_idx, fig)
+        images.append(img[0])
+    return np.array(images)
+
+
 def main(args):
     if args.seed >= 0:
         random_seed(args.seed)
@@ -151,11 +170,6 @@ def main(args):
         ReLU(),
         Dense(10)
     ])
-
-    # img = np.zeros((6, 28, 28, 1))
-    # save_batch_as_images('output/a.png', img, title='test',
-    #     subs=[str(i) for i in range(6)])
-    # quit()
 
     # load the model
     model = Model(
@@ -183,6 +197,26 @@ def main(args):
     images = am_visualize_conv_layer(model, 3, fig)
     save_batch_as_images('output/{}.png'.format(layer_name),
         images, title='visualized feature maps for ' + layer_name)
+
+    # uncomment below to visualize deeper layers
+
+#    layer_name = 'dense-layer-1'
+#    print('[ ' + layer_name + ' ]')
+#    images = am_visualize_dense_layer(model, 7, fig)
+#    save_batch_as_images('output/{}.png'.format(layer_name),
+#        images, title='visualized feature maps for ' + layer_name)
+#
+#    layer_name = 'dense-layer-2'
+#    print('[ ' + layer_name + ' ]')
+#    images = am_visualize_dense_layer(model, 9, fig)
+#    save_batch_as_images('output/{}.png'.format(layer_name),
+#        images, title='visualized feature maps for ' + layer_name)
+#
+#    layer_name = 'dense-layer-3'
+#    print('[ ' + layer_name + ' ]')
+#    images = am_visualize_dense_layer(model, 11, fig)
+#    save_batch_as_images('output/{}.png'.format(layer_name),
+#        images, title='visualized feature maps for ' + layer_name)
 
 
 if __name__ == "__main__":
