@@ -41,18 +41,22 @@ def save_batch_as_images(path, batch, title=None, subs=None):
     batch_copy.resize(m, 28, 28)
     w = math.floor(math.sqrt(m))
     h = math.ceil(m / float(w))
-    fig, ax = plt.subplots(w, h, figsize=(28, 28))
+    print(w, h)
+    fig, ax = plt.subplots(h, w, figsize=(28, 28))
     if title is not None: fig.suptitle(title, fontsize=60)
     cnt = 0
-    for i in range(w):
-        for j in range(h):
+    while cnt < w * h:
+        i, j = int(cnt / w), cnt % w
+        if cnt < m:
             ax[i][j].set_xticks([])
             ax[i][j].set_yticks([])
             ax[i][j].imshow(batch_copy[cnt], cmap='gray',
                 interpolation='nearest', vmin=0, vmax=1)
             if subs is not None:
                 ax[i][j].set_title(subs[cnt], fontsize=40)
-            cnt += 1
+        else:
+            ax[i, j].axis('off')
+        cnt += 1
     print('Saving', path)
     plt.savefig(path, facecolor='grey')
     plt.close(fig)
