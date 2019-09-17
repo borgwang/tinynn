@@ -41,7 +41,6 @@ def save_batch_as_images(path, batch, title=None, subs=None):
     batch_copy.resize(m, 28, 28)
     w = math.floor(math.sqrt(m))
     h = math.ceil(m / float(w))
-    print(w, h)
     fig, ax = plt.subplots(h, w, figsize=(28, 28))
     if title is not None: fig.suptitle(title, fontsize=60)
     cnt = 0
@@ -202,7 +201,7 @@ def main(args):
     save_batch_as_images('output/{}.png'.format(layer_name),
         images, title='visualized feature maps for ' + layer_name)
 
-    # uncomment below to visualize deeper layers
+   # uncomment below to visualize deeper layers
 
 #    layer_name = 'dense-layer-1'
 #    print('[ ' + layer_name + ' ]')
