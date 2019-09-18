@@ -351,6 +351,18 @@ class Sigmoid(Activation):
         return self.func(x) * (1.0 - self.func(x))
 
 
+class Softplus(Activation):
+
+    def __init__(self):
+        super().__init__("Softplus")
+
+    def func(self, x):
+        return np.log(1.0 + np.exp(x))
+
+    def derivative_func(self, x):
+        return 1.0 / (1.0 + np.exp(-x))
+
+
 class Tanh(Activation):
 
     def __init__(self):
