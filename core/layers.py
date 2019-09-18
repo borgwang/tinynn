@@ -2,6 +2,7 @@
 
 import numpy as np
 
+from core.initializer import UniformInit
 from core.initializer import XavierUniformInit
 from core.initializer import ZerosInit
 
@@ -402,3 +403,71 @@ class LeakyReLU(Activation):
     def derivative_func(self, x):
         x[x < 0.0] = self._slope
         return x
+
+
+class RBM(Layer):
+
+    def _init_parameters(self, n_visible):
+        self.shape[0] = n_visible
+        self.params["w"] = self.initializers["w"](shape=self.shape)
+        self.params["v_b"] = self.initializers["v_b"](shape=n_visible)
+        self.params["h_b"] = self.initializers["h_b"](shape=self.shape[1])
+
+    def __init__(self,
+                 n_hidden,
+                 k=1, # sample times
+                 n_visible=None,
+                 sigmoid=Sigmoid().func,
+                 softplus=Softplus().func,
+                 w_init=UniformInit(),
+                 v_b_init=UniformInit(),
+                 h_b_init=UniformInit()):
+        super().__init__("RBM")
+        self.initializers = {"w": w_init, "v_b": v_b_init, "h_b": h_b_init}
+        self.shape = [n_visible, n_hidden]
+        self.params = {"w": None, "v_b": None, "h_b": None}
+        self.k = k
+        self.sigmoid = sigmoid;
+        self.softplus = softplus;
+        self.relu = ReLU().func
+
+    def sample_by_prob(self, prob):
+        rand = np.random.uniform(0.0, 1.0, prob.shape)
+        sign = np.sign(prob - rand) # 1 or -1
+        return self.relu(sign) # 1 or 0
+
+    def v_to_h(self, v):
+        p_h = self.sigmoid(v @ self.params['w'] + self.params['h_b'])
+        sample_h = self.sample_by_prob(p_h)
+        return sample_h
+
+    def h_to_v(self, h):
+        p_v = self.sigmoid(h @ self.params['w'].T + self.params['v_b'])
+        sample_v = self.sample_by_prob(p_v)
+        return sample_v
+
+    def gibs_sampling(self, v):
+        # lazy initialize
+        if self.shape[0] is None:
+            self._init_parameters(v.shape[1])
+
+        # gibs sampling (k times)
+        self.v_0 = v[0,:]
+        for _ in range(self.k):
+            h = self.v_to_h(v)
+            v = self.h_to_v(h)
+        self.v_k = v[-1,:]
+        return v
+
+    def step(self, lr):
+        p_h_0 = self.sigmoid(self.v_0 @ self.params['w'] + self.params['h_b'])
+        p_h_k = self.sigmoid(self.v_k @ self.params['w'] + self.params['h_b'])
+        p_h_0_ = np.asarray([p_h_0])
+        p_h_k_ = np.asarray([p_h_k])
+        v_0 = np.asarray([self.v_0]).T
+        v_k = np.asarray([self.v_k]).T
+        # update parameters
+        self.params['w'] += lr * (v_0 @ p_h_0_ - v_k @ p_h_k_)
+        self.params['v_b'] += lr * (self.v_0 - self.v_k)
+        self.params['h_b'] += lr * (p_h_0 - p_h_k)
+        return 0
