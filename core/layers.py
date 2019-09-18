@@ -100,19 +100,16 @@ class Conv2D(Layer):
         if not self.is_init:
             self._init_parameters()
 
-        k_h, k_w = self.kernel[:2]  # kernel size
-        s_h, s_w = self.stride # stride lengths
+        k_h, k_w = self.kernel[:2]
+        s_h, s_w = self.stride
 
-        # get padding size
         pad = self._get_padding([k_h, k_w], self.padding_mode)
 
         # pad the inputs with the edge values
         pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
         padded = np.pad(inputs, pad_width=pad_width, mode="edge")
 
-        # inputs shape
         in_n, in_h, in_w, in_c = inputs.shape
-        # resulting inputs size
         padded_h, padded_w = padded.shape[1:3]
 
         # resulting feature maps' sizes
@@ -120,8 +117,8 @@ class Conv2D(Layer):
         out_w = int((padded_w - k_w) / s_w + 1)
         out_c = self.kernel[-1]
 
-        kernel = self.params["w"] # (h, w, in_channels, out_channels)
-        ker_len = np.prod(kernel.shape[:3]) # flatten kernel length
+        kernel = self.params["w"]
+        ker_len = np.prod(kernel.shape[:3])  # flatten kernel length
         patches = list()
 
         # expand inputs matrix before convolution by matrix product.
@@ -139,35 +136,31 @@ class Conv2D(Layer):
             row_patches = list()
             for j, col in enumerate(range(0, padded_w - k_w + 1, s_w)):
                 patch = padded[:, row:row+k_h, col:col+k_w, :]
-                # patch: (batch, pad_h, pad_w, in_channels)
+                # lay out local patch
                 row_patches.append(patch.reshape(-1, ker_len))
-                # row_patches: [(batch, X_row)]
             patches.append(row_patches)
-        # patches: [[(batch, X_row)]]
+        # organize local patches to a (out_h, out_w, batch, ker_len) matrix
         patches = np.asarray(patches)
 
-        # reorder the batch dimension to (batch, -1, -1, X_row)
         X_matrix = patches.transpose([2, 0, 1, 3])
-        # expanded inputs: X_matrix [X_row]
-        X_matrix = X_matrix.reshape((-1, ker_len))
+        X_matrix = X_matrix.reshape((-1, ker_len))  # (batch * out_h * out_w, ker_len)
 
-        # transformed kernel: W_matrix (W_col, out_channels)
+        # transformed kernel (ker_len, out_c)
         W_matrix = kernel.reshape((ker_len, -1))
-        # outputs = X_matrix @ W_matrix
         outputs = (X_matrix @ W_matrix).reshape((in_n, out_h, out_w, out_c))
-        # save results for backward path
+
         self.cache = {"in_n": in_n, "in_img_size": (in_h, in_w, in_c),
                       "kernel_size": (k_h, k_w, in_c), "stride": (s_h, s_w),
                       "pad": pad, "pad_img_size": (padded_h, padded_w, in_c),
                       "out_img_size": (out_h, out_w, out_c),
                       "X_matrix": X_matrix, "W_matrix": W_matrix}
-        # add bias
+
         outputs += self.params["b"]
         return outputs
 
     def backward(self, grad):
         # read save values form cache
-        in_n = self.cache["in_n"] # batch size
+        in_n = self.cache["in_n"]  # batch size
         in_h, in_w, in_c = self.cache["in_img_size"]
         k_h, k_w, _ = self.cache["kernel_size"]
         s_h, s_w = self.cache["stride"]
@@ -175,43 +168,42 @@ class Conv2D(Layer):
         padded_h, padded_w, _ = self.cache["pad_img_size"]
         pad = self.cache["pad"]
 
-        # update w (similar to dense layer backward)
+        # gradient of parameters
         d_w = self.cache["X_matrix"].T @ grad.reshape((-1, out_c))
         self.grads["w"] = d_w.reshape(self.params["w"].shape)
-        # update b (similar to dense layer backward)
         self.grads["b"] = np.sum(grad, axis=(0, 1, 2))
-        # gradients to lower level (similar to dense layer backward)
+
+        # gradients to lower layers
         d_X_matrix = grad @ self.cache["W_matrix"].T
         # transform gradients back to original shape as d_in
         d_in = np.zeros(shape=(in_n, padded_h, padded_w, in_c))
         for i, col in enumerate(range(0, padded_h - k_h + 1, s_h)):
             for j, row in enumerate(range(0, padded_w - k_w + 1, s_w)):
-                # d_X_matrix: (batch, out_h, out_w, ker_len)
                 patch = d_X_matrix[:, i, j, :].reshape(
                     (in_n, k_h, k_w, in_c))
                 d_in[:, col:col+k_h, row:row+k_w, :] += patch
         # cut off padding
         d_in = d_in[:, pad[0]:padded_h-pad[1], pad[2]:padded_w-pad[3], :]
-        # return accumulated gradients
         return d_in
 
     @staticmethod
     def _get_padding(ks, mode):
         """
-        params: ks (kernel size) [p, q]
-        return: list of padding (top, bottom, left, right) in different modes
+        :param ks (kernel size) [p, q]
+        :param mode (FULL|VALID|SAME)
+            - FULL: to generate maximum sized feature map, allow only one valid
+            pixel to be mapped at the corners.
+            - VALID: to generate minimal sized feature map, require all kernel
+            units mapping to valid input area.
+            - SAME: require generated feature map to have the same (or almost
+            the same) size as input area.
+        :return: list of padding (top, bottom, left, right) in different modes
         """
         pad = None
-        # FULL: to generate maximum sized feature map, allow only one valid
-        # pixel to be mapped at the corners.
         if mode == "FULL":
             pad = [ks[0] - 1, ks[1] - 1, ks[0] - 1, ks[1] - 1]
-        # VALID: to generate minimal sized feature map, require all kernel
-        # units mapping to valid input area.
         elif mode == "VALID":
             pad = [0, 0, 0, 0]
-        # SAME: require generated feature map to have the same (or almost
-        # the same) size as input area.
         elif mode == "SAME":
             pad = [(ks[0] - 1) // 2, (ks[0] - 1) // 2,
                    (ks[1] - 1) // 2, (ks[1] - 1) // 2]
