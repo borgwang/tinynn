@@ -357,7 +357,7 @@ class Softplus(Activation):
         super().__init__("Softplus")
 
     def func(self, x):
-        return np.log(1.0 + np.exp(x))
+        return np.log(1.0 + np.exp(-np.abs(x))) + np.maximum(x, 0.0)
 
     def derivative_func(self, x):
         return 1.0 / (1.0 + np.exp(-x))
