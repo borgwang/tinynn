@@ -13,6 +13,7 @@ import numpy as np
 
 from core.evaluator import AccEvaluator
 from core.layers import Conv2D
+from core.layers import Conv2D_
 from core.layers import Dense
 from core.layers import Flatten
 from core.layers import MaxPool2D
@@ -60,10 +61,10 @@ def main(args):
     if args.model_type == "cnn":
         # a LeNet-5 model with activation function changed to ReLU
         net = Net([
-            Conv2D(kernel=[5, 5, 1, 6], stride=[1, 1], padding="SAME"),
+            Conv2D_(kernel=[5, 5, 1, 6], stride=[1, 1], padding="SAME"),
             ReLU(),
             MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
-            Conv2D(kernel=[5, 5, 6, 16], stride=[1, 1], padding="SAME"),
+            Conv2D_(kernel=[5, 5, 6, 16], stride=[1, 1], padding="SAME"),
             ReLU(),
             MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
             Flatten(),

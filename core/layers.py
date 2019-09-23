@@ -62,6 +62,176 @@ class Dense(Layer):
         self.is_init = True
 
 
+class Conv2D_(Layer):
+    """
+    Implement 2D convolution layer
+    :param kernel: A list/tuple of int that has length 4 (height, width,
+        in_channels, out_channels)
+    :param stride: A list/tuple of int that has length 2 (height, width)
+    :param padding: String ["SAME", "VALID"]
+    :param w_init: weight initializer
+    :param b_init: bias initializer
+    """
+    def __init__(self,
+                 kernel,
+                 stride=(1, 1),
+                 padding="SAME",
+                 w_init=XavierUniformInit(),
+                 b_init=ZerosInit()):
+        super().__init__("Conv2D")
+
+        # verify arguments
+        assert len(kernel) == 4
+        assert len(stride) == 2
+        assert padding in ("FULL", "SAME", "VALID")
+
+        self.padding_mode = padding
+        self.kernel_sz = kernel
+        self.stride = stride
+        self.initializers = {"w": w_init, "b": b_init}
+
+        self.is_init = False
+
+    @staticmethod
+    def _im2col(X, k_h, k_w, s_h, s_w):
+        batch_sz, h, w, in_c = X.shape
+        # calculate result feature map size
+        out_h = (h - k_h) // s_h + 1
+        out_w = (w - k_w) // s_w + 1
+        # allocate space for column matrix
+        col = np.zeros((batch_sz * out_h * out_w, k_h * k_w * in_c))
+        # fill in the column matrix
+        batch_span = out_w * out_h
+        for y in range(out_h):
+            y_min = y * s_h
+            y_max = y_min + k_h
+            start = y * out_w
+            for x in range(out_w):
+                x_min = x * s_w
+                x_max = x_min + k_w
+                patch = X[:, y_min:y_max, x_min:x_max, :]
+                patch = patch.reshape(batch_sz, -1)
+                col[start + x :: batch_span, :] = patch
+        return col
+
+    def forward(self, inputs):
+        # lazy initialization
+        if not self.is_init:
+            self._init_parameters()
+
+        # read size parameters
+        k_h, k_w, in_c, out_c = self.kernel_sz
+        s_h, s_w = self.stride
+        # number of incomming channels should match
+        assert in_c == inputs.shape[3]
+
+        # pad the inputs with the edge values
+        pad = self._get_padding([k_h, k_w], self.padding_mode)
+        pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
+        X = np.pad(inputs, pad_width=pad_width, mode="edge")
+
+        # transform padded inputs into column matrix,
+        # resulted matrix size: (B * out_h * out_w) * (k_h * k_w * in_c)
+        col = self._im2col(X, k_h, k_w, s_h, s_w)
+        # get flatten kernel,
+        # resulted matrix size: (k_h * k_w * in_c) * out_c
+        W = self.params["w"].reshape(-1, out_c)
+
+        # Perform convolution by matrix product.
+        # An example (assuming only one channel and one filter):
+        # input = | 43  16  78 |         kernel = | 4  6 |
+        #  (X)    | 34  76  95 |                  | 7  9 |
+        #         | 35   8  46 |
+        #
+        # After im2col and kernel flattening:
+        #  col  = | 43  16  34  76 |     kernel = | 4 |
+        #         | 16  78  76  95 |      (W)     | 6 |
+        #         | 34  76  35   8 |              | 7 |
+        #         | 76  95   8  46 |              | 9 |
+        Z = np.dot(col, W)
+
+        # read padded sizes
+        batch_sz, h, w, _ = X.shape # inputs.shape[3] is just in_c
+        # separate the batch size and feature map dimensions
+        Z = Z.reshape(batch_sz, Z.shape[0] // batch_sz, out_c)
+        # further divide the feature map in to (h, w) dimension
+        out_h = (h - k_h) // s_h + 1
+        out_w = (w - k_w) // s_w + 1
+        Z = Z.reshape(batch_sz, out_h, out_w, out_c)
+
+        # plus the bias for every filter
+        Z += self.params["b"]
+
+        # save results for backward function
+        self.col = col
+        self.W = W
+        self.pad = pad
+        self.X_shape = X.shape
+        return Z
+
+    def backward(self, grad):
+        # read size parameters
+        k_h, k_w, in_c, out_c = self.kernel_sz
+        s_h, s_w = self.stride
+        batch_sz, h, w, in_c = self.X_shape
+        pad = self.pad
+
+        # calculate  gradients of parameters
+        # (input grad is of size: batch_sz * out_h * out_w * out_c)
+        flat_grad = grad.reshape((-1, out_c))
+        d_W = self.col.T @ flat_grad
+        self.grads["w"] = d_W.reshape(self.kernel_sz)
+        self.grads["b"] = np.sum(flat_grad, axis=0)
+
+        # calculate gradients to lower layers
+        d_X = grad @ self.W.T
+
+        # cast gradients back to original shape as d_in
+        d_in = np.zeros(shape=self.X_shape)
+        for i, row in enumerate(range(0, h - k_h + 1, s_h)):
+            for j, col in enumerate(range(0, w - k_w + 1, s_w)):
+                patch = d_X[:, i, j, :]
+                patch = patch.reshape((batch_sz, k_h, k_w, in_c))
+                d_in[:, row:row+k_h, col:col+k_w, :] += patch
+        # cut off padding and return gradients to lower layers
+        d_in = d_in[:, pad[0]:h-pad[1], pad[2]:w-pad[3], :]
+        return d_in
+
+    @staticmethod
+    def _get_padding(ks, mode):
+        """
+        :param ks (kernel size) [p, q]
+        :param mode (FULL|VALID|SAME)
+            - FULL: to generate maximum sized feature map, allow only one valid
+            pixel to be mapped at the corners.
+            - VALID: to generate minimal sized feature map, require all kernel
+            units mapping to valid input area.
+            - SAME: require generated feature map to have the same (or almost
+            the same) size as input area.
+        :return: list of padding (top, bottom, left, right) in different modes
+        """
+        pad = None
+        if mode == "FULL":
+            pad = [ks[0] - 1, ks[1] - 1, ks[0] - 1, ks[1] - 1]
+        elif mode == "VALID":
+            pad = [0, 0, 0, 0]
+        elif mode == "SAME":
+            pad = [(ks[0] - 1) // 2, (ks[0] - 1) // 2,
+                   (ks[1] - 1) // 2, (ks[1] - 1) // 2]
+            if ks[0] % 2 == 0:
+                pad[1] += 1
+            if ks[1] % 2 == 0:
+                pad[3] += 1
+        else:
+            print("Invalid mode")
+        return pad
+
+    def _init_parameters(self):
+        self.params["w"] = self.initializers["w"](self.kernel_sz)
+        self.params["b"] = self.initializers["b"](self.kernel_sz[-1])
+        self.is_init = True
+
+
 class Conv2D(Layer):
 
     def __init__(self,
