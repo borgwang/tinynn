@@ -85,10 +85,13 @@ class Conv2D(Layer):
         assert len(stride) == 2
         assert padding in ("FULL", "SAME", "VALID")
 
-        self.padding_mode = padding
         self.kernel_sz = kernel
         self.stride = stride
         self.initializers = {"w": w_init, "b": b_init}
+
+        # calculate padding needed for this layer
+        k_h, k_w = kernel[:2]
+        self.pad = self._get_padding(k_h, k_w, padding)
 
         self.is_init = False
 
@@ -122,13 +125,12 @@ class Conv2D(Layer):
         # read size parameters
         k_h, k_w, in_c, out_c = self.kernel_sz
         s_h, s_w = self.stride
+        pad = self.pad
         # number of incomming channels should match
         assert in_c == inputs.shape[3]
 
-        # pad the inputs with the edge values
-        pad = self._get_padding([k_h, k_w], self.padding_mode)
         pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
-        X = np.pad(inputs, pad_width=pad_width, mode="edge")
+        X = np.pad(inputs, pad_width=pad_width, mode="constant")
 
         # transform padded inputs into column matrix,
         # resulted matrix size: (B * out_h * out_w) * (k_h * k_w * in_c)
@@ -165,7 +167,6 @@ class Conv2D(Layer):
         # save results for backward function
         self.col = col
         self.W = W
-        self.pad = pad
         self.X_shape = X.shape
         return Z
 
@@ -210,25 +211,23 @@ class Conv2D(Layer):
             the same) size as input area.
         :return: list of padding (top, bottom, left, right) in different modes
         """
-        pad = None
         if mode == "FULL":
-            pad = [ks[0] - 1, ks[1] - 1, ks[0] - 1, ks[1] - 1]
+            pad = [k_h - 1, k_w - 1, k_h - 1, k_w - 1]
         elif mode == "VALID":
             pad = [0, 0, 0, 0]
-        elif mode == "SAME":
-            pad = [(ks[0] - 1) // 2, (ks[0] - 1) // 2,
-                   (ks[1] - 1) // 2, (ks[1] - 1) // 2]
-            if ks[0] % 2 == 0:
-                pad[1] += 1
-            if ks[1] % 2 == 0:
-                pad[3] += 1
         else:
-            print("Invalid mode")
+            # SAME mode
+            pad = [(k_h - 1) // 2, (k_h - 1) // 2,
+                   (k_w - 1) // 2, (k_w - 1) // 2]
+            if k_h % 2 == 0:
+                pad[1] += 1
+            if k_w % 2 == 0:
+                pad[3] += 1
         return pad
 
     def _init_parameters(self):
-        self.params["w"] = self.initializers["w"](self.kernel_sz)
-        self.params["b"] = self.initializers["b"](self.kernel_sz[-1])
+        self.params["w"] = self.initializers["w"](self.kernel_shape)
+        self.params["b"] = self.initializers["b"](self.kernel_shape[-1])
         self.is_init = True
 
 
