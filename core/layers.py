@@ -152,7 +152,7 @@ class Conv2D(Layer):
 
     def backward(self, grad):
         """
-        Compute gradiens w.r.t layer parameters and backward gradients.
+        Compute gradients w.r.t layer parameters and backward gradients.
         :param grad: gradients from previous layer 
             with shape (batch_sz, out_h, out_w, out_c)
         :return d_in: gradients to next layers 
@@ -210,7 +210,7 @@ class Conv2D(Layer):
                 c_start = c * s_w
                 patch = img[:, r_start: r_start+k_h, c_start: c_start+k_w, :]
                 patch = patch.reshape(batch_sz, -1)
-                col[matrix_r+c :: batch_span, :] = patch
+                col[matrix_r+c::batch_span, :] = patch
         return col
 
     @staticmethod
