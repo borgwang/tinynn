@@ -68,7 +68,7 @@ class Conv2D(Layer):
     :param kernel: A list/tuple of int that has length 4 (height, width,
         in_channels, out_channels)
     :param stride: A list/tuple of int that has length 2 (height, width)
-    :param padding: String ["SAME", "VALID"]
+    :param padding: String ["SAME", "VALID", "FULL"]
     :param w_init: weight initializer
     :param b_init: bias initializer
     """
@@ -85,8 +85,8 @@ class Conv2D(Layer):
         assert len(stride) == 2
         assert padding in ("FULL", "SAME", "VALID")
 
-        self.kernel_sz = kernel
-        self.stride = stride
+        self.kernel_shape = kernel
+        self.stride_shape = stride
         self.initializers = {"w": w_init, "b": b_init}
 
         # calculate padding needed for this layer
@@ -95,70 +95,50 @@ class Conv2D(Layer):
 
         self.is_init = False
 
-    @staticmethod
-    def _im2col(X, k_h, k_w, s_h, s_w):
-        batch_sz, h, w, in_c = X.shape
-        # calculate result feature map size
-        out_h = (h - k_h) // s_h + 1
-        out_w = (w - k_w) // s_w + 1
-        # allocate space for column matrix
-        col = np.zeros((batch_sz * out_h * out_w, k_h * k_w * in_c))
-        # fill in the column matrix
-        batch_span = out_w * out_h
-        for y in range(out_h):
-            y_min = y * s_h
-            y_max = y_min + k_h
-            start = y * out_w
-            for x in range(out_w):
-                x_min = x * s_w
-                x_max = x_min + k_w
-                patch = X[:, y_min:y_max, x_min:x_max, :]
-                patch = patch.reshape(batch_sz, -1)
-                col[start + x :: batch_span, :] = patch
-        return col
-
     def forward(self, inputs):
+        """
+        Accelerate convolution via im2col trick.
+        An example (assuming only one channel and one filter):
+         input = | 43  16  78 |         kernel = | 4  6 |
+          (X)    | 34  76  95 |                  | 7  9 |
+                 | 35   8  46 |
+        
+        After im2col and kernel flattening:
+         col  = | 43  16  34  76 |     kernel = | 4 |
+                | 16  78  76  95 |      (W)     | 6 |
+                | 34  76  35   8 |              | 7 |
+                | 76  95   8  46 |              | 9 |
+        """
         # lazy initialization
         if not self.is_init:
             self._init_parameters()
 
-        # read size parameters
-        k_h, k_w, in_c, out_c = self.kernel_sz
-        s_h, s_w = self.stride
+        k_h, k_w, in_c, out_c = self.kernel_shape
+        s_h, s_w = self.stride_shape
         pad = self.pad
         # number of incomming channels should match
         assert in_c == inputs.shape[3]
 
+        # step1: zero-padding
         pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
         X = np.pad(inputs, pad_width=pad_width, mode="constant")
 
-        # transform padded inputs into column matrix,
-        # resulted matrix size: (B * out_h * out_w) * (k_h * k_w * in_c)
+        # step2: im2col
+        # padded inputs to column matrix
         col = self._im2col(X, k_h, k_w, s_h, s_w)
-        # get flatten kernel,
-        # resulted matrix size: (k_h * k_w * in_c) * out_c
-        W = self.params["w"].reshape(-1, out_c)
+        # flatten kernel
+        W = self.params["w"].reshape(-1, out_c)  # (k_h * k_w * in_c, out_c)
 
-        # Perform convolution by matrix product.
-        # An example (assuming only one channel and one filter):
-        # input = | 43  16  78 |         kernel = | 4  6 |
-        #  (X)    | 34  76  95 |                  | 7  9 |
-        #         | 35   8  46 |
-        #
-        # After im2col and kernel flattening:
-        #  col  = | 43  16  34  76 |     kernel = | 4 |
-        #         | 16  78  76  95 |      (W)     | 6 |
-        #         | 34  76  35   8 |              | 7 |
-        #         | 76  95   8  46 |              | 9 |
-        Z = np.dot(col, W)
+        # step3: perform convolution by matrix product.
+        Z = col @ W
 
-        # read padded sizes
-        batch_sz, h, w, _ = X.shape # inputs.shape[3] is just in_c
+        # step4: reshape output 
+        batch_sz, in_h, in_w, _ = X.shape 
         # separate the batch size and feature map dimensions
         Z = Z.reshape(batch_sz, Z.shape[0] // batch_sz, out_c)
         # further divide the feature map in to (h, w) dimension
-        out_h = (h - k_h) // s_h + 1
-        out_w = (w - k_w) // s_w + 1
+        out_h = (in_h - k_h) // s_h + 1
+        out_w = (in_w - k_w) // s_w + 1
         Z = Z.reshape(batch_sz, out_h, out_w, out_c)
 
         # plus the bias for every filter
@@ -171,37 +151,73 @@ class Conv2D(Layer):
         return Z
 
     def backward(self, grad):
+        """
+        Compute gradiens w.r.t layer parameters and backward gradients.
+        :param grad: gradients from previous layer 
+            with shape (batch_sz, out_h, out_w, out_c)
+        :return d_in: gradients to next layers 
+            with shape (batch_sz, in_h, in_w, in_c)
+        """
         # read size parameters
-        k_h, k_w, in_c, out_c = self.kernel_sz
-        s_h, s_w = self.stride
-        batch_sz, h, w, in_c = self.X_shape
+        k_h, k_w, in_c, out_c = self.kernel_shape
+        s_h, s_w = self.stride_shape
+        batch_sz, in_h, in_w, in_c = self.X_shape
         pad = self.pad
 
-        # calculate  gradients of parameters
-        # (input grad is of size: batch_sz * out_h * out_w * out_c)
+        # calculate gradients of parameters
         flat_grad = grad.reshape((-1, out_c))
         d_W = self.col.T @ flat_grad
-        self.grads["w"] = d_W.reshape(self.kernel_sz)
+        self.grads["w"] = d_W.reshape(self.kernel_shape)
         self.grads["b"] = np.sum(flat_grad, axis=0)
 
-        # calculate gradients to lower layers
+        # calculate backward gradients
         d_X = grad @ self.W.T
-
         # cast gradients back to original shape as d_in
         d_in = np.zeros(shape=self.X_shape)
-        for i, row in enumerate(range(0, h - k_h + 1, s_h)):
-            for j, col in enumerate(range(0, w - k_w + 1, s_w)):
+        for i, r in enumerate(range(0, in_h - k_h + 1, s_h)):
+            for j, c in enumerate(range(0, in_w - k_w + 1, s_w)):
                 patch = d_X[:, i, j, :]
                 patch = patch.reshape((batch_sz, k_h, k_w, in_c))
-                d_in[:, row:row+k_h, col:col+k_w, :] += patch
-        # cut off padding and return gradients to lower layers
-        d_in = d_in[:, pad[0]:h-pad[1], pad[2]:w-pad[3], :]
+                d_in[:, r:r+k_h, c:c+k_w, :] += patch
+
+        # cut off gradients of padding
+        d_in = d_in[:, pad[0]:in_h-pad[1], pad[2]:in_w-pad[3], :]
         return d_in
 
     @staticmethod
-    def _get_padding(ks, mode):
+    def _im2col(img, k_h, k_w, s_h, s_w):
         """
-        :param ks (kernel size) [p, q]
+        Transform padded image into column matrix.
+        :param img: padded inputs of shape (B, in_h, in_w, in_c)
+        :param k_h: kernel height
+        :param k_w: kernel width
+        :param s_h: stride height
+        :param s_w: stride width
+        :return col: column matrix of shape (B*out_h*out_w, k_h*k_h*inc)
+        """
+        batch_sz, h, w, in_c = img.shape
+        # calculate result feature map size
+        out_h = (h - k_h) // s_h + 1
+        out_w = (w - k_w) // s_w + 1
+        # allocate space for column matrix
+        col = np.empty((batch_sz * out_h * out_w, k_h * k_w * in_c))
+        # fill in the column matrix
+        batch_span = out_w * out_h
+        for r in range(out_h):
+            r_start = r * s_h
+            matrix_r = r * out_w 
+            for c in range(out_w):
+                c_start = c * s_w
+                patch = img[:, r_start: r_start+k_h, c_start: c_start+k_w, :]
+                patch = patch.reshape(batch_sz, -1)
+                col[matrix_r+c :: batch_span, :] = patch
+        return col
+
+    @staticmethod
+    def _get_padding(k_h, k_w, mode):
+        """
+        :param k_h: kernel height 
+        :param k_w: kernel width
         :param mode (FULL|VALID|SAME)
             - FULL: to generate maximum sized feature map, allow only one valid
             pixel to be mapped at the corners.
