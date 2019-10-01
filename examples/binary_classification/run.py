@@ -6,8 +6,6 @@ import argparse
 import os
 import sys
 import time
-from urllib.error import URLError
-from urllib.request import urlretrieve
 
 import numpy as np
 
@@ -30,7 +28,7 @@ def get_one_hot(targets, nb_classes):
 def prepare_dataset(data_dir):
     # download dataset
     url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00229/Skin_NonSkin.txt"
-    save_path =  os.path.join(data_dir, url.split("/")[-1])
+    save_path = os.path.join(data_dir, url.split("/")[-1])
     try:
         download_url(url, save_path)
     except Exception as e:
