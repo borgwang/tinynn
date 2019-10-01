@@ -10,27 +10,29 @@ class BaseOptimizer(object):
         self.weight_decay = weight_decay
 
     def compute_step(self, grads, params):
-        # flatten all gradients into 1-dim array
-        flatten_grads = np.concatenate(
-            [np.ravel(v) for grad in grads for v in grad.values()])
-        # compute step according to derived class method
-        flatten_step = self._compute_step(flatten_grads)
+        # convert list of dicts to a numpy array
+        grad_values = list()
+        for grad_dict in grads:
+            for grad in grad_dict.values():
+                grad_values.append(grad)
+        grad_values = np.array(grad_values)
 
-        p = 0 # linear block pointer
-        steps = list() # all layer of steps in restored shape
-        for param in params:
-            layer = dict() # one layer of steps in restored shape
-            for k, v in param.items():
-                # the number of elements in v
-                block = np.prod(v.shape)
-                # restore the shape for a block of flatten_step
-                _step = flatten_step[p:p+block].reshape(v.shape)
+        # compute step according to derived class method
+        step_values = self._compute_step(grad_values)
+
+        # construct list of dict
+        i = 0  
+        steps = list()  # all layer of steps in restored shape
+        for param_dict in params:
+            layer = dict()  # one layer of steps in restored shape
+            for name, param in param_dict.items():
+                # get step value of curr layer parameters
+                step = step_values[i]
                 # apply weight_decay if specified
-                _step -= self.weight_decay * v
+                step -= self.weight_decay * param
                 # set the restored step to parameter key
-                layer[k] = _step
-                # count the block
-                p += block
+                layer[name] = step
+                i += 1
             steps.append(layer)
         return steps
 
@@ -75,7 +77,6 @@ class Adam(BaseOptimizer):
         _v = self._v / (1 - self._b2 ** self._t)
 
         step = -self.lr * _m / (_v ** 0.5 + self._eps)
-
         return step
 
 
