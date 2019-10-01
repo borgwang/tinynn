@@ -12,11 +12,12 @@ from utils.seeder import random_seed
 
 
 def main(args):
+    env = gym.make("CartPole-v0")
+
     if args.seed >= 0:
         random_seed(args.seed)
+        env.seed(args.seed)
 
-    env = gym.make("CartPole-v0")
-    env.seed(args.seed)
 
     agent = DQN(env, args)
     agent.construct_model()

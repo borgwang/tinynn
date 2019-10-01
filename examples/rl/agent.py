@@ -41,15 +41,14 @@ class DQN(object):
     def construct_model(self):
         self.q_net = self.build_net()
         self.model = Model(net=self.q_net, loss=MSELoss(), optimizer=RMSProp(self.args.lr))
-
         # Target network
         self.target_q_net = self.build_net()
-        self.target_q_net.initialize()
 
     def sample_action(self, state, policy):
         self.global_step += 1
         # Q value of all actions
-        output_q = self.model.forward([state])[0]
+        state = np.array([state])
+        output_q = self.model.forward(state)[0]
 
         if policy == "egreedy":
             if random.random() <= self.epsilon:  # random action
@@ -84,6 +83,7 @@ class DQN(object):
         s_batch, a_batch, r_batch, next_s_batch, done_batch = \
             np.array(minibatch).T.tolist()
 
+        next_s_batch = np.array(next_s_batch)
         next_s_all_action_Q = self.target_q_net.forward(next_s_batch)
         next_s_Q_batch = np.max(next_s_all_action_Q, 1)
 

@@ -40,15 +40,14 @@ def main(args):
         random_seed(args.seed)
 
     # data preparing
-    data_path = os.path.join(args.data_dir, args.file_name)
-    train_x, train_y, img_shape = prepare_dataset(data_path)
+    train_x, train_y, img_shape = prepare_dataset(args.img)
 
     net = Net([
         Dense(30),
         ReLU(),
-        Dense(60),
+        Dense(100),
         ReLU(),
-        Dense(60),
+        Dense(100),
         ReLU(),
         Dense(30),
         ReLU(),
@@ -60,7 +59,6 @@ def main(args):
     mse_evaluator = MSEEvaluator()
     iterator = BatchIterator(batch_size=args.batch_size)
     for epoch in range(args.num_ep):
-        t_start = time.time()
         for batch in iterator(train_x, train_y):
             preds = model.forward(batch.inputs)
             loss, grads = model.backward(preds, batch.targets)
@@ -69,25 +67,22 @@ def main(args):
         # evaluate
         preds = net.forward(train_x)
         mse = mse_evaluator.evaluate(preds, train_y)
-        print(mse)
+        print("Epoch %d %s" % (epoch, mse))
 
-        if args.paint:
-            # generate painting
+        # generate painting
+        if epoch % 5 == 0:
             preds = preds.reshape(img_shape[0], img_shape[1], -1)
             preds = (preds * 255.0).astype("uint8")
-            filename, ext = os.path.splitext(args.file_name)
-            output_filename = "output" + ext
-            output_path = os.path.join(args.data_dir, output_filename)
-            Image.fromarray(preds).save(output_path)
-        print("Epoch %d time cost: %.2f" % (epoch, time.time() - t_start))
+            filename, ext = os.path.splitext(args.img)
+            output_filename = filename + "-paint-epoch" + str(epoch) + ext
+            Image.fromarray(preds).save(output_filename)
+            print("save painting to %s" % output_filename)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_dir", default="./examples/nn_paint/data", type=str)
-    parser.add_argument("--file_name", default="input.jpg", type=str)
+    parser.add_argument("--img", default="./examples/nn_paint/test-img.jpg", type=str)
     parser.add_argument("--seed", default=-1, type=int)
     parser.add_argument("--batch_size", default=32, type=int)
     parser.add_argument("--num_ep", default=100, type=int)
-    parser.add_argument("--paint", default=True, type=bool)
     main(parser.parse_args())
