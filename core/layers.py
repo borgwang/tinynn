@@ -68,7 +68,7 @@ class Conv2D(Layer):
     :param kernel: A list/tuple of int that has length 4 (height, width,
         in_channels, out_channels)
     :param stride: A list/tuple of int that has length 2 (height, width)
-    :param padding: String ["SAME", "VALID", "FULL"]
+    :param padding: String ["SAME", "VALID"]
     :param w_init: weight initializer
     :param b_init: bias initializer
     """
@@ -83,15 +83,14 @@ class Conv2D(Layer):
         # verify arguments
         assert len(kernel) == 4
         assert len(stride) == 2
-        assert padding in ("FULL", "SAME", "VALID")
+        assert padding in ("SAME", "VALID")
 
         self.kernel_shape = kernel
-        self.stride_shape = stride
+        self.stride = stride
         self.initializers = {"w": w_init, "b": b_init}
 
         # calculate padding needed for this layer
-        k_h, k_w = kernel[:2]
-        self.pad = self._get_padding(k_h, k_w, padding)
+        self.pad = self._get_padding(kernel[:2], padding)
 
         self.is_init = False
 
@@ -114,7 +113,7 @@ class Conv2D(Layer):
             self._init_parameters()
 
         k_h, k_w, in_c, out_c = self.kernel_shape
-        s_h, s_w = self.stride_shape
+        s_h, s_w = self.stride
         pad = self.pad
         # number of incomming channels should match
         assert in_c == inputs.shape[3]
@@ -160,7 +159,7 @@ class Conv2D(Layer):
         """
         # read size parameters
         k_h, k_w, in_c, out_c = self.kernel_shape
-        s_h, s_w = self.stride_shape
+        s_h, s_w = self.stride
         batch_sz, in_h, in_w, in_c = self.X_shape
         pad = self.pad
 
@@ -214,32 +213,16 @@ class Conv2D(Layer):
         return col
 
     @staticmethod
-    def _get_padding(k_h, k_w, mode):
-        """
-        :param k_h: kernel height 
-        :param k_w: kernel width
-        :param mode (FULL|VALID|SAME)
-            - FULL: to generate maximum sized feature map, allow only one valid
-            pixel to be mapped at the corners.
-            - VALID: to generate minimal sized feature map, require all kernel
-            units mapping to valid input area.
-            - SAME: require generated feature map to have the same (or almost
-            the same) size as input area.
-        :return: list of padding (top, bottom, left, right) in different modes
-        """
-        if mode == "FULL":
-            pad = [k_h - 1, k_w - 1, k_h - 1, k_w - 1]
-        elif mode == "VALID":
-            pad = [0, 0, 0, 0]
-        else:
-            # SAME mode
-            pad = [(k_h - 1) // 2, (k_h - 1) // 2,
-                   (k_w - 1) // 2, (k_w - 1) // 2]
-            if k_h % 2 == 0:
-                pad[1] += 1
-            if k_w % 2 == 0:
-                pad[3] += 1
-        return pad
+    def _get_padding(kernel_shape, mode):
+        def _get_padding_1d(k_s):
+            n_pad = 0 if mode == "VALID" else k_s - 1
+            half = n_pad // 2
+            pad = [half, half] if n_pad % 2 == 0 else [half, half + 1]
+            return pad
+
+        h_pad = _get_padding_1d(kernel_shape[0])
+        w_pad = _get_padding_1d(kernel_shape[1])
+        return h_pad + w_pad
 
     def _init_parameters(self):
         self.params["w"] = self.initializers["w"](self.kernel_shape)
@@ -259,83 +242,87 @@ class MaxPool2D(Layer):
         :param stride: A list/tuple of 2 integers (stride_height, stride_width)
         :param padding: A string ("SAME", "VALID")
         """
-        super().__init__("MaxPooling2D")
+        super().__init__("MaxPool2D")
         # validate arguments
         assert len(pool_size) == 2
         assert len(stride) == 2
         assert padding in ("VALID", "SAME")
 
-        self.pool_size = pool_size
+        self.kernel_shape = pool_size
         self.stride = stride
-        self.padding_mode = padding
-
-        self.cache = None
+        self.pad = self._get_padding(pool_size, padding)
 
     def forward(self, inputs):
-        in_n, in_h, in_w, in_c = inputs.shape
-        pad = self._get_padding([in_h, in_w], self.pool_size, self.stride,
-                                self.padding_mode)
-        pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
-        padded = np.pad(inputs, pad_width=pad_width, mode="constant")
-        pad_h, pad_w = padded.shape[1:3]
-        (s_h, s_w), (pool_h, pool_w) = self.stride, self.pool_size
-        out_h, out_w = pad_h // s_h, pad_w // s_w
-        patches_list, max_pos_list = list(), list()
-        for col in range(0, pad_h, s_h):
-            for row in range(0, pad_w, s_w):
-                pool = padded[:, col:col + pool_h, row:row + pool_w, :]
-                pool = pool.reshape((in_n, -1, in_c))
-                max_pos_list.append(np.argmax(pool, axis=1))
-                patches_list.append(np.max(pool, axis=1))
-        outputs = np.array(patches_list).transpose((1, 0, 2)).reshape(
-            (in_n, out_h, out_w, in_c))
-        max_pos = np.array(max_pos_list).transpose((1, 0, 2)).reshape(
-            (in_n, out_h, out_w, in_c))
+        s_h, s_w = self.stride
+        k_h, k_w = self.kernel_shape
+        batch_sz, in_h, in_w, in_c = inputs.shape
+        pad = self.pad
 
-        self.cache = {"in_n": in_n, "in_img_size": (in_h, in_w, in_c),
-                      "stride": (s_h, s_w), "pad": (pad_h, pad_w),
-                      "pool": (pool_h, pool_w), "max_pos": max_pos,
-                      "out_img_size": (out_h, out_w, in_c)}
-        return outputs
+        # zero-padding
+        pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
+        X = np.pad(inputs, pad_width=pad_width, mode="constant")
+        padded_h, padded_w = X.shape[1:3]
+    
+        out_h = (padded_h - k_h) // s_h + 1
+        out_w = (padded_w - k_w) // s_w + 1
+
+        # construct output matrix and argmax matrix
+        max_pool = np.empty(shape=(batch_sz, out_h, out_w, in_c))
+        argmax = np.empty(shape=(batch_sz, out_h, out_w, in_c), dtype=int)
+        for r in range(out_h):
+            r_start = r * s_h
+            for c in range(out_w):
+                c_start = c * s_w
+                pool = X[:, r_start: r_start+k_h, c_start: c_start+k_w, :]
+                pool = pool.reshape((batch_sz, -1, in_c))
+
+                _argmax = np.argmax(pool, axis=1)[:, np.newaxis, :]
+                argmax[:, r, c, :] = _argmax.squeeze()
+
+                # get max elements
+                _max_pool = np.take_along_axis(pool, _argmax, axis=1).squeeze()
+                max_pool[:, r, c, :] = _max_pool
+
+        self.X_shape = X.shape
+        self.out_shape = (out_h, out_w)
+        self.argmax = argmax
+        return max_pool
 
     def backward(self, grad):
-        in_n, (in_h, in_w, in_c) = self.cache["in_n"], self.cache["in_img_size"]
-        s_h, s_w = self.cache["stride"]
-        pad_h, pad_w = self.cache["pad"]
-        pool_h, pool_w = self.cache["pool"]
+        batch_sz, in_h, in_w, in_c = self.X_shape
+        out_h, out_w = self.out_shape
+        pad = self.pad
+        s_h, s_w = self.stride
+        k_h, k_w = self.kernel_shape
+        k_sz = k_h * k_w
 
-        d_in = np.zeros(shape=(in_n, pad_h, pad_w, in_c))
-        for i, col in enumerate(range(0, pad_h, s_h)):
-            for j, row in enumerate(range(0, pad_w, s_w)):
-                _max_pos = self.cache["max_pos"][:, i, j, :]
-                _grad = grad[:, i, j, :]
-                mask = np.eye(pool_h * pool_w)[_max_pos].transpose((0, 2, 1))
-                region = np.repeat(_grad[:, np.newaxis, :],
-                                   pool_h * pool_w, axis=1) * mask
-                region = region.reshape((in_n, pool_h, pool_w, in_c))
-                d_in[:, col:col + pool_h, row:row + pool_w, :] = region
+        d_in = np.zeros(shape=(batch_sz, in_h, in_w, in_c))
+        for r in range(out_h):
+            r_start = r * s_h
+            for c in range(out_w):
+                c_start = c * s_w
+                _argmax = self.argmax[:, r, c, :]
+                mask = np.eye(k_sz)[_argmax].transpose((0, 2, 1))
+                _grad = grad[:, r, c, :][:, np.newaxis, :]
+                patch = np.repeat(_grad, k_sz, axis=1) * mask
+                patch = patch.reshape((batch_sz, k_h, k_w, in_c))
+                d_in[:, r_start:r_start+k_h, c_start:c_start+k_w, :] += patch
+
+        # cut off gradients of padding
+        d_in = d_in[:, pad[0]:in_h-pad[1], pad[2]:in_w-pad[3], :]
         return d_in
 
-    def _get_padding(self, input_size, pool_size, stride, mode):
-        h_pad = self._get_padding_1d(
-            input_size[0], pool_size[0], stride[0], mode)
-        w_pad = self._get_padding_1d(
-            input_size[1], pool_size[1], stride[1], mode)
-        return h_pad + w_pad
-
     @staticmethod
-    def _get_padding_1d(input_size, pool_size, stride, mode):
-        if mode == "SAME":
-            r = input_size % stride
-            if r == 0:
-                n_pad = max(pool_size - stride, 0)
-            else:
-                n_pad = max(pool_size, stride) - r
-        else:
-            n_pad = 0
-        half = n_pad // 2
-        pad = [half, half] if n_pad % 2 == 0 else [half, half + 1]
-        return pad
+    def _get_padding(kernel_shape, mode):
+        def _get_padding_1d(k_s):
+            n_pad = 0 if mode == "VALID" else k_s - 1
+            half = n_pad // 2
+            pad = [half, half] if n_pad % 2 == 0 else [half, half + 1]
+            return pad
+
+        h_pad = _get_padding_1d(kernel_shape[0])
+        w_pad = _get_padding_1d(kernel_shape[1])
+        return h_pad + w_pad
 
 
 class Flatten(Layer):

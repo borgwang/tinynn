@@ -5,6 +5,7 @@ __pycache__/
 *$py.class
 .idea/
 .pytest_cache
+*.lprof
 
 # C extensions
 *.so
