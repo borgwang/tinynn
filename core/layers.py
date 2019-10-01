@@ -33,7 +33,7 @@ class Dense(Layer):
                  b_init=ZerosInit()):
         super().__init__("Linear")
         self.initializers = {"w": w_init, "b": b_init}
-        self.shapes = {"w": [num_in, num_out], "b": [1, num_out]}
+        self.shapes = {"w": [num_in, num_out], "b": [num_out]}
         self.params = {"w": None, "b": None}
 
         self.is_init = False

@@ -6,6 +6,7 @@ __pycache__/
 .idea/
 .pytest_cache
 *.lprof
+*.swp
 
 # C extensions
 *.so
