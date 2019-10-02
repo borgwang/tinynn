@@ -10,6 +10,6 @@ tinynn implementation of [Deep Convolution Generative Adversarial Network](https
 pip install -r requirements.txt
 pip install -r examples/dcgan/requirements.txt
 
-# run
-python examples/dcgan/run.py 
+# train
+python examples/dcgan/run.py --train
 ```
