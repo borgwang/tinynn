@@ -6,6 +6,8 @@ class Net(object):
     def __init__(self, layers):
         self.layers = layers
         self._phase = "TRAIN"
+        
+        self.input_grads = None
 
     def forward(self, inputs):
         for layer in self.layers:
@@ -17,6 +19,7 @@ class Net(object):
         for layer in reversed(self.layers):
             grad = layer.backward(grad)
             all_grads.append(layer.grads)
+        self.input_grads = grad
         return all_grads[::-1]
 
     def get_parameters(self):
