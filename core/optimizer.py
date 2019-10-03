@@ -105,7 +105,7 @@ class RMSProp(BaseOptimizer):
     def _compute_step(self, grad):
         self._ms += (1 - self._decay) * (grad ** 2 - self._ms)
         self._mom = self._momentum * self._mom + \
-            self.lr * grad / (self._ms ** 0.5 + self._eps)
+            self.lr * grad / (self._ms + self._eps) ** 0.5
 
         step = -self._mom
         return step
