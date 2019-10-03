@@ -73,15 +73,24 @@ def main(args):
         if epoch % 5 == 0:
             preds = preds.reshape(img_shape[0], img_shape[1], -1)
             preds = (preds * 255.0).astype("uint8")
-            filename, ext = os.path.splitext(args.img)
-            output_filename = filename + "-paint-epoch" + str(epoch) + ext
-            Image.fromarray(preds).save(output_filename)
-            print("save painting to %s" % output_filename)
+            name, ext = os.path.splitext(args.img)
+            filename = os.path.basename(name)
+            out_filename = filename + "-paint-epoch" + str(epoch) + ext
+            if not os.path.exists(args.output_dir):
+                os.makedirs(args.output_dir)
+            out_path = os.path.join(args.output_dir, out_filename)
+            Image.fromarray(preds).save(out_path)
+            print("save painting to %s" % out_path)
 
 
 if __name__ == "__main__":
+    curr_dir = os.path.dirname(os.path.abspath(__file__))
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("--img", default="./examples/nn_paint/test-img.jpg", type=str)
+    parser.add_argument("--img", type=str,
+                        default=os.path.join(curr_dir, "test-img.jpg"))
+    parser.add_argument("--output_dir", type=str,
+                        default=os.path.join(curr_dir, "output"))
     parser.add_argument("--seed", default=-1, type=int)
     parser.add_argument("--batch_size", default=32, type=int)
     parser.add_argument("--num_ep", default=100, type=int)
