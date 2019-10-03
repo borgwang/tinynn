@@ -12,14 +12,14 @@ import time
 import numpy as np
 
 from core.evaluator import AccEvaluator
-from core.layers import Conv2D
-from core.layers import Dense
-from core.layers import Flatten
-from core.layers import MaxPool2D
-from core.layers import ReLU
-from core.losses import SoftmaxCrossEntropyLoss
+from core.layer import Conv2D
+from core.layer import Dense
+from core.layer import Flatten
+from core.layer import MaxPool2D
+from core.layer import ReLU
+from core.loss import SoftmaxCrossEntropy
 from core.model import Model
-from core.nn import Net
+from core.net import Net
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
 from utils.downloader import download_url
@@ -88,7 +88,7 @@ def main(args):
     else:
         raise ValueError("Invalid argument: model_type")
 
-    model = Model(net=net, loss=SoftmaxCrossEntropyLoss(), optimizer=Adam(lr=args.lr))
+    model = Model(net=net, loss=SoftmaxCrossEntropy(), optimizer=Adam(lr=args.lr))
 
     iterator = BatchIterator(batch_size=args.batch_size)
     evaluator = AccEvaluator()

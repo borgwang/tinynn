@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from core.initializer import XavierUniformInit
-from core.initializer import ZerosInit
+from core.initializer import XavierUniform
+from core.initializer import Zeros
 
 
 class Layer(object):
@@ -29,8 +29,8 @@ class Dense(Layer):
     def __init__(self,
                  num_out,
                  num_in=None,
-                 w_init=XavierUniformInit(),
-                 b_init=ZerosInit()):
+                 w_init=XavierUniform(),
+                 b_init=Zeros()):
         super().__init__("Linear")
         self.initializers = {"w": w_init, "b": b_init}
         self.shapes = {"w": [num_in, num_out], "b": [num_out]}
@@ -76,8 +76,8 @@ class Conv2D(Layer):
                  kernel,
                  stride=(1, 1),
                  padding="SAME",
-                 w_init=XavierUniformInit(),
-                 b_init=ZerosInit()):
+                 w_init=XavierUniform(),
+                 b_init=Zeros()):
         super().__init__("Conv2D")
 
         # verify arguments

@@ -19,7 +19,7 @@ class Initializer(object):
         raise NotImplementedError
 
 
-class NormalInit(Initializer):
+class Normal(Initializer):
 
     def __init__(self, mean=0.0, std=1.0):
         self._mean = mean
@@ -29,7 +29,7 @@ class NormalInit(Initializer):
         return np.random.normal(loc=self._mean, scale=self._std, size=shape)
 
 
-class TruncatedNormalInit(Initializer):
+class TruncatedNormal(Initializer):
 
     def __init__(self, mean=0.0, std=1.0):
         self._tn = stats.truncnorm(- 2 * std, 2 * std, loc=mean, scale=std)
@@ -38,7 +38,7 @@ class TruncatedNormalInit(Initializer):
         return self._tn.rvs(size=shape)
 
 
-class UniformInit(Initializer):
+class Uniform(Initializer):
 
     def __init__(self, a=0.0, b=1.0):
         self._a = a
@@ -48,7 +48,7 @@ class UniformInit(Initializer):
         return np.random.uniform(low=self._a, high=self._b, size=shape)
 
 
-class ConstantInit(Initializer):
+class Constant(Initializer):
 
     def __init__(self, val):
         self._val = val
@@ -57,13 +57,13 @@ class ConstantInit(Initializer):
         return np.full(shape=shape, fill_value=self._val)
 
 
-class ZerosInit(ConstantInit):
+class Zeros(Constant):
 
     def __init__(self):
-        super(ZerosInit, self).__init__(0.0)
+        super(Zeros, self).__init__(0.0)
 
 
-class XavierUniformInit(Initializer):
+class XavierUniform(Initializer):
     """
     Implement the Xavier method described in
     "Understanding the difficulty of training deep feedforward neural networks”
@@ -83,7 +83,7 @@ class XavierUniformInit(Initializer):
         return np.random.uniform(low=-a, high=a, size=shape)
 
 
-class XavierNormalInit(Initializer):
+class XavierNormal(Initializer):
     """
     Implement the Xavier method described in
     "Understanding the difficulty of training deep feedforward neural networks”
@@ -102,7 +102,7 @@ class XavierNormalInit(Initializer):
         return np.random.normal(loc=0.0, scale=std, size=shape)
 
 
-class HeUniformInit(Initializer):
+class HeUniform(Initializer):
     """
     Implement the He initialization method described in
     “Delving deep into rectifiers: Surpassing human-level performance
@@ -121,7 +121,7 @@ class HeUniformInit(Initializer):
         return np.random.uniform(low=-a, high=a, size=shape)
 
 
-class HeNormalInit(Initializer):
+class HeNormal(Initializer):
     """
     Implement the He initialization method described in
     “Delving deep into rectifiers: Surpassing human-level performance

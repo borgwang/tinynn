@@ -11,13 +11,13 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
-from core.layers import Dense
-from core.layers import LeakyReLU
-from core.layers import Sigmoid
-from core.losses import SigmoidCrossEntropyLoss
+from core.layer import Dense
+from core.layer import LeakyReLU
+from core.layer import Sigmoid
+from core.loss import SigmoidCrossEntropy
 from core.model import Model
-from core.nn import Net
-from core.initializer import NormalInit
+from core.net import Net
+from core.initializer import Normal
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
 from utils.downloader import download_url
@@ -48,7 +48,7 @@ def get_noise(size):
 
 
 def mlp_G():
-    w_init = NormalInit(0.0, 0.02)
+    w_init = Normal(0.0, 0.02)
     return Net([
         Dense(100, w_init=w_init), 
         LeakyReLU(), 
@@ -59,7 +59,7 @@ def mlp_G():
 
 
 def mlp_D():
-    w_init = NormalInit(0.0, 0.02)
+    w_init = Normal(0.0, 0.02)
     return Net([
         Dense(300, w_init=w_init), 
         LeakyReLU(), 
@@ -70,7 +70,7 @@ def mlp_D():
 
 def train(args):
     fix_noise = get_noise(size=(args.batch_size, args.nz))
-    loss = SigmoidCrossEntropyLoss()
+    loss = SigmoidCrossEntropy()
     # TODO: replace mlp with cnn
     G = Model(net=mlp_G(), loss=loss,
               optimizer=Adam(args.lr_g, beta1=args.beta1))

@@ -10,11 +10,11 @@ import time
 import numpy as np
 
 from core.evaluator import AccEvaluator
-from core.layers import Dense
-from core.layers import ReLU
-from core.losses import SigmoidCrossEntropyLoss
+from core.layer import Dense
+from core.layer import ReLU
+from core.loss import SigmoidCrossEntropy
 from core.model import Model
-from core.nn import Net
+from core.net import Net
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
 from utils.downloader import download_url
@@ -71,7 +71,7 @@ def main(args):
         Dense(1)
     ])
 
-    model = Model(net=net, loss=SigmoidCrossEntropyLoss(), optimizer=Adam(lr=args.lr))
+    model = Model(net=net, loss=SigmoidCrossEntropy(), optimizer=Adam(lr=args.lr))
 
     iterator = BatchIterator(batch_size=args.batch_size)
     evaluator = AccEvaluator()

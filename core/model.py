@@ -16,8 +16,8 @@ class Model(object):
     def backward(self, preds, targets):
         loss = self.loss.loss(preds, targets)
         grad = self.loss.grad(preds, targets)
-        grad_struct = self.net.backward(grad)
-        return loss, grad_struct
+        struct_grad = self.net.backward(grad)
+        return loss, struct_grad
 
     def apply_grad(self, grads):
         params = self.net.params
