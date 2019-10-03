@@ -335,6 +335,135 @@ class MaxPool2D(Layer):
         return h_pad + w_pad
 
 
+class ConvTranspose2D(Layer):
+
+    def __init__(self,
+                 kernel,
+                 stride=(1, 1),
+                 padding="SAME",
+                 w_init=XavierUniformInit(),
+                 b_init=ZerosInit()):
+        super().__init__("ConvTranspose2D")
+
+        # verify arguments
+        assert len(kernel) == 4
+        assert len(stride) == 2
+        assert padding in ("SAME", "VALID")
+
+        self.kernel_shape = kernel
+        self.stride = stride
+        self.initializers = {"w": w_init, "b": b_init}
+
+        # calculate padding needed for this layer
+        self.pad = self._get_padding(kernel[:2], padding)
+
+        self.is_init = False
+
+    def forward(self, inputs):
+        # lazy initialization
+        if not self.is_init:
+            self._init_parameters()
+
+        # inputs (?, 7, 7, 32)
+        k_h, k_w, in_c, out_c = self.kernel_shape
+        s_h, s_w = self.stride
+        pad = self.pad
+        print("origin: ", inputs.shape)
+
+        # insert zeros to inputs
+        inputs = self._insert_zeros(inputs, s_h, s_w)
+        print("zero-expanding: ", inputs.shape)
+
+        # padding
+        pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
+        X = np.pad(inputs, pad_width=pad_width, mode="constant")
+        print("zero-padding: ", X.shape)
+
+        col = self._im2col(X, k_h, k_w, s_h=1, s_w=1)
+        # flatten kernel
+        W = self.params["w"].reshape(-1, out_c)  # (k_h * k_w * in_c, out_c)
+
+        # step3: perform convolution by matrix product.
+        Z = col @ W
+        print("col shape: ", col.shape)
+        print("W shape: ", W.shape)
+        print("Z shape: ", Z.shape)
+
+        # step4: reshape output 
+        batch_sz, in_h, in_w, _ = X.shape 
+        # separate the batch size and feature map dimensions
+        Z = Z.reshape(batch_sz, Z.shape[0] // batch_sz, out_c)
+        # further divide the feature map in to (h, w) dimension
+        out_h = (in_h - k_h) + 1
+        out_w = (in_w - k_w) + 1
+        Z = Z.reshape(batch_sz, out_h, out_w, out_c)
+        print("final Z shape: ", Z.shape)
+
+        # plus the bias for every filter
+        Z += self.params["b"]
+        return Z
+
+    def backward(self, grads):
+        pass
+
+    @staticmethod
+    def _im2col(img, k_h, k_w, s_h, s_w):
+        """
+        Transform padded image into column matrix.
+        :param img: padded inputs of shape (B, in_h, in_w, in_c)
+        :param k_h: kernel height
+        :param k_w: kernel width
+        :param s_h: stride height
+        :param s_w: stride width
+        :return col: column matrix of shape (B*out_h*out_w, k_h*k_h*inc)
+        """
+        batch_sz, h, w, in_c = img.shape
+        # calculate result feature map size
+        out_h = (h - k_h) // s_h + 1
+        out_w = (w - k_w) // s_w + 1
+        # allocate space for column matrix
+        col = np.empty((batch_sz * out_h * out_w, k_h * k_w * in_c))
+        # fill in the column matrix
+        batch_span = out_w * out_h
+        for r in range(out_h):
+            r_start = r * s_h
+            matrix_r = r * out_w 
+            for c in range(out_w):
+                c_start = c * s_w
+                patch = img[:, r_start: r_start+k_h, c_start: c_start+k_w, :]
+                patch = patch.reshape(batch_sz, -1)
+                col[matrix_r+c::batch_span, :] = patch
+        return col
+        
+    @staticmethod
+    def _get_padding(kernel_shape, mode):
+        def _get_padding_1d(k_s):
+            n_pad = 0 if mode == "VALID" else k_s - 1
+            half = n_pad // 2
+            pad = [half, half] if n_pad % 2 == 0 else [half, half + 1]
+            return pad
+
+        h_pad = _get_padding_1d(kernel_shape[0])
+        w_pad = _get_padding_1d(kernel_shape[1])
+        return h_pad + w_pad
+
+    @staticmethod
+    def _insert_zeros(inputs, s_h, s_w):
+        batch_sz, in_h, in_w, in_c = inputs.shape
+
+        out_h = (in_h - 1) * s_h + 1
+        out_w = (in_w - 1) * s_w + 1
+        expand = np.zeros((batch_sz, out_h, out_w, in_c))
+        expand[:, ::s_h, ::s_w, :] = inputs
+        return expand
+
+
+    def _init_parameters(self):
+        self.params["w"] = self.initializers["w"](self.kernel_shape)
+        self.params["b"] = self.initializers["b"](self.kernel_shape[-1])
+        self.is_init = True
+
+
 class Flatten(Layer):
 
     def __init__(self):
