@@ -113,8 +113,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_type", default="cnn", type=str,
-        help="cnn or dense")
+    parser.add_argument("--model_type", default="dense", type=str,
+                        help="cnn or dense")
     parser.add_argument("--num_ep", default=50, type=int)
     parser.add_argument("--data_dir", default="./examples/mnist/data", type=str)
     parser.add_argument("--lr", default=1e-3, type=float)

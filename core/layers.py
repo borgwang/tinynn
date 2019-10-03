@@ -1,7 +1,5 @@
 """Network layers and activation layers."""
 
-import copy
-
 import numpy as np
 
 from core.initializer import XavierUniformInit
@@ -13,7 +11,7 @@ class Layer(object):
     def __init__(self, name):
         self.name = name
 
-        self.params, self._grads = {}, {}
+        self.params, self.grads = {}, {}
         self.is_training = True
 
     def forward(self, inputs):
@@ -21,14 +19,6 @@ class Layer(object):
 
     def backward(self, grad):
         raise NotImplementedError
-
-    @property
-    def grads(self):
-        return copy.copy(self._grads)
-
-    @grads.setter
-    def grads(self, grads):
-        self._grads = grads
 
     def set_phase(self, phase):
         self.is_training = True if phase == "TRAIN" else False
@@ -61,8 +51,8 @@ class Dense(Layer):
         return inputs @ self.params["w"] + self.params["b"]
 
     def backward(self, grad):
-        self._grads["w"] = self.inputs.T @ grad
-        self._grads["b"] = np.sum(grad, axis=0)
+        self.grads["w"] = self.inputs.T @ grad
+        self.grads["b"] = np.sum(grad, axis=0)
         return grad @ self.params["w"].T
 
     def _init_parameters(self, input_size):
@@ -176,8 +166,8 @@ class Conv2D(Layer):
         # calculate gradients of parameters
         flat_grad = grad.reshape((-1, out_c))
         d_W = self.col.T @ flat_grad
-        self._grads["w"] = d_W.reshape(self.kernel_shape)
-        self._grads["b"] = np.sum(flat_grad, axis=0)
+        self.grads["w"] = d_W.reshape(self.kernel_shape)
+        self.grads["b"] = np.sum(flat_grad, axis=0)
 
         # calculate backward gradients
         d_X = grad @ self.W.T

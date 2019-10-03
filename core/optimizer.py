@@ -13,7 +13,7 @@ class BaseOptimizer(object):
         # compute step according to derived class method
         grad_values = grads.values
         step_values = self._compute_step(grad_values)
-        grads.from_values(step_values)
+        grads.values = step_values
 
         # apply weight_decay if specified
         if self.weight_decay:
