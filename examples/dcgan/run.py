@@ -12,11 +12,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from core.layers import Dense
-from core.layers import ReLU
-from core.layers import Tanh
+from core.layers import LeakyReLU
+from core.layers import Sigmoid
 from core.losses import SigmoidCrossEntropyLoss
 from core.model import Model
 from core.nn import Net
+from core.initializer import NormalInit
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
 from utils.downloader import download_url
@@ -47,20 +48,30 @@ def get_noise(size):
 
 
 def mlp_G():
-    return Net([Dense(100), ReLU(), 
-                Dense(300), ReLU(), 
-                Dense(784), Tanh()])
+    w_init = NormalInit(0.0, 0.02)
+    return Net([
+        Dense(100, w_init=w_init), 
+        LeakyReLU(), 
+        Dense(300, w_init=w_init), 
+        LeakyReLU(), 
+        Dense(784, w_init=w_init), 
+        Sigmoid()])
 
 
 def mlp_D():
-    return Net([Dense(300), ReLU(), 
-                Dense(100), ReLU(), 
-                Dense(1)])
+    w_init = NormalInit(0.0, 0.02)
+    return Net([
+        Dense(300, w_init=w_init), 
+        LeakyReLU(), 
+        Dense(100, w_init=w_init), 
+        LeakyReLU(), 
+        Dense(1, w_init=w_init)])
 
 
 def train(args):
     fix_noise = get_noise(size=(args.batch_size, args.nz))
     loss = SigmoidCrossEntropyLoss()
+    # TODO: replace mlp with cnn
     G = Model(net=mlp_G(), loss=loss,
               optimizer=Adam(args.lr_g, beta1=args.beta1))
     D = Model(net=mlp_D(), loss=loss,
@@ -156,6 +167,7 @@ def save_batch_as_images(path, batch, titles=None):
 
 
 def sum_grads(grad1, grad2):
+    # TODO: better way?
     sum_grad = list()
     for gd1, gd2 in zip(grad1, grad2):
         layer = dict()
@@ -191,8 +203,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--num_ep", default=50, type=int)
-    parser.add_argument("--lr_g", default=9e-4, type=float)
-    parser.add_argument("--lr_d", default=3e-4, type=float)
+    parser.add_argument("--lr_g", default=7.5e-4, type=float)
+    parser.add_argument("--lr_d", default=2e-4, type=float)
     parser.add_argument("--beta1", default=0.5, type=float)
     parser.add_argument("--nz", default=50, type=int,
                         help="dimension of latent z vector")
