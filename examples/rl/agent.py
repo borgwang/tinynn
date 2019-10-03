@@ -73,8 +73,7 @@ class DQN(object):
     def update_model(self):
         if self.global_step % self.target_network_update_interval == 0:
             # Update target network. Assign params in q_net to target_q_net
-            q_net_params = self.q_net.get_parameters()
-            self.target_q_net.set_parameters(q_net_params)
+            self.target_q_net.params = self.q_net.params
 
         # Sample experience
         minibatch = random.sample(self.replay_buffer, self.batch_size)

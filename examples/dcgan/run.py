@@ -99,14 +99,14 @@ def train(args):
 
             # train D
             d_err = d_real_err + d_fake_err
-            d_grads = sum_grads(d_real_grad, d_fake_grad)
+            d_grads = d_real_grad + d_fake_grad
             D.apply_grad(d_grads)
 
             # ---- Train Generator ---
             # maximize log(D(G(z)))
             d_pred_fake = D.forward(g_out)
-            g_err, _ = D.backward(d_pred_fake, label_real)
-            g_grads = G.net.backward(D.net.input_grads)
+            g_err, d_grad = D.backward(d_pred_fake, label_real)
+            g_grads = G.net.backward(d_grad.wrt_input)
             G.apply_grad(g_grads)
 
             running_d_err = 0.9 * running_d_err + 0.1 * d_err
@@ -132,8 +132,7 @@ def train(args):
 
 
 def evaluate(args):
-    G = Model(net=mlp_G(), loss=SigmoidCrossEntropyLoss(),
-              optimizer=Adam(args.lr_g, beta1=args.beta1))
+    G = Model(net=mlp_G(), loss=None, optimizer=None)
     model_path = os.path.join(args.output_dir, args.model_name)
     print("Loading model from ", model_path)
     G.load(model_path)
@@ -164,17 +163,6 @@ def save_batch_as_images(path, batch, titles=None):
     print("Saving", path)
     plt.savefig(path)
     plt.close(fig)
-
-
-def sum_grads(grad1, grad2):
-    # TODO: better way?
-    sum_grad = list()
-    for gd1, gd2 in zip(grad1, grad2):
-        layer = dict()
-        for name in gd1.keys():
-            layer[name] = gd1[name] + gd2[name]
-        sum_grad.append(layer)
-    return sum_grad
 
 
 def main(args):

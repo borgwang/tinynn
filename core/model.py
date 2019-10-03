@@ -16,15 +16,12 @@ class Model(object):
     def backward(self, preds, targets):
         loss = self.loss.loss(preds, targets)
         grad = self.loss.grad(preds, targets)
-        grads = self.net.backward(grad)
-        return loss, grads
+        grad_struct = self.net.backward(grad)
+        return loss, grad_struct
 
     def apply_grad(self, grads):
-        params = self.net.get_parameters()
-        steps = self.optimizer.compute_step(grads, params)
-        for step, param in zip(steps, params):
-            for k, v in param.items():
-                param[k] += step[k]
+        params = self.net.params
+        self.optimizer.step(grads, params)
 
     def save(self, path):
         with open(path, "wb") as f:

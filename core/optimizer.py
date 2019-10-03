@@ -9,32 +9,18 @@ class BaseOptimizer(object):
         self.lr = lr
         self.weight_decay = weight_decay
 
-    def compute_step(self, grads, params):
-        # convert list of dicts to a numpy array
-        grad_values = list()
-        for grad_dict in grads:
-            for grad in grad_dict.values():
-                grad_values.append(grad)
-        grad_values = np.array(grad_values)
-
+    def step(self, grads, params):
         # compute step according to derived class method
+        grad_values = grads.values
         step_values = self._compute_step(grad_values)
+        grads.from_values(step_values)
 
-        # construct list of dict
-        i = 0  
-        steps = list()  # all layer of steps in restored shape
-        for param_dict in params:
-            layer = dict()  # one layer of steps in restored shape
-            for name, param in param_dict.items():
-                # get step value of curr layer parameters
-                step = step_values[i]
-                # apply weight_decay if specified
-                step -= self.weight_decay * param
-                # set the restored step to parameter key
-                layer[name] = step
-                i += 1
-            steps.append(layer)
-        return steps
+        # apply weight_decay if specified
+        if self.weight_decay:
+            grads -= self.weight_decay * params
+
+        # take a step
+        params += grads
 
     def _compute_step(self, grad):
         raise NotImplementedError
