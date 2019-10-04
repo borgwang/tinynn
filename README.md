@@ -1,5 +1,8 @@
 
-## tinynn
+## tinynn 
+
+[![Build Status](https://travis-ci.com/borgwang/tinynn.svg?branch=master)](https://travis-ci.com/borgwang/tinynn)
+
 
 tinynn is a lightweight deep learning framework written in Python3 (with NumPy).
 
@@ -41,7 +44,7 @@ python examples/rl/run.py
 - losses: SoftmaxCrossEntropy, SigmoidCrossEntropy, MAE, MSE, Huber
 - optimizer: SGD, Adam, Momentum, RMSProp, Adagrad, Adadelta
 
-## Contribute
+## Contribute 
 
 Please follow the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) for Python coding style.
 
