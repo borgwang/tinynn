@@ -14,7 +14,7 @@ matrix:
       language: shell
 
 # install dependencies
-install: pip3 install -r requirments.txt
+install: pip3 install -r requirements.txt
 
 # run test
 script: pytest
