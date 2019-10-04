@@ -78,6 +78,27 @@ class StructuredParam(object):
                 i += 1
         self._values = self._get_values()
 
+    @property
+    def shape(self):
+        return self._get_shape()
+
+    def _get_shape(self):
+        shape = list()
+        for d in self.layer_data:
+            l_shape = dict()
+            for k, v in d.items():
+                l_shape[k] = v.shape
+            shape.append(l_shape)
+        shape = tuple(shape)
+        return shape
+
+    def __repr__(self):
+        cont = "%s with shape\n" % self.__class__.__name__
+        cont += ("-" * 10 + "\n")
+        cont += "\n".join([str(s) for s in self.shape])
+        cont += ("\n" + "-" * 10)
+        return cont
+
     @staticmethod
     def _ensure_values(obj):
         if isinstance(obj, StructuredParam):
