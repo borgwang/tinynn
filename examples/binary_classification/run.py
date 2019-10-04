@@ -9,7 +9,6 @@ import time
 
 import numpy as np
 
-from core.evaluator import AccEvaluator
 from core.layer import Dense
 from core.layer import ReLU
 from core.loss import SigmoidCrossEntropy
@@ -18,6 +17,7 @@ from core.net import Net
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
 from utils.downloader import download_url
+from utils.metric import accuracy
 from utils.seeder import random_seed
 
 
@@ -74,7 +74,6 @@ def main(args):
     model = Model(net=net, loss=SigmoidCrossEntropy(), optimizer=Adam(lr=args.lr))
 
     iterator = BatchIterator(batch_size=args.batch_size)
-    evaluator = AccEvaluator()
     loss_list = list()
     for epoch in range(args.num_ep):
         t_start = time.time()
@@ -91,7 +90,7 @@ def main(args):
         test_pred[test_pred > 0] = 1
         test_pred[test_pred <= 0] = 0
         test_pred_idx = test_pred.reshape(-1)
-        res = evaluator.evaluate(test_pred_idx, test_y_idx)
+        res = accuracy(test_pred_idx, test_y_idx)
         print(res)
         model.set_phase("TRAIN")
 

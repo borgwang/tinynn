@@ -11,7 +11,6 @@ import time
 
 import numpy as np
 
-from core.evaluator import AccEvaluator
 from core.layer import Conv2D
 from core.layer import Dense
 from core.layer import Flatten
@@ -23,6 +22,7 @@ from core.net import Net
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
 from utils.downloader import download_url
+from utils.metric import accuracy
 from utils.seeder import random_seed
 
 
@@ -91,7 +91,6 @@ def main(args):
     model = Model(net=net, loss=SoftmaxCrossEntropy(), optimizer=Adam(lr=args.lr))
 
     iterator = BatchIterator(batch_size=args.batch_size)
-    evaluator = AccEvaluator()
     loss_list = list()
     for epoch in range(args.num_ep):
         t_start = time.time()
@@ -106,7 +105,7 @@ def main(args):
         test_pred = model.forward(test_x)
         test_pred_idx = np.argmax(test_pred, axis=1)
         test_y_idx = np.asarray(test_y)
-        res = evaluator.evaluate(test_pred_idx, test_y_idx)
+        res = accuracy(test_pred_idx, test_y_idx)
         print(res)
         model.set_phase("TRAIN")
 
