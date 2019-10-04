@@ -1,20 +1,20 @@
 language: python
 
-dist: xenial
 python:
   - 3.6
 
 matrix:
   include:
+    # Linux
+    - name: "Python 3.6 on Xenial Linux"
+      python: 3.6
     # OSX
     - name: "Python 3.6 on macOS"
       os: osx
       language: shell
-      install: pip install -r requirements.txt
-      script: pytest
 
 # install dependencies
-install: pip install -r requirments.txt
+install: pip3 install -r requirments.txt
 
 # run test
 script: pytest
