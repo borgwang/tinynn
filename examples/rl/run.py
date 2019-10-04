@@ -18,7 +18,6 @@ def main(args):
         random_seed(args.seed)
         env.seed(args.seed)
 
-
     agent = DQN(env, args)
     agent.construct_model()
 
@@ -51,7 +50,8 @@ def main(args):
                 rewards_history[-1] * 0.9 + ep_rewards * 0.1)
         # Decay epsilon
         if agent.epsilon > args.final_epsilon:
-            agent.epsilon -= (args.init_epsilon - args.final_epsilon) / args.max_ep
+            decay = (args.init_epsilon - args.final_epsilon) / args.max_ep
+            agent.epsilon -= decay
 
         # Evaluate during training
         if ep % args.log_every == args.log_every-1:

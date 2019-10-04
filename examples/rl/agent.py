@@ -40,7 +40,8 @@ class DQN(object):
 
     def construct_model(self):
         self.q_net = self.build_net()
-        self.model = Model(net=self.q_net, loss=MSE(), optimizer=RMSProp(self.args.lr))
+        self.model = Model(net=self.q_net, loss=MSE(),
+                           optimizer=RMSProp(self.args.lr))
         # Target network
         self.target_q_net = self.build_net()
 

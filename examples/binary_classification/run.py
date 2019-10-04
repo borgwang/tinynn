@@ -71,7 +71,8 @@ def main(args):
         Dense(1)
     ])
 
-    model = Model(net=net, loss=SigmoidCrossEntropy(), optimizer=Adam(lr=args.lr))
+    model = Model(net=net, loss=SigmoidCrossEntropy(),
+                  optimizer=Adam(lr=args.lr))
 
     iterator = BatchIterator(batch_size=args.batch_size)
     loss_list = list()
@@ -96,10 +97,12 @@ def main(args):
 
 
 if __name__ == "__main__":
+    curr_dir = os.path.dirname(os.path.abspath(__file__))
+
     parser = argparse.ArgumentParser()
+    parser.add_argument("--data_dir", type=str,
+                        default=os.path.join(curr_dir, "data"))
     parser.add_argument("--num_ep", default=50, type=int)
-    parser.add_argument("--data_dir", default="./examples/binary_classification/data",
-                        type=str, help="dataset directory")
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--batch_size", default=128, type=int)
     parser.add_argument("--seed", default=-1, type=int)

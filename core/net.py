@@ -136,7 +136,7 @@ class StructuredParam(object):
 
     def __mul__(self, other):
         obj = copy.deepcopy(self)
-        obj.valus = self.values * self._ensure_values(other)
+        obj.values = self.values * self._ensure_values(other)
         return obj
 
     def __rmul__(self, other):
