@@ -37,7 +37,7 @@ def prepare_dataset(data_dir):
     try:
         download_url(url, save_path)
     except Exception as e:
-        print('Error downloading dataset: %s' % str(e))
+        print("Error downloading dataset: %s" % str(e))
         sys.exit(1)
     # load the dataset
     with gzip.open(save_path, "rb") as f:

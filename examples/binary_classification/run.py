@@ -32,7 +32,7 @@ def prepare_dataset(data_dir):
     try:
         download_url(url, save_path)
     except Exception as e:
-        print('Error downloading dataset: %s' % str(e))
+        print("Error downloading dataset: %s" % str(e))
         sys.exit(1)
     # read the dataset
     data = list()
