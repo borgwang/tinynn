@@ -28,7 +28,7 @@ class Optimizer(object):
 
 class SGD(Optimizer):
 
-    def __init__(self, lr, weight_decay=0.0):
+    def __init__(self, lr=0.01, weight_decay=0.0):
         super().__init__(lr, weight_decay)
 
     def _compute_step(self, grad):
