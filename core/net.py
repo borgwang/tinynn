@@ -54,20 +54,10 @@ class StructuredParam(object):
 
     def __init__(self, layer_data):
         self.layer_data = layer_data
-        self._values = None
-
-    def _get_values(self):
-        values = list()
-        for d in self.layer_data:
-            for v in d.values():
-                values.append(v)
-        return np.array(values)
 
     @property
     def values(self):
-        if self._values is None:
-            self._values = self._get_values()
-        return self._values
+        return np.array([v for d in self.layer_data for v in d.values()])
 
     @values.setter
     def values(self, values):
@@ -76,7 +66,6 @@ class StructuredParam(object):
             for name in d.keys():
                 d[name] = values[i]
                 i += 1
-        self._values = self._get_values()
 
     @property
     def shape(self):
