@@ -3,6 +3,9 @@
 import runtime_path  # isort:skip
 
 from core.initializer import *
+from utils.seeder import random_seed
+
+random_seed(0)
 
 TEST_SHAPE = (100000, 1)
 TOR = 1e-2
