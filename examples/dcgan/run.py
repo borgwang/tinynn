@@ -3,44 +3,22 @@
 import runtime_path  # isort:skip
 
 import argparse
-import gzip
 import os
-import pickle
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
 
+from core.initializer import Normal
 from core.layer import Dense
 from core.layer import LeakyReLU
 from core.layer import Sigmoid
 from core.loss import SigmoidCrossEntropy
 from core.model import Model
 from core.net import Net
-from core.initializer import Normal
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
-from utils.downloader import download_url
+from utils.dataset import mnist
 from utils.seeder import random_seed
-
-
-def prepare_dataset(data_dir):
-    url = "http://deeplearning.net/data/mnist/mnist.pkl.gz"
-    save_path = os.path.join(data_dir, url.split("/")[-1])
-    print("Preparing MNIST dataset ...")
-    try:
-        download_url(url, save_path)
-    except Exception as e:
-        print("Error downloading dataset: %s" % str(e))
-        sys.exit(1)
-    # load the dataset
-    with gzip.open(save_path, "rb") as f:
-        train, valid, test = pickle.load(f, encoding="latin1")
-
-    # return all X from train/valid/test 
-    X = np.concatenate([train[0], valid[0], test[0]])
-    y = np.concatenate([train[1], valid[1], test[1]])
-    return X, y
 
 
 def get_noise(size):
@@ -69,7 +47,13 @@ def mlp_D():
 
 
 def train(args):
+    # prepare dataset
+    train_, valid, test = mnist(args.data_dir)
+    X = np.concatenate([train_[0], valid[0], test[0]])
+    y = np.concatenate([train_[1], valid[1], test[1]])
+
     fix_noise = get_noise(size=(args.batch_size, args.nz))
+
     loss = SigmoidCrossEntropy()
     # TODO: replace mlp with cnn
     G = Model(net=mlp_G(), loss=loss,
@@ -78,7 +62,6 @@ def train(args):
               optimizer=Adam(args.lr_d, beta1=args.beta1))
 
     running_g_err, running_d_err = 0, 0
-    X, y = prepare_dataset(args.data_dir)
     iterator = BatchIterator(batch_size=args.batch_size)
     for epoch in range(args.num_ep):
         for i, batch in enumerate(iterator(X, y)):

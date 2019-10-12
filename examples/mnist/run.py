@@ -3,10 +3,7 @@
 import runtime_path  # isort:skip
 
 import argparse
-import gzip
 import os
-import pickle
-import sys
 import time
 
 import numpy as np
@@ -21,7 +18,7 @@ from core.model import Model
 from core.net import Net
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
-from utils.downloader import download_url
+from utils.dataset import mnist
 from utils.metric import accuracy
 from utils.seeder import random_seed
 
@@ -30,25 +27,11 @@ def get_one_hot(targets, nb_classes):
     return np.eye(nb_classes)[np.array(targets).reshape(-1)]
 
 
-def prepare_dataset(data_dir):
-    url = "http://deeplearning.net/data/mnist/mnist.pkl.gz"
-    save_path = os.path.join(data_dir, url.split("/")[-1])
-    print("Preparing MNIST dataset ...")
-    try:
-        download_url(url, save_path)
-    except Exception as e:
-        print("Error downloading dataset: %s" % str(e))
-        sys.exit(1)
-    # load the dataset
-    with gzip.open(save_path, "rb") as f:
-        return pickle.load(f, encoding="latin1")
-
-
 def main(args):
     if args.seed >= 0:
         random_seed(args.seed)
 
-    train_set, valid_set, test_set = prepare_dataset(args.data_dir)
+    train_set, valid_set, test_set = mnist(args.data_dir)
     train_x, train_y = train_set
     test_x, test_y = test_set
     train_y = get_one_hot(train_y, 10)

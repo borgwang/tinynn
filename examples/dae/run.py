@@ -5,10 +5,7 @@ Example code for a denoising autoencoder (DAE).
 import runtime_path  # isort:skip
 
 import argparse
-import gzip
 import os
-import pickle
-import sys
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -21,7 +18,7 @@ from core.net import Net
 from core.optimizer import Adam
 from examples.dae.autoencoder import AutoEncoder
 from utils.data_iterator import BatchIterator
-from utils.downloader import download_url
+from utils.dataset import mnist
 from utils.seeder import random_seed
 
 
@@ -45,20 +42,6 @@ def save_batch_as_images(path, batch, titles=None):
     plt.close(fig)
 
 
-def prepare_dataset(data_dir):
-    url = "http://deeplearning.net/data/mnist/mnist.pkl.gz"
-    save_path = os.path.join(data_dir, url.split("/")[-1])
-    print("Preparing MNIST dataset ...")
-    try:
-        download_url(url, save_path)
-    except Exception as e:
-        print("Error downloading dataset: %s" % str(e))
-        sys.exit(1)
-    # load the dataset
-    with gzip.open(save_path, "rb") as f:
-        return pickle.load(f, encoding="latin1")
-
-
 def transition(code1, code2, n):
     """
     Make intermediate latent-space transition
@@ -80,7 +63,7 @@ def main(args):
         os.makedirs(args.output_dir)
 
     # prepare and read dataset
-    train_set, valid_set, test_set = prepare_dataset(args.data_dir)
+    train_set, _, test_set = mnist(args.data_dir)
     train_x, train_y = train_set
     test_x, test_y = test_set
 
