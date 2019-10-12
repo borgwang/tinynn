@@ -64,7 +64,10 @@ class StructuredParam(object):
         i = 0
         for d in self.layer_data:
             for name in d.keys():
-                d[name] = values[i]
+                if isinstance(values, float):
+                    d[name] = values
+                else:
+                    d[name] = values[i]
                 i += 1
 
     @property
@@ -87,6 +90,9 @@ class StructuredParam(object):
         cont += "\n".join([str(s) for s in self.shape])
         cont += ("\n" + "-" * 10)
         return cont
+
+    def clip(self, min_=None, max_=None):
+        self.values = [v.clip(min_, max_)for v in self.values]
 
     @staticmethod
     def _ensure_values(obj):
@@ -141,3 +147,37 @@ class StructuredParam(object):
         obj = copy.deepcopy(self)
         obj.values = -self.values
         return obj
+
+    def __len__(self):
+        return len(self.values)
+
+    def __lt__(self, other):
+        obj = copy.deepcopy(self)
+        other = self._ensure_values(other)
+
+        if isinstance(other, float):
+            obj.values = [v < other for v in self.values]
+        else:
+            obj.values = [v < other[i] for i, v in enumerate(self.values)]
+        return obj
+
+    def __gt__(self, other):
+        obj = copy.deepcopy(self)
+        other = self._ensure_values(other)
+
+        if isinstance(other, float):
+            obj.values = [v > other for v in self.values]
+        else:
+            obj.values = [v > other[i] for i, v in enumerate(self.values)]
+        return obj
+
+    def __and__(self, other):
+        obj = copy.deepcopy(self)
+        obj.values = self._ensure_values(other) & self.values
+        return obj
+
+    def __or__(self, other):
+        obj = copy.deepcopy(self)
+        obj.values = self._ensure_values(other) | self.values
+        return obj
+
