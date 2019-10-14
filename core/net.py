@@ -11,9 +11,6 @@ class Net(object):
         self.layers = layers
         self._phase = "TRAIN"
 
-        layer_params = [l.params for l in self.layers]
-        self._struct_param = StructuredParam(layer_params)
-
     def forward(self, inputs):
         for layer in self.layers:
             inputs = layer.forward(inputs)
@@ -34,11 +31,11 @@ class Net(object):
 
     @property
     def params(self):
-        return self._struct_param
+        return StructuredParam([l.params for l in self.layers])
 
     @params.setter
     def params(self, params):
-        self._struct_param.values = params.values
+        self.params.values = params.values
 
     def get_phase(self):
         return self._phase
@@ -47,6 +44,12 @@ class Net(object):
         for layer in self.layers:
             layer.set_phase(phase)
         self._phase = phase
+
+    def init_params(self, input_shape):
+        """Manually init parameters by letting data forward throught the network."""
+        # TODO: better way to do this?
+        fake = np.ones((1, *input_shape))
+        self.forward(fake)
 
 
 class StructuredParam(object):
@@ -64,10 +67,7 @@ class StructuredParam(object):
         i = 0
         for d in self.layer_data:
             for name in d.keys():
-                if isinstance(values, float):
-                    d[name] = values
-                else:
-                    d[name] = values[i]
+                d[name] = values[i]
                 i += 1
 
     @property
