@@ -35,6 +35,7 @@ class ParamServer(object):
         self.model.net.init_params(input_shape=(784,))
 
         self.cnt = 0
+        self.start_time = time.time()
 
     def get_params(self):
         return self.model.net.params
@@ -54,7 +55,8 @@ class ParamServer(object):
         test_pred_idx = np.argmax(test_pred, axis=1)
         test_y_idx = np.asarray(test_y)
 
-        print("accuracy after %d updates: " % self.cnt)
+        print("[%.2fs] accuracy after %d batches: " %
+              (time.time() - self.start_time, self.cnt))
         print(accuracy(test_pred_idx, test_y_idx))
         self.model.set_phase("TRAIN")
 
@@ -124,7 +126,8 @@ def main():
                   optimizer=Adam(lr=args.lr))
 
     ray.init()
-    ps = ParamServer.remote(model=copy.deepcopy(model), test_set=test_set)
+    ps = ParamServer.remote(model=copy.deepcopy(model),
+                            test_set=test_set)
     workers = []
     for rank in range(1, args.num_proc + 1):
         worker = Worker.remote(model=copy.deepcopy(model),
@@ -158,9 +161,9 @@ if __name__ == "__main__":
                         help="Train mode [sync|async]. Defaults to 'sync'.")
     parser.add_argument("--data_dir", type=str,
                         default=os.path.join(curr_dir, "data"))
-    parser.add_argument("--num_proc", type=int, default=4,
+    parser.add_argument("--num_proc", type=int, default=8,
                         help="Number of workers.")
-    parser.add_argument("--num_ep", default=5, type=int)
+    parser.add_argument("--num_ep", default=50, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--batch_size", default=128, type=int)
     parser.add_argument("--seed", default=-1, type=int)
