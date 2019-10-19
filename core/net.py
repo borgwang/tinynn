@@ -143,6 +143,20 @@ class StructuredParam(object):
         self.values *= self._ensure_values(other)
         return self
 
+    def __truediv__(self, other):
+        obj = copy.deepcopy(self)
+        obj.values = self.values / self._ensure_values(other)
+        return obj
+
+    def __rtruediv__(self, other):
+        obj = copy.deepcopy(self)
+        obj.values = self._ensure_values(other) / self.values
+        return obj
+
+    def __itruediv__(self, other):
+        self.values /= self._ensure_values(other)
+        return self
+
     def __neg__(self):
         obj = copy.deepcopy(self)
         obj.values = -self.values

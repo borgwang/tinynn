@@ -20,6 +20,6 @@ def test_struct_param():
     assert params.shape == bigger.shape
     assert (params.values[-1] * 10 == bigger.values[-1]).all()
 
-
-
+    smaller = params / 10
+    assert (params.values[-1] / 10 == smaller.values[-1]).all()
 
