@@ -23,3 +23,6 @@ def test_struct_param():
     smaller = params / 10
     assert (params.values[-1] / 10 == smaller.values[-1]).all()
 
+    power = params ** 2
+    assert (power.values[-1] == params.values[-1] * params.values[-1]).all()
+

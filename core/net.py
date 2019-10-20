@@ -157,6 +157,15 @@ class StructuredParam(object):
         self.values /= self._ensure_values(other)
         return self
 
+    def __pow__(self, other):
+        obj = copy.deepcopy(self)
+        obj.values = self.values ** self._ensure_values(other)
+        return obj
+
+    def __ipow__(self, other):
+        self.values **= self._ensure_values(other)
+        return self
+
     def __neg__(self):
         obj = copy.deepcopy(self)
         obj.values = -self.values
