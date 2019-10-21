@@ -9,8 +9,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from core.initializer import Normal
+from core.layer import Conv2D
 from core.layer import Dense
+from core.layer import Flatten
 from core.layer import LeakyReLU
+from core.layer import MaxPool2D
 from core.layer import Sigmoid
 from core.loss import SigmoidCrossEntropy
 from core.model import Model
@@ -46,19 +49,46 @@ def mlp_D():
         Dense(1, w_init=w_init)])
 
 
+def cnn_G():
+    # TODO
+    pass 
+
+
+def cnn_D():
+    return Net([
+        Conv2D(kernel=[5, 5, 1, 6], stride=[1, 1], padding="SAME"),
+        LeakyReLU(),
+        MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
+        Conv2D(kernel=[5, 5, 6, 16], stride=[1, 1], padding="SAME"),
+        LeakyReLU(),
+        MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
+        Flatten(),
+        Dense(120),
+        LeakyReLU(),
+        Dense(84),
+        LeakyReLU(),
+        Dense(1)])
+
+
 def train(args):
     # prepare dataset
     train_, valid, test = mnist(args.data_dir)
     X = np.concatenate([train_[0], valid[0], test[0]])
     y = np.concatenate([train_[1], valid[1], test[1]])
 
-    fix_noise = get_noise(size=(args.batch_size, args.nz))
+    if args.model_type == "cnn":
+        G_net, D_net = cnn_G(), cnn_D()
+        X = X.reshape((-1, 28, 28, 1))
+    elif args.model_type == "mlp":
+        G_net, D_net = mlp_G(), mlp_D()
+    else:
+        raise ValueError("Invalid argument: model_type")
 
+    fix_noise = get_noise(size=(args.batch_size, args.nz))
     loss = SigmoidCrossEntropy()
-    # TODO: replace mlp with cnn
-    G = Model(net=mlp_G(), loss=loss,
+    G = Model(net=G_net, loss=loss,
               optimizer=Adam(args.lr_g, beta1=args.beta1))
-    D = Model(net=mlp_D(), loss=loss,
+    D = Model(net=D_net, loss=loss,
               optimizer=Adam(args.lr_d, beta1=args.beta1))
 
     running_g_err, running_d_err = 0, 0
@@ -165,6 +195,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_dir", type=str,
                         default=os.path.join(curr_dir, "data"))
+    parser.add_argument("--model_type", default="mlp", type=str,
+                        help="cnn or mlp")
     parser.add_argument("--output_dir", type=str,
                         default=os.path.join(curr_dir, "samples"))
     parser.add_argument("--seed", type=int, default=-1)
