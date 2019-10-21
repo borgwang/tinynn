@@ -77,7 +77,6 @@ def test_parameters_change(fake_dataset):
 def test_backprop_dense(fc_model, fake_dataset):
     # train on a single data point
     X, y = fake_dataset
-    X, y = X[0:1], y[0:1]
 
     previous_loss = np.inf
     for step in range(50):
@@ -92,7 +91,6 @@ def test_backprop_dense(fc_model, fake_dataset):
 def test_backprop_cnn(cnn_model, img_dataset):
     # train on a single data point
     X, y = img_dataset
-    X, y = X[0:1], y[0:1]
 
     previous_loss = np.inf
     for step in range(50):

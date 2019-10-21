@@ -331,8 +331,8 @@ class ConvTranspose2D(Layer):
                  kernel,
                  stride=(1, 1),
                  padding="SAME",
-                 w_init=XavierUniformInit(),
-                 b_init=ZerosInit()):
+                 w_init=XavierUniform(),    
+                 b_init=Zeros()):
         super().__init__("ConvTranspose2D")
 
         # verify arguments
@@ -358,43 +358,71 @@ class ConvTranspose2D(Layer):
         k_h, k_w, in_c, out_c = self.kernel_shape
         s_h, s_w = self.stride
         pad = self.pad
-        print("origin: ", inputs.shape)
 
-        # insert zeros to inputs
+        # set stride - insert zeros to inputs
         inputs = self._insert_zeros(inputs, s_h, s_w)
-        print("zero-expanding: ", inputs.shape)
 
-        # padding
-        pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
+        # handle padding
+        # TODO: buggy 
+        real_pad = [k_h - 1 - pad[0], k_h - 1 - pad[1],
+                    k_w - 1 - pad[2], k_w - 1 - pad[3]]
+        pad_width = ((0, 0), (real_pad[0], real_pad[1]), 
+                     (real_pad[2], real_pad[3]), (0, 0))
         X = np.pad(inputs, pad_width=pad_width, mode="constant")
-        print("zero-padding: ", X.shape)
 
         col = self._im2col(X, k_h, k_w, s_h=1, s_w=1)
         # flatten kernel
         W = self.params["w"].reshape(-1, out_c)  # (k_h * k_w * in_c, out_c)
-
-        # step3: perform convolution by matrix product.
+        # perform convolution by matrix product.
         Z = col @ W
-        print("col shape: ", col.shape)
-        print("W shape: ", W.shape)
-        print("Z shape: ", Z.shape)
 
         # step4: reshape output 
         batch_sz, in_h, in_w, _ = X.shape 
         # separate the batch size and feature map dimensions
         Z = Z.reshape(batch_sz, Z.shape[0] // batch_sz, out_c)
+
         # further divide the feature map in to (h, w) dimension
-        out_h = (in_h - k_h) + 1
-        out_w = (in_w - k_w) + 1
+        out_h = (in_h - k_h) // 1 + 1
+        out_w = (in_w - k_w) // 1 + 1
         Z = Z.reshape(batch_sz, out_h, out_w, out_c)
-        print("final Z shape: ", Z.shape)
 
         # plus the bias for every filter
         Z += self.params["b"]
+
+        # save results for backward function
+        self.col = col
+        self.W = W
+        self.X_shape = X.shape
+        self.real_pad = real_pad
         return Z
 
-    def backward(self, grads):
-        pass
+    def backward(self, grad):
+        # read size parameters
+        k_h, k_w, in_c, out_c = self.kernel_shape
+        s_h, s_w = self.stride
+        batch_sz, in_h, in_w, in_c = self.X_shape
+        pad = self.real_pad
+
+        # calculate gradients of parameters
+        flat_grad = grad.reshape((-1, out_c))
+        d_W = self.col.T @ flat_grad
+        self.grads["w"] = d_W.reshape(self.kernel_shape)
+        self.grads["b"] = np.sum(flat_grad, axis=0)
+
+        # calculate backward gradients
+        d_X = grad @ self.W.T
+        # cast gradients back to original shape as d_in
+        d_in = np.zeros(shape=self.X_shape)
+        for i, r in enumerate(range(0, in_h - k_h + 1, 1)):
+            for j, c in enumerate(range(0, in_w - k_w + 1, 1)):
+                patch = d_X[:, i, j, :]
+                patch = patch.reshape((batch_sz, k_h, k_w, in_c))
+                d_in[:, r:r+k_h, c:c+k_w, :] += patch
+
+        # cut off gradients of padding
+        d_in = d_in[:, pad[0]:in_h-pad[1], pad[2]:in_w-pad[3], :]
+        # ignore zeros inserted in forward process 
+        return d_in[:, ::s_h, ::s_w, :]
 
     @staticmethod
     def _im2col(img, k_h, k_w, s_h, s_w):
