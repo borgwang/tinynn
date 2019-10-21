@@ -9,15 +9,15 @@ import time
 import numpy as np
 from PIL import Image
 
-from core.evaluator import MSEEvaluator
-from core.layers import Dense
-from core.layers import ReLU
-from core.layers import Sigmoid
-from core.losses import MSELoss
+from core.layer import Dense
+from core.layer import ReLU
+from core.layer import Sigmoid
+from core.loss import MSE
 from core.model import Model
-from core.nn import Net
+from core.net import Net
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
+from utils.metric import mean_square_error
 from utils.seeder import random_seed
 
 
@@ -55,18 +55,17 @@ def main(args):
         Sigmoid()
     ])
 
-    model = Model(net=net, loss=MSELoss(), optimizer=Adam())
-    mse_evaluator = MSEEvaluator()
+    model = Model(net=net, loss=MSE(), optimizer=Adam())
     iterator = BatchIterator(batch_size=args.batch_size)
     for epoch in range(args.num_ep):
         for batch in iterator(train_x, train_y):
             preds = model.forward(batch.inputs)
             loss, grads = model.backward(preds, batch.targets)
-            model.apply_grad(grads)
+            model.apply_grads(grads)
 
         # evaluate
         preds = net.forward(train_x)
-        mse = mse_evaluator.evaluate(preds, train_y)
+        mse = mean_square_error(preds, train_y)
         print("Epoch %d %s" % (epoch, mse))
 
         # generate painting

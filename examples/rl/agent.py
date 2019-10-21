@@ -4,10 +4,10 @@ import numpy as np
 import random
 from collections import deque
 
-from core.nn import Net
-from core.layers import Dense, ReLU
+from core.net import Net
+from core.layer import Dense, ReLU
 from core.model import Model
-from core.losses import MSELoss
+from core.loss import MSE
 from core.optimizer import RMSProp
 
 
@@ -40,7 +40,8 @@ class DQN(object):
 
     def construct_model(self):
         self.q_net = self.build_net()
-        self.model = Model(net=self.q_net, loss=MSELoss(), optimizer=RMSProp(self.args.lr))
+        self.model = Model(net=self.q_net, loss=MSE(),
+                           optimizer=RMSProp(self.args.lr))
         # Target network
         self.target_q_net = self.build_net()
 
@@ -105,4 +106,4 @@ class DQN(object):
         targets = np.multiply(targets, a_batch)
         loss, grads = self.model.backward(preds, targets)
 
-        self.model.apply_grad(grads)
+        self.model.apply_grads(grads)

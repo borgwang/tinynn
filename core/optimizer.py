@@ -3,7 +3,7 @@
 import numpy as np
 
 
-class BaseOptimizer(object):
+class Optimizer(object):
 
     def __init__(self, lr, weight_decay):
         self.lr = lr
@@ -13,7 +13,7 @@ class BaseOptimizer(object):
         # compute step according to derived class method
         grad_values = grads.values
         step_values = self._compute_step(grad_values)
-        grads.from_values(step_values)
+        grads.values = step_values
 
         # apply weight_decay if specified
         if self.weight_decay:
@@ -26,16 +26,16 @@ class BaseOptimizer(object):
         raise NotImplementedError
 
 
-class SGD(BaseOptimizer):
+class SGD(Optimizer):
 
-    def __init__(self, lr, weight_decay=0.0):
+    def __init__(self, lr=0.01, weight_decay=0.0):
         super().__init__(lr, weight_decay)
 
     def _compute_step(self, grad):
         return - self.lr * grad
 
 
-class Adam(BaseOptimizer):
+class Adam(Optimizer):
 
     def __init__(self,
                  lr=0.001,
@@ -66,7 +66,7 @@ class Adam(BaseOptimizer):
         return step
 
 
-class RMSProp(BaseOptimizer):
+class RMSProp(Optimizer):
     """
     RMSProp maintain a moving (discounted) average of the square of gradients.
     Then divide gradients by the root of this average.
@@ -97,7 +97,7 @@ class RMSProp(BaseOptimizer):
         return step
 
 
-class Momentum(BaseOptimizer):
+class Momentum(Optimizer):
     """
      accumulation = momentum * accumulation + gradient
      variable -= learning_rate * accumulation
@@ -113,7 +113,7 @@ class Momentum(BaseOptimizer):
         return step
 
 
-class Adagrad(BaseOptimizer):
+class Adagrad(Optimizer):
     """
     AdaGrad optimizer (http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf)
     accumulation = - (learning_rate / sqrt(G + epsilon)) * gradient
@@ -131,7 +131,7 @@ class Adagrad(BaseOptimizer):
         return step
 
 
-class Adadelta(BaseOptimizer):
+class Adadelta(Optimizer):
     """
     Adadelta algorithm (https://arxiv.org/abs/1212.5701)
     """

@@ -1,0 +1,34 @@
+language: python
+
+python:
+  - 3.6
+
+matrix:
+  include:
+    # OSX
+    - name: "Python 3.6 on macOS"
+      os: osx
+      language: shell
+      before_install:
+        - python3 --version
+        - pip3 install -U pip
+        - pip3 install pytest
+        - pip3 install codecov 
+      install: 
+        - pip3 install -r requirements.txt --user
+      script: 
+        - pytest
+      after_success:
+        - codecov
+
+before_install:
+  - pip3 install -U pip
+  - pip3 install pytest
+  - pip3 install codecov
+install: 
+  - pip3 install -r requirements.txt --
+script: 
+  - pytest
+after_success:
+  - codecov
+

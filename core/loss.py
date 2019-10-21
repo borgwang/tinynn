@@ -3,7 +3,7 @@
 import numpy as np
 
 
-class BaseLoss(object):
+class Loss(object):
 
     def loss(self, predicted, actual):
         raise NotImplementedError
@@ -12,7 +12,7 @@ class BaseLoss(object):
         raise NotImplementedError
 
 
-class MSELoss(BaseLoss):
+class MSE(Loss):
 
     def loss(self, predicted, actual):
         m = predicted.shape[0]
@@ -23,7 +23,7 @@ class MSELoss(BaseLoss):
         return (predicted - actual) / m
 
 
-class MAELoss(BaseLoss):
+class MAE(Loss):
 
     def loss(self, predicted, actual):
         m = predicted.shape[0]
@@ -34,7 +34,7 @@ class MAELoss(BaseLoss):
         return np.sign(predicted - actual) / m
 
 
-class HuberLoss(BaseLoss):
+class Huber(Loss):
 
     def __init__(self, delta=1.0):
         self._delta = delta
@@ -59,7 +59,7 @@ class HuberLoss(BaseLoss):
         return (mae_grad * mae_mask + mse_grad * mse_mask) / m
 
 
-class SoftmaxCrossEntropyLoss(BaseLoss):
+class SoftmaxCrossEntropy(Loss):
 
     def __init__(self, weight=None):
         """
@@ -71,7 +71,7 @@ class SoftmaxCrossEntropyLoss(BaseLoss):
 
     def loss(self, logits, labels):
         m = logits.shape[0]
-        exps = np.exp(logits - np.max(logits))
+        exps = np.exp(logits - np.max(logits, axis=1, keepdims=True))
         p = exps / np.sum(exps)
         nll = -np.log(np.sum(p * labels, axis=1))
 
@@ -86,7 +86,7 @@ class SoftmaxCrossEntropyLoss(BaseLoss):
         return grad / m
 
 
-class SparseSoftmaxCrossEntropyLoss(BaseLoss):
+class SparseSoftmaxCrossEntropy(Loss):
 
     def __init__(self, weight=None):
         weight = np.asarray(weight) if weight is not None else weight
@@ -109,7 +109,7 @@ class SparseSoftmaxCrossEntropyLoss(BaseLoss):
         return grad / m
 
 
-class SigmoidCrossEntropyLoss(BaseLoss):
+class SigmoidCrossEntropy(Loss):
     """
     logits = a, label = y
     L = -y * log(1 / (1 + exp(-a)) - (1-y) * log(exp(-a) / (1 + exp(-a))
@@ -117,7 +117,7 @@ class SigmoidCrossEntropyLoss(BaseLoss):
 
     In order to get stable version, we can further derive
     L = -y * a + log((1 + exp(-a)) / exp(-a))
-    L = -y * a + log(1 + exp(-a)) + a
+      = -y * a + log(1 + exp(-a)) + a
     """
     def __init__(self, weight=None):
         weight = np.asarray(weight) if weight is not None else weight
