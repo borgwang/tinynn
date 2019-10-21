@@ -1,4 +1,4 @@
-"""Example code for training neural networks with Asynchronous SGD."""
+"""Implementation of asynchronous and synchronous SGD."""
 
 import runtime_path  # isort:skip
 
@@ -26,46 +26,40 @@ def get_one_hot(targets, nb_classes):
     return np.eye(nb_classes)[np.array(targets).reshape(-1)]
 
 
+def get_model(lr):
+    net = Net([Dense(200), 
+               ReLU(), 
+               Dense(100), 
+               ReLU(), 
+               Dense(70), 
+               ReLU(), 
+               Dense(30), 
+               ReLU(), 
+               Dense(10)])
+    model = Model(net=net, loss=SoftmaxCrossEntropy(),
+                  optimizer=Adam(lr=lr))
+    model.net.init_params(input_shape=(784,))
+    return model
+
+
 @ray.remote
 class ParamServer(object):
 
     def __init__(self, model, test_set):
         self.test_set = test_set
         self.model = model
-        self.model.net.init_params(input_shape=(784,))
-
-        self.cnt = 0
-        self.start_time = time.time()
 
     def get_params(self):
         return self.model.net.params
 
-    def apply_grads(self, *grads):
-        self.model.apply_grad(sum(grads))
-
-        self.cnt += len(grads)
-        if self.cnt % 100 == 0:
-            self.evaluate()  
-    
-    def evaluate(self):
-        self.model.set_phase("TEST")
-        test_x, test_y = self.test_set
-        test_pred = self.model.forward(test_x)
-
-        test_pred_idx = np.argmax(test_pred, axis=1)
-        test_y_idx = np.asarray(test_y)
-
-        print("[%.2fs] accuracy after %d batches: " %
-              (time.time() - self.start_time, self.cnt))
-        print(accuracy(test_pred_idx, test_y_idx))
-        self.model.set_phase("TRAIN")
+    def apply_grads(self, grads):
+        self.model.apply_grad(grads)
 
 
 @ray.remote
 class Worker(object):
 
-    def __init__(self, model, train_set, ps):
-        self.ps = ps
+    def __init__(self, model, train_set):
         self.model = model
         self.train_set = train_set
 
@@ -73,7 +67,6 @@ class Worker(object):
         self.batch_gen = None
 
     def get_next_batch(self):
-        end_epoch = False
         # reset batch generator if needed
         if self.batch_gen is None:
             self.batch_gen = self.iterator(*self.train_set)
@@ -82,34 +75,17 @@ class Worker(object):
             batch = next(self.batch_gen)
         except StopIteration:
             self.batch_gen = None
-            batch, _ = self.get_next_batch()
-            end_epoch = True
-        return batch, end_epoch
+            batch = self.get_next_batch()
+        return batch
 
-    def compute_grads(self, batch=None):
-        if batch is None:
-            batch, _ = self.get_next_batch()
-
-        # fetch model params from server
-        params = ray.get(self.ps.get_params.remote())
-        self.set_params(params)
-
-        # get local gradients
+    def compute_grads(self):
+        batch = self.get_next_batch()
         preds = self.model.forward(batch.inputs)
         _, grads = self.model.backward(preds, batch.targets)
         return grads
 
     def set_params(self, params):
         self.model.net.params = params
-
-    def async_run(self):
-        for epoch in range(args.num_ep):
-            while True:
-                batch, end_epoch = self.get_next_batch()
-                grads = self.compute_grads(batch)
-                self.ps.apply_grads.remote(grads)
-                if end_epoch:
-                    break
 
 
 def main():
@@ -119,38 +95,82 @@ def main():
     # data preparation
     train_set, valid_set, test_set = mnist(args.data_dir)
     train_set = (train_set[0], get_one_hot(train_set[1], 10))
+    test_set = (test_set[0], get_one_hot(test_set[1], 10))
 
     # init model
-    net = Net([Dense(200), ReLU(), Dense(50), ReLU(), Dense(10)])
-    model = Model(net=net, loss=SoftmaxCrossEntropy(),
-                  optimizer=Adam(lr=args.lr))
-
+    model = get_model(args.lr)
+    # init ray
     ray.init()
+    # init parameter server and workers
     ps = ParamServer.remote(model=copy.deepcopy(model),
                             test_set=test_set)
     workers = []
     for rank in range(1, args.num_proc + 1):
         worker = Worker.remote(model=copy.deepcopy(model),
-                               train_set=train_set,
-                               ps=ps)
+                               train_set=train_set)
         workers.append(worker)
 
+    start_time = time.time()
+    iter_each_epoch = len(train_set[0]) // args.batch_size + 1
+    iterations = args.num_ep * iter_each_epoch
     if args.mode == "async":
-        for worker in workers:
-            worker.async_run.remote()
-    elif args.mode == "sync":
-        iter_each_epoch = len(train_set[0]) // args.batch_size + 1
-        for i in range(args.num_ep * iter_each_epoch):
-            all_grads = [worker.compute_grads.remote() for worker in workers]
-            ps.apply_grads.remote(*all_grads)
-
-            params = ps.get_params.remote()
+        # Workers repeatedly fetch global parameters, train one batch locally
+        # and send their local gradients to the parameter server.
+        # The parameter server updates global parameters once it receives 
+        # gradients from any workers.
+        for i in range(iterations):
+            global_params = ps.get_params.remote()
             for worker in workers:
-                worker.set_params.remote(params)
+                worker.set_params.remote(global_params)
+                # compute local grads
+                grads = worker.compute_grads.remote()
+                # update global model asynchronously
+                ps.apply_grads.remote(grads)
+
+            # evaluate
+            model.net.params = ray.get(ps.get_params.remote())
+            acc = evaluate(test_set, model)
+            print("[%.2fs] accuracy after %d iterations: \n %s" %
+                  (time.time() - start_time, i + 1, acc))
+    elif args.mode == "sync":
+        # In each iteration, workers request for the global model, 
+        # compute local gradients and then send to the parameter server.
+        # The parameter server gathers grads from all workers, updates the global model
+        # and then broadcasts the new model to workers synchronously.
+        for i in range(iterations):
+            all_grads = []
+            global_params = ps.get_params.remote()
+            for worker in workers:
+                # grab global params
+                worker.set_params.remote(global_params)
+                # compute local grads
+                grads = worker.compute_grads.remote()
+                all_grads.append(grads)
+
+            # gathers grads from all workers
+            all_grads = ray.get(all_grads)
+            # update global model
+            ps.apply_grads.remote(sum(all_grads))
+
+            # evaluate
+            model.net.params = ray.get(ps.get_params.remote())
+            acc = evaluate(test_set, model)
+            print("[%.2fs] accuracy after %d iterations: \n %s" %
+                  (time.time() - start_time, i + 1, acc))
     else:
         print("Invalid train mode. Suppose to be 'sync' or 'async'.")
 
-    time.sleep(10000)
+
+def evaluate(test_set, model):
+    model.set_phase("TEST")
+
+    test_x, test_y = test_set
+    test_pred = model.forward(test_x)
+
+    test_pred_idx = np.argmax(test_pred, axis=1)
+    test_y_idx = np.argmax(test_y, axis=1)
+
+    return accuracy(test_pred_idx, test_y_idx)
 
 
 if __name__ == "__main__":
