@@ -66,7 +66,7 @@ class Zeros(Constant):
 class XavierUniform(Initializer):
     """
     Implement the Xavier method described in
-    "Understanding the difficulty of training deep feedforward neural networks”
+    "Understanding the difficulty of training deep feedforward neural networks"
     Glorot, X. & Bengio, Y. (2010)
 
     Weights will have values sampled from uniform distribution U(-a, a) where
@@ -86,7 +86,7 @@ class XavierUniform(Initializer):
 class XavierNormal(Initializer):
     """
     Implement the Xavier method described in
-    "Understanding the difficulty of training deep feedforward neural networks”
+    "Understanding the difficulty of training deep feedforward neural networks"
     Glorot, X. & Bengio, Y. (2010)
 
     Weights will have values sampled from uniform distribution N(0, std) where
@@ -105,8 +105,8 @@ class XavierNormal(Initializer):
 class HeUniform(Initializer):
     """
     Implement the He initialization method described in
-    “Delving deep into rectifiers: Surpassing human-level performance
-    on ImageNet classification” He, K. et al. (2015)
+    "Delving deep into rectifiers: Surpassing human-level performance
+    on ImageNet classification" He, K. et al. (2015)
 
     Weights will have values sampled from uniform distribution U(-a, a) where
     a = sqrt(6.0 / num_in)
@@ -124,8 +124,8 @@ class HeUniform(Initializer):
 class HeNormal(Initializer):
     """
     Implement the He initialization method described in
-    “Delving deep into rectifiers: Surpassing human-level performance
-    on ImageNet classification” He, K. et al. (2015)
+    "Delving deep into rectifiers: Surpassing human-level performance
+    on ImageNet classification" He, K. et al. (2015)
 
     Weights will have values sampled from normal distribution N(0, std) where
     std = sqrt(2.0 / num_in)
