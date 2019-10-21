@@ -81,7 +81,7 @@ def main(args):
         for batch in iterator(train_x, train_y):
             pred = model.forward(batch.inputs)
             loss, grads = model.backward(pred, batch.targets)
-            model.apply_grad(grads)
+            model.apply_grads(grads)
             loss_list.append(loss)
         print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
         # evaluate

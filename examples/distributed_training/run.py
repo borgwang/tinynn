@@ -53,7 +53,7 @@ class ParamServer(object):
         return self.model.net.params
 
     def apply_grads(self, grads):
-        self.model.apply_grad(grads)
+        self.model.apply_grads(grads)
 
 
 @ray.remote

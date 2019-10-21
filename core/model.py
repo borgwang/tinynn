@@ -19,7 +19,7 @@ class Model(object):
         struct_grad = self.net.backward(grad_from_loss)
         return loss, struct_grad
 
-    def apply_grad(self, grads):
+    def apply_grads(self, grads):
         params = self.net.params
         self.optimizer.step(grads, params)
 

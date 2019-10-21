@@ -83,14 +83,14 @@ def train(args):
             # train D
             d_err = d_real_err + d_fake_err
             d_grads = d_real_grad + d_fake_grad
-            D.apply_grad(d_grads)
+            D.apply_grads(d_grads)
 
             # ---- Train Generator ---
             # maximize log(D(G(z)))
             d_pred_fake = D.forward(g_out)
             g_err, d_grad = D.backward(d_pred_fake, label_real)
             g_grads = G.net.backward(d_grad.wrt_input)
-            G.apply_grad(g_grads)
+            G.apply_grads(g_grads)
 
             running_d_err = 0.9 * running_d_err + 0.1 * d_err
             running_g_err = 0.9 * running_g_err + 0.1 * g_err

@@ -68,7 +68,7 @@ def test_parameters_change(fake_dataset):
 
     # parameters change test
     params_before = model.net.params.values
-    model.apply_grad(grads)
+    model.apply_grads(grads)
     params_after = model.net.params.values
     for p1, p2 in zip(params_before, params_after):
         assert np.all(p1 != p2)
@@ -83,7 +83,7 @@ def test_backprop_dense(fc_model, fake_dataset):
     for step in range(50):
         pred = fc_model.forward(X)
         loss, grads = fc_model.backward(pred, y)
-        fc_model.apply_grad(grads)
+        fc_model.apply_grads(grads)
         # loss should decrease monotonically
         assert loss < previous_loss
         previous_loss = loss
@@ -98,7 +98,7 @@ def test_backprop_cnn(cnn_model, img_dataset):
     for step in range(50):
         pred = cnn_model.forward(X)
         loss, grads = cnn_model.backward(pred, y)
-        cnn_model.apply_grad(grads)
+        cnn_model.apply_grads(grads)
         # loss should decrease monotonically
         assert loss < previous_loss
         previous_loss = loss

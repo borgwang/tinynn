@@ -61,7 +61,7 @@ def main(args):
         for batch in iterator(train_x, train_y):
             preds = model.forward(batch.inputs)
             loss, grads = model.backward(preds, batch.targets)
-            model.apply_grad(grads)
+            model.apply_grads(grads)
 
         # evaluate
         preds = net.forward(train_x)

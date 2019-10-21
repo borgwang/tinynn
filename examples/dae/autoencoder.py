@@ -27,7 +27,7 @@ class AutoEncoder(Model):
 
         return loss, (en_grads, de_grads)
 
-    def apply_grad(self, grads):
+    def apply_grads(self, grads):
         for net, grad, opt in zip(self.net, grads, self.optimizer):
             opt.step(grad, net.params)
 

@@ -106,4 +106,4 @@ class DQN(object):
         targets = np.multiply(targets, a_batch)
         loss, grads = self.model.backward(preds, targets)
 
-        self.model.apply_grad(grads)
+        self.model.apply_grads(grads)

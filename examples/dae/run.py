@@ -134,7 +134,7 @@ def main(args):
             loss, grads = model.backward(genn, origin_in)
 
             # apply gradients
-            model.apply_grad(grads)
+            model.apply_grads(grads)
         print("Epoch: %d Loss: %.3f" % (epoch, loss))
 
         # save all the generated images and original inputs for this batch
