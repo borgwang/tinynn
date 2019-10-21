@@ -18,7 +18,7 @@ from core.model import Model
 from core.net import Net
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
-from utils.dataset import mnist, cifar10, cifar100
+from utils.dataset import mnist
 from utils.metric import accuracy
 from utils.seeder import random_seed
 
@@ -51,7 +51,7 @@ def main(args):
             ReLU(),
             Dense(10)
         ])
-    elif args.model_type == "dense":
+    elif args.model_type == "mlp":
         net = Net([
             Dense(200),
             ReLU(),
@@ -95,8 +95,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_dir", type=str,
                         default=os.path.join(curr_dir, "data"))
-    parser.add_argument("--model_type", default="dense", type=str,
-                        help="cnn or dense")
+    parser.add_argument("--model_type", default="mlp", type=str,
+                        help="cnn or mlp")
     parser.add_argument("--num_ep", default=50, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--batch_size", default=128, type=int)
