@@ -22,10 +22,6 @@ from utils.metric import accuracy
 from utils.seeder import random_seed
 
 
-def get_one_hot(targets, nb_classes):
-    return np.eye(nb_classes)[np.array(targets).reshape(-1)]
-
-
 def get_model(lr):
     net = Net([Dense(200), 
                ReLU(), 
@@ -93,9 +89,7 @@ def main():
         random_seed(args.seed)
 
     # data preparation
-    train_set, valid_set, test_set = mnist(args.data_dir)
-    train_set = (train_set[0], get_one_hot(train_set[1], 10))
-    test_set = (test_set[0], get_one_hot(test_set[1], 10))
+    train_set, valid_set, test_set = mnist(args.data_dir, one_hot=True)
 
     # init model
     model = get_model(args.lr)

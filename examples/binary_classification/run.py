@@ -61,7 +61,6 @@ def main(args):
     train_set, valid_set, test_set = prepare_dataset(args.data_dir)
     train_x, train_y = train_set
     test_x, test_y = test_set
-    # train_y = get_one_hot(train_y, 2)
 
     net = Net([
         Dense(100),

@@ -13,7 +13,11 @@ import numpy as np
 from utils.downloader import download_url
 
 
-def mnist(data_dir):
+def get_one_hot(targets, nb_classes):
+    return np.eye(nb_classes)[np.array(targets).reshape(-1)]
+
+
+def mnist(data_dir, one_hot=False):
     url = "http://deeplearning.net/data/mnist/mnist.pkl.gz"
     checksum = "a02cd19f81d51c426d7ca14024243ce9"
 
@@ -27,10 +31,17 @@ def mnist(data_dir):
 
     # load the dataset
     with gzip.open(save_path, "rb") as f:
-        return pickle.load(f, encoding="latin1")
+        train_set, valid_set, test_set = pickle.load(f, encoding="latin1")
+
+    if one_hot:
+        train_set = (train_set[0], get_one_hot(train_set[1], 10))
+        valid_set = (valid_set[0], get_one_hot(valid_set[1], 10))
+        test_set = (test_set[0], get_one_hot(test_set[1], 10))
+
+    return train_set, valid_set, test_set
 
 
-def cifar10(data_dir):
+def cifar10(data_dir, one_hot=False):
     url = "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
     checksum = "c58f30108f718f92721af3b95e74349a"
 
@@ -63,15 +74,17 @@ def cifar10(data_dir):
     train_y = np.asarray(train_y)
     train_set = (train_x, train_y)
 
-    test_batch_name = ["test_batch"]
     test_x = dataset["test_batch"][b"data"]
     test_y = np.asarray(dataset["test_batch"][b"labels"])
     test_set = (test_x, test_y)
 
-    return (train_set, test_set)
+    if one_hot:
+        train_set = (train_set[0], get_one_hot(train_set[1], 10))
+        test_set = (test_set[0], get_one_hot(test_set[1], 10))
+    return train_set, test_set
 
 
-def cifar100(data_dir):
+def cifar100(data_dir, one_hot=False):
     url = "https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz"
     checksum = "eb9058c3a382ffc7106e4002c42a8d85"
 
@@ -102,4 +115,7 @@ def cifar100(data_dir):
     test_y = np.asarray(dataset["test"][b"fine_labels"])
     test_set = (test_x, test_y)
 
-    return (train_set, test_set)
+    if one_hot:
+        train_set = (train_set[0], get_one_hot(train_set[1], 10))
+        test_set = (test_set[0], get_one_hot(test_set[1], 10))
+    return train_set, test_set

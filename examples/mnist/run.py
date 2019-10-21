@@ -18,23 +18,20 @@ from core.model import Model
 from core.net import Net
 from core.optimizer import Adam
 from utils.data_iterator import BatchIterator
-from utils.dataset import mnist
+from utils.dataset import mnist, cifar10, cifar100
 from utils.metric import accuracy
 from utils.seeder import random_seed
-
-
-def get_one_hot(targets, nb_classes):
-    return np.eye(nb_classes)[np.array(targets).reshape(-1)]
 
 
 def main(args):
     if args.seed >= 0:
         random_seed(args.seed)
 
-    train_set, valid_set, test_set = mnist(args.data_dir)
+    print(cifar10(args.data_dir, one_hot=True)[0][1].shape)
+    import pdb; pdb.set_trace()
+    train_set, _, test_set = mnist(args.data_dir, one_hot=True)
     train_x, train_y = train_set
     test_x, test_y = test_set
-    train_y = get_one_hot(train_y, 10)
 
     if args.model_type == "cnn":
         train_x = train_x.reshape((-1, 28, 28, 1))
