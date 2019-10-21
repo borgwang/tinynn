@@ -83,7 +83,7 @@ def main(args):
         model.set_phase("TEST")
         test_pred = model.forward(test_x)
         test_pred_idx = np.argmax(test_pred, axis=1)
-        test_y_idx = np.asarray(test_y)
+        test_y_idx = np.argmax(test_y, axis=1)
         res = accuracy(test_pred_idx, test_y_idx)
         print(res)
         model.set_phase("TRAIN")
