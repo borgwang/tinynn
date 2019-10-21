@@ -27,8 +27,6 @@ def main(args):
     if args.seed >= 0:
         random_seed(args.seed)
 
-    print(cifar10(args.data_dir, one_hot=True)[0][1].shape)
-    import pdb; pdb.set_trace()
     train_set, _, test_set = mnist(args.data_dir, one_hot=True)
     train_x, train_y = train_set
     test_x, test_y = test_set
