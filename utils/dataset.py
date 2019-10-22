@@ -72,12 +72,12 @@ def cifar10(data_dir, one_hot=False):
         train_y.extend(cont[b'labels'])
     train_x = np.concatenate(train_x, axis=0)
     # normalize
-    train_x /= 255.0
+    train_x = train_x / 255.0
     train_y = np.asarray(train_y)
     train_set = (train_x, train_y)
 
     test_x = dataset["test_batch"][b"data"]
-    test_x /= 255.0
+    test_x = test_x / 255.0
     test_y = np.asarray(dataset["test_batch"][b"labels"])
     test_set = (test_x, test_y)
 
@@ -111,12 +111,12 @@ def cifar100(data_dir, one_hot=False):
             dataset[item.name.split("/")[-1]] = cont
 
     train_x = dataset["train"][b"data"]
-    train_x /= 255.0
+    train_x = train_x / 255.0
     train_y = np.asarray(dataset["train"][b"fine_labels"])
     train_set = (train_x, train_y)
 
     test_x = dataset["test"][b"data"]
-    test_x /= 255.0
+    test_x = test_x / 255.0
     test_y = np.asarray(dataset["test"][b"fine_labels"])
     test_set = (test_x, test_y)
 
