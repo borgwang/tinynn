@@ -91,15 +91,16 @@ def main():
     # data preparation
     train_set, valid_set, test_set = mnist(args.data_dir, one_hot=True)
 
-    # init model
-    model = get_model(args.lr)
     # init ray
     ray.init()
+    # init model
+    model = get_model(args.lr)
+
     # init parameter server and workers
     ps = ParamServer.remote(model=copy.deepcopy(model),
                             test_set=test_set)
     workers = []
-    for rank in range(1, args.num_proc + 1):
+    for rank in range(1, args.num_workers + 1):
         worker = Worker.remote(model=copy.deepcopy(model),
                                train_set=train_set)
         workers.append(worker)
@@ -108,6 +109,7 @@ def main():
     iter_each_epoch = len(train_set[0]) // args.batch_size + 1
     iterations = args.num_ep * iter_each_epoch
     if args.mode == "async":
+        print("Run asynchronous training.")
         # Workers repeatedly fetch global parameters, train one batch locally
         # and send their local gradients to the parameter server.
         # The parameter server updates global parameters once it receives 
@@ -127,6 +129,7 @@ def main():
             print("[%.2fs] accuracy after %d iterations: \n %s" %
                   (time.time() - start_time, i + 1, acc))
     elif args.mode == "sync":
+        print("Run synchronous training.")
         # In each iteration, workers request for the global model, 
         # compute local gradients and then send to the parameter server.
         # The parameter server gathers grads from all workers, updates the global model
@@ -152,18 +155,16 @@ def main():
             print("[%.2fs] accuracy after %d iterations: \n %s" %
                   (time.time() - start_time, i + 1, acc))
     else:
-        print("Invalid train mode. Suppose to be 'sync' or 'async'.")
+        raise ValueError("Invalid train mode. Suppose to be 'sync' or 'async'.")
 
 
 def evaluate(test_set, model):
     model.set_phase("TEST")
-
     test_x, test_y = test_set
     test_pred = model.forward(test_x)
 
     test_pred_idx = np.argmax(test_pred, axis=1)
     test_y_idx = np.argmax(test_y, axis=1)
-
     return accuracy(test_pred_idx, test_y_idx)
 
 
@@ -175,9 +176,9 @@ if __name__ == "__main__":
                         help="Train mode [sync|async]. Defaults to 'sync'.")
     parser.add_argument("--data_dir", type=str,
                         default=os.path.join(curr_dir, "data"))
-    parser.add_argument("--num_proc", type=int, default=8,
+    parser.add_argument("--num_workers", type=int, default=4,
                         help="Number of workers.")
-    parser.add_argument("--num_ep", default=50, type=int)
+    parser.add_argument("--num_ep", default=3, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--batch_size", default=128, type=int)
     parser.add_argument("--seed", default=-1, type=int)
