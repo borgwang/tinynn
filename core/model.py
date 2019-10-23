@@ -25,12 +25,12 @@ class Model(object):
 
     def save(self, path):
         with open(path, "wb") as f:
-            pickle.dump(self.net, f, -1)
+            pickle.dump(self.net.params, f)
 
     def load(self, path):
         with open(path, "rb") as f:
-            net = pickle.load(f)
-        self.net = net
+            params = pickle.load(f)
+        self.net.params = params
 
     def get_phase(self):
         return self.net.get_phase()
