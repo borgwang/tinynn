@@ -64,3 +64,26 @@ def test_conv_2d():
     input_grads = layer.backward(output)
     assert input_grads.shape == input_.shape
 
+
+def test_max_pool_2d():
+    batch_size = 1
+    channel = 2
+    input_ = np.random.randn(batch_size, 4, 4, channel)
+
+    layer = MaxPool2D(pool_size=[2, 2], stride=[2, 2])
+    output = layer.forward(input_)
+    assert output.shape == (batch_size, 2, 2, channel)
+
+    layer = MaxPool2D(pool_size=[4, 4], stride=[2, 2])
+    output = layer.forward(input_)
+    answer = np.max(np.reshape(input_, (batch_size, -1, 2)), axis=1)
+    assert (output.ravel() == answer.ravel()).all()
+
+
+def test_reshape():
+    batch_size = 1
+    input_ = np.random.randn(batch_size, 2, 3, 4, 5)
+    target_shape = (5, 4, 3, 2)
+    layer = Reshape(*target_shape)
+    output = layer.forward(input_)
+    assert output.shape[1:] == target_shape
