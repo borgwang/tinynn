@@ -115,25 +115,19 @@ class Conv2D(Layer):
         if not self.is_init:
             self._init_params()
 
-        batch_sz, in_h, in_w, in_c = inputs.shape
         k_h, k_w, in_c, out_c = self.kernel_shape
         s_h, s_w = self.stride
-
-        # step1: zero-padding
-        if self.padding is None:
-            self.padding = get_padding_2d(
-                (in_h, in_w), (k_h, k_w), (s_h, s_w), self.padding_mode)
-        X = np.pad(inputs, pad_width=self.padding, mode="constant")
+        X = self._inputs_preprocess(inputs)
 
         # step2: padded inputs to column matrix
-        col = im2col(X, k_h, k_w, s_h, s_w)
+        self.col = im2col(X, k_h, k_w, s_h, s_w)
 
         # step3: perform convolution by matrix product.
-        W = self.params["w"].reshape(-1, out_c)  # (k_h * k_w * in_c, out_c)
-        Z = col @ W
+        self.W = self.params["w"].reshape(-1, out_c)  # (k_h * k_w * in_c, out_c)
+        Z = self.col @ self.W
 
         # step4: reshape output 
-        batch_sz, in_h, in_w, _ = X.shape 
+        batch_sz, in_h, in_w, _ = X.shape
         # separate the batch size and feature map dimensions
         Z = Z.reshape(batch_sz, Z.shape[0] // batch_sz, out_c)
         # further divide the feature map in to (h, w) dimension
@@ -143,10 +137,7 @@ class Conv2D(Layer):
 
         # plus the bias for every filter
         Z += self.params["b"]
-
         # save results for backward function
-        self.col = col
-        self.W = W
         self.X_shape = X.shape
         return Z
 
@@ -182,7 +173,19 @@ class Conv2D(Layer):
 
         # cut off gradients of padding
         d_in = d_in[:, pad_h[0]:in_h-pad_h[1], pad_w[0]:in_w-pad_w[1], :]
-        return d_in
+        return self._grads_postprocess(d_in)
+
+    def _inputs_preprocess(self, inputs):
+        _, in_h, in_w, _ = inputs.shape
+        k_h, k_w, _, _ = self.kernel_shape
+        # padding calculation
+        if self.padding is None:
+            self.padding = get_padding_2d(
+                (in_h, in_w), (k_h, k_w), self.padding_mode)
+        return np.pad(inputs, pad_width=self.padding, mode="constant")
+
+    def _grads_postprocess(self, grads):
+        return grads
 
     def _init_params(self):
         self.params["w"] = self.initializers["w"](self.kernel_shape)
@@ -219,7 +222,7 @@ class MaxPool2D(Layer):
         # zero-padding
         if self.padding is None:
             self.padding = get_padding_2d(
-                (in_h, in_w), (k_h, k_w), (s_h, s_w), self.padding_mode)
+                (in_h, in_w), (k_h, k_w), self.padding_mode)
         X = np.pad(inputs, pad_width=self.padding, mode="constant")
         padded_h, padded_w = X.shape[1:3]
     
@@ -273,99 +276,39 @@ class MaxPool2D(Layer):
         return d_in
 
 
-class ConvTranspose2D(Layer):
+class ConvTranspose2D(Conv2D):
 
     def __init__(self,
                  kernel,
                  stride=(1, 1),
                  padding="SAME",
-                 w_init=XavierUniform(),    
+                 w_init=XavierUniform(),
                  b_init=Zeros()):
-        super().__init__()
+        super().__init__(kernel, stride, padding, w_init, b_init)
+        self.origin_stride = stride
+        self.stride = (1, 1)
 
-        self.kernel_shape = kernel
-        self.stride = stride
-        self.initializers = {"w": w_init, "b": b_init}
-        self.shapes = {"w": self.kernel_shape, "b": self.kernel_shape[-1]}
-        self.padding_mode = padding
+    def _inputs_preprocess(self, inputs):
+        k_h, k_w = self.kernel_shape[:2]
 
-        self.padding = None
-        self.is_init = False
-
-    def forward(self, inputs):
-        # lazy initialization
-        if not self.is_init:
-            self._init_params()
-
-        k_h, k_w, in_c, out_c = self.kernel_shape
-        s_h, s_w = self.stride
-        # set stride - insert zeros to inputs
-        inputs = self._insert_zeros(inputs, s_h, s_w, self.padding_mode)
+        # insert zeros to inputs
+        inputs = self._insert_zeros(inputs,
+                                    *self.origin_stride,
+                                    self.padding_mode)
         batch_sz, in_h, in_w, in_c = inputs.shape
 
-        # handle padding
+        # padding calculation
         if self.padding is None:
             if self.padding_mode == "SAME":
                 self.padding = get_padding_2d(
-                    (in_h, in_w), (k_h, k_w), (1, 1), self.padding_mode)
+                    (in_h, in_w), (k_h, k_w), self.padding_mode)
             else:
                 self.padding = ((0, 0), (k_h - 1, k_h - 1),
                                 (k_w - 1, k_w - 1), (0, 0))
+        return np.pad(inputs, pad_width=self.padding, mode="constant")
 
-        X = np.pad(inputs, pad_width=self.padding, mode="constant")
-
-        col = im2col(X, k_h, k_w, s_h=1, s_w=1)
-        # flatten kernel
-        W = self.params["w"].reshape(-1, out_c)  # (k_h * k_w * in_c, out_c)
-        # perform convolution by matrix product.
-        Z = col @ W
-
-        # step4: reshape output 
-        batch_sz, in_h, in_w, _ = X.shape 
-        # separate the batch size and feature map dimensions
-        Z = Z.reshape(batch_sz, Z.shape[0] // batch_sz, out_c)
-
-        # further divide the feature map in to (h, w) dimension
-        out_h = (in_h - k_h) // 1 + 1
-        out_w = (in_w - k_w) // 1 + 1
-        Z = Z.reshape(batch_sz, out_h, out_w, out_c)
-
-        # plus the bias for every filter
-        Z += self.params["b"]
-
-        # save results for backward function
-        self.col = col
-        self.W = W
-        self.X_shape = X.shape
-        return Z
-
-    def backward(self, grad):
-        # read size parameters
-        k_h, k_w, in_c, out_c = self.kernel_shape
-        s_h, s_w = self.stride
-        batch_sz, in_h, in_w, in_c = self.X_shape
-        pad_h, pad_w = self.padding[1:3]
-
-        # calculate gradients of parameters
-        flat_grad = grad.reshape((-1, out_c))
-        d_W = self.col.T @ flat_grad
-        self.grads["w"] = d_W.reshape(self.kernel_shape)
-        self.grads["b"] = np.sum(flat_grad, axis=0)
-
-        # calculate backward gradients
-        d_X = grad @ self.W.T
-        # cast gradients back to original shape as d_in
-        d_in = np.zeros(shape=self.X_shape)
-        for i, r in enumerate(range(0, in_h - k_h + 1, 1)):
-            for j, c in enumerate(range(0, in_w - k_w + 1, 1)):
-                patch = d_X[:, i, j, :]
-                patch = patch.reshape((batch_sz, k_h, k_w, in_c))
-                d_in[:, r:r+k_h, c:c+k_w, :] += patch
-
-        # cut off gradients of padding
-        d_in = d_in[:, pad_h[0]:in_h-pad_h[1], pad_w[0]:in_w-pad_w[1], :]
-        # ignore zeros inserted in forward process
-        return d_in[:, ::s_h, ::s_w, :]
+    def _grads_postprocess(self, grads):
+        return grads[:, ::self.origin_stride[0], ::self.origin_stride[1], :]
 
     @staticmethod
     def _insert_zeros(inputs, s_h, s_w, mode):
@@ -380,11 +323,6 @@ class ConvTranspose2D(Layer):
         expand = np.zeros((batch_sz, out_h, out_w, in_c))
         expand[:, ::s_h, ::s_w, :] = inputs
         return expand
-
-    def _init_params(self):
-        self.params["w"] = self.initializers["w"](self.kernel_shape)
-        self.params["b"] = self.initializers["b"](self.kernel_shape[-1])
-        self.is_init = True
 
 
 class Reshape(Layer):
@@ -532,16 +470,16 @@ def im2col(img, k_h, k_w, s_h, s_w):
     return col
 
 
-def get_padding_2d(in_shape, k_shape, stride, mode):
-    def get_padding_1d(w, k, s):
+def get_padding_2d(in_shape, k_shape, mode):
+    def get_padding_1d(w, k):
         if mode == "SAME":
-            pads = (w - 1) * s + k - w
+            pads = (w - 1) + k - w
             half = pads // 2
             padding = (half, half) if pads % 2 == 0 else (half, half + 1)
         else:
             padding = (0, 0)
         return padding
 
-    h_pad = get_padding_1d(in_shape[0], k_shape[0], stride[0])
-    w_pad = get_padding_1d(in_shape[1], k_shape[1], stride[1])
+    h_pad = get_padding_1d(in_shape[0], k_shape[0])
+    w_pad = get_padding_1d(in_shape[1], k_shape[1])
     return (0, 0), h_pad, w_pad, (0, 0)

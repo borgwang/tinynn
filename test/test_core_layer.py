@@ -26,51 +26,41 @@ def test_activation(activation_layer, expect_range):
 
 
 def test_conv_transpose_2d():
-    # test forward
-    input_ = np.random.randn(256, 7, 7, 32)
+    batch_size = 1
+    input_ = np.random.randn(batch_size, 7, 7, 1)
 
+    # test forward and backward correctness
     layer = ConvTranspose2D(
-        kernel=[4, 4, 32, 64], stride=[1, 1], padding="VALID")
+        kernel=[4, 4, 1, 2], stride=[3, 3], padding="VALID")
     output = layer.forward(input_)
-    assert output.shape == (256, 10, 10, 64)
-
-    layer = ConvTranspose2D(
-        kernel=[4, 4, 32, 64], stride=[3, 3], padding="VALID")
-    output = layer.forward(input_)
-    assert output.shape == (256, 22, 22, 64)
-
-    layer = ConvTranspose2D(
-        kernel=[4, 4, 32, 64], stride=[1, 1], padding="SAME")
-    output = layer.forward(input_)
-    assert output.shape == (256, 7, 7, 64)
-
-    layer = ConvTranspose2D(
-        kernel=[4, 4, 32, 64], stride=[3, 3], padding="SAME")
-    output = layer.forward(input_)
-    assert output.shape == (256, 21, 21, 64)
-
-    layer = ConvTranspose2D(
-        kernel=[4, 4, 32, 64], stride=[1, 1], padding="VALID")
-    output = layer.forward(input_)
+    assert output.shape == (batch_size, 22, 22, 2)
     input_grads = layer.backward(output)
     assert input_grads.shape == input_.shape
 
     layer = ConvTranspose2D(
-        kernel=[4, 4, 32, 64], stride=[3, 3], padding="VALID")
+        kernel=[4, 4, 1, 2], stride=[3, 3], padding="SAME")
     output = layer.forward(input_)
+    assert output.shape == (batch_size, 21, 21, 2)
     input_grads = layer.backward(output)
     assert input_grads.shape == input_.shape
 
-    layer = ConvTranspose2D(
-        kernel=[4, 4, 32, 64], stride=[1, 1], padding="SAME")
+
+def test_conv_2d():
+    batch_size = 1
+    input_ = np.random.randn(batch_size, 16, 16, 1)
+
+    # test forward and backward correctness
+    layer = Conv2D(
+        kernel=[4, 4, 1, 2], stride=[3, 3], padding="VALID")
     output = layer.forward(input_)
+    assert output.shape == (batch_size, 5, 5, 2)
     input_grads = layer.backward(output)
     assert input_grads.shape == input_.shape
 
-    """
-    layer = ConvTranspose2D(
-        kernel=[4, 4, 32, 64], stride=[3, 3], padding="SAME")
+    layer = Conv2D(
+        kernel=[4, 4, 1, 2], stride=[3, 3], padding="SAME")
     output = layer.forward(input_)
+    assert output.shape == (batch_size, 6, 6, 2)
     input_grads = layer.backward(output)
     assert input_grads.shape == input_.shape
-    """
+
