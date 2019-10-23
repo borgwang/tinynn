@@ -4,6 +4,7 @@ import numpy as np
 
 from core.initializer import XavierUniform
 from core.initializer import Zeros
+from core.initializer import Ones
 
 
 class Layer(object):
@@ -323,6 +324,63 @@ class ConvTranspose2D(Conv2D):
         expand = np.zeros((batch_sz, out_h, out_w, in_c))
         expand[:, ::s_h, ::s_w, :] = inputs
         return expand
+
+
+class BatchNormalization(Layer):
+
+    def __init__(self,
+                 momentum=0.99,
+                 gamma_init=Ones(),
+                 beta_init=Zeros(),
+                 running_mean_init=Zeros(),
+                 running_var_init=Ones(),
+                 epsilon=1e-3):
+        super().__init__()
+        self.m = momentum
+        self.epsilon = epsilon
+
+        self.running_mean = None
+        self.running_var = None
+
+        self.initializer = {"gamma": gamma_init, "beta": beta_init,
+                            "running_mean": running_mean_init,
+                            "running_var": running_var_init}
+        self.params = {"gamma": None, "beta": None}
+        self.shapes = {"gamma": None, "beta": None}
+
+        self.is_init = False
+
+    def forward(self, inputs):
+        # lazy initialize
+        if not self.is_init:
+            self._init_params(inputs.shape[1:])
+
+        if self.is_training:
+            mean = inputs.mean(axis=0)
+            var = inputs.var(axis=0)
+            self.running_mean = self.m * self.running_mean + (1 - self.m) * mean
+            self.running_var = self.m * self.running_var + (1 - self.m) * var
+        else:
+            mean = self.running_mean
+            var = self.running_var
+
+        # normalize
+        self.X_center = inputs - mean
+        self.std = (var + self.epsilon) ** 0.5
+        X = self.X_center / self.std
+        return self.params["gamma"] * X + self.params["beta"]
+
+    def backward(self, grad):
+        pass
+
+    def _init_params(self, input_size):
+        for param in ["gamma", "beta"]:
+            self.params[param] = self.initializer[param](input_size)
+            self.shapes[param] = input_size
+
+        self.running_mean = self.initializer["running_mean"](input_size)
+        self.running_var = self.initializer["running_var"](input_size)
+        self.is_init = True
 
 
 class Reshape(Layer):

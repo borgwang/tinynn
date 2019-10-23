@@ -63,6 +63,12 @@ class Zeros(Constant):
         super(Zeros, self).__init__(0.0)
 
 
+class Ones(Constant):
+
+    def __init__(self):
+        super(Ones, self).__init__(1.0)
+
+
 class XavierUniform(Initializer):
     """
     Implement the Xavier method described in
