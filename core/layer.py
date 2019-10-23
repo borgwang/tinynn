@@ -122,7 +122,7 @@ class Conv2D(Layer):
 
         # step2: im2col
         # padded inputs to column matrix
-        col = self._im2col(X, k_h, k_w, s_h, s_w)
+        col = im2col(X, k_h, k_w, s_h, s_w)
         # flatten kernel
         W = self.params["w"].reshape(-1, out_c)  # (k_h * k_w * in_c, out_c)
 
@@ -180,35 +180,6 @@ class Conv2D(Layer):
         # cut off gradients of padding
         d_in = d_in[:, pad[0]:in_h-pad[1], pad[2]:in_w-pad[3], :]
         return d_in
-
-    @staticmethod
-    def _im2col(img, k_h, k_w, s_h, s_w):
-        """
-        Transform padded image into column matrix.
-        :param img: padded inputs of shape (B, in_h, in_w, in_c)
-        :param k_h: kernel height
-        :param k_w: kernel width
-        :param s_h: stride height
-        :param s_w: stride width
-        :return col: column matrix of shape (B*out_h*out_w, k_h*k_h*inc)
-        """
-        batch_sz, h, w, in_c = img.shape
-        # calculate result feature map size
-        out_h = (h - k_h) // s_h + 1
-        out_w = (w - k_w) // s_w + 1
-        # allocate space for column matrix
-        col = np.empty((batch_sz * out_h * out_w, k_h * k_w * in_c))
-        # fill in the column matrix
-        batch_span = out_w * out_h
-        for r in range(out_h):
-            r_start = r * s_h
-            matrix_r = r * out_w 
-            for c in range(out_w):
-                c_start = c * s_w
-                patch = img[:, r_start: r_start+k_h, c_start: c_start+k_w, :]
-                patch = patch.reshape(batch_sz, -1)
-                col[matrix_r+c::batch_span, :] = patch
-        return col
 
     @staticmethod
     def _get_padding(kernel_shape, mode):
@@ -359,7 +330,7 @@ class ConvTranspose2D(Layer):
                      (real_pad[2], real_pad[3]), (0, 0))
         X = np.pad(inputs, pad_width=pad_width, mode="constant")
 
-        col = self._im2col(X, k_h, k_w, s_h=1, s_w=1)
+        col = im2col(X, k_h, k_w, s_h=1, s_w=1)
         # flatten kernel
         W = self.params["w"].reshape(-1, out_c)  # (k_h * k_w * in_c, out_c)
         # perform convolution by matrix product.
@@ -414,35 +385,6 @@ class ConvTranspose2D(Layer):
         return d_in[:, ::s_h, ::s_w, :]
 
     @staticmethod
-    def _im2col(img, k_h, k_w, s_h, s_w):
-        """
-        Transform padded image into column matrix.
-        :param img: padded inputs of shape (B, in_h, in_w, in_c)
-        :param k_h: kernel height
-        :param k_w: kernel width
-        :param s_h: stride height
-        :param s_w: stride width
-        :return col: column matrix of shape (B*out_h*out_w, k_h*k_h*inc)
-        """
-        batch_sz, h, w, in_c = img.shape
-        # calculate result feature map size
-        out_h = (h - k_h) // s_h + 1
-        out_w = (w - k_w) // s_w + 1
-        # allocate space for column matrix
-        col = np.empty((batch_sz * out_h * out_w, k_h * k_w * in_c))
-        # fill in the column matrix
-        batch_span = out_w * out_h
-        for r in range(out_h):
-            r_start = r * s_h
-            matrix_r = r * out_w 
-            for c in range(out_w):
-                c_start = c * s_w
-                patch = img[:, r_start: r_start+k_h, c_start: c_start+k_w, :]
-                patch = patch.reshape(batch_sz, -1)
-                col[matrix_r+c::batch_span, :] = patch
-        return col
-        
-    @staticmethod
     def _get_padding(kernel_shape, mode):
         def _get_padding_1d(k_s):
             n_pad = 0 if mode == "VALID" else k_s - 1
@@ -470,18 +412,25 @@ class ConvTranspose2D(Layer):
         self.is_init = True
 
 
-class Flatten(Layer):
+class Reshape(Layer):
 
-    def __init__(self):
+    def __init__(self, *output_shape):
         super().__init__()
         self.input_shape = None
+        self.output_shape = output_shape
 
     def forward(self, inputs):
         self.input_shape = inputs.shape
-        return inputs.ravel().reshape(inputs.shape[0], -1)
+        return inputs.reshape(inputs.shape[0], *self.output_shape)
 
     def backward(self, grad):
         return grad.reshape(self.input_shape)
+
+
+class Flatten(Reshape):
+
+    def __init__(self):
+        super().__init__(-1)
 
 
 class Dropout(Layer):
@@ -577,3 +526,32 @@ class LeakyReLU(Activation):
         dx = np.ones_like(x)
         dx[x < 0.0] = self._slope
         return dx
+
+
+def im2col(img, k_h, k_w, s_h, s_w):
+    """
+    Transform padded image into column matrix.
+    :param img: padded inputs of shape (B, in_h, in_w, in_c)
+    :param k_h: kernel height
+    :param k_w: kernel width
+    :param s_h: stride height
+    :param s_w: stride width
+    :return col: column matrix of shape (B*out_h*out_w, k_h*k_h*inc)
+    """
+    batch_sz, h, w, in_c = img.shape
+    # calculate result feature map size
+    out_h = (h - k_h) // s_h + 1
+    out_w = (w - k_w) // s_w + 1
+    # allocate space for column matrix
+    col = np.empty((batch_sz * out_h * out_w, k_h * k_w * in_c))
+    # fill in the column matrix
+    batch_span = out_w * out_h
+    for r in range(out_h):
+        r_start = r * s_h
+        matrix_r = r * out_w
+        for c in range(out_w):
+            c_start = c * s_w
+            patch = img[:, r_start: r_start+k_h, c_start: c_start+k_w, :]
+            patch = patch.reshape(batch_sz, -1)
+            col[matrix_r+c::batch_span, :] = patch
+    return col
