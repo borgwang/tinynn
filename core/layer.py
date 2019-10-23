@@ -11,6 +11,7 @@ class Layer(object):
     def __init__(self):
         self.params, self.grads = {}, {}
         self.is_training = True
+        self.shapes = None
 
     def forward(self, inputs):
         raise NotImplementedError
@@ -24,6 +25,9 @@ class Layer(object):
     @property
     def name(self):
         return self.__class__.__name__
+
+    def __repr__(self):
+        return "layer: %s \t shape: %s" % (self.name, self.shapes)
 
 
 class Dense(Layer):
@@ -86,6 +90,7 @@ class Conv2D(Layer):
         self.kernel_shape = kernel
         self.stride = stride
         self.initializers = {"w": w_init, "b": b_init}
+        self.shapes = {"w": self.kernel_shape, "b": self.kernel_shape[-1]}
 
         self.padding_mode = padding
         self.padding = None
@@ -198,6 +203,7 @@ class MaxPool2D(Layer):
         :param padding: A string ("SAME", "VALID")
         """
         super().__init__()
+        self.shape = None
 
         self.kernel_shape = pool_size
         self.stride = stride
@@ -280,6 +286,7 @@ class ConvTranspose2D(Layer):
         self.kernel_shape = kernel
         self.stride = stride
         self.initializers = {"w": w_init, "b": b_init}
+        self.shapes = {"w": self.kernel_shape, "b": self.kernel_shape[-1]}
         self.padding_mode = padding
 
         self.padding = None

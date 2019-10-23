@@ -11,6 +11,9 @@ class Net(object):
         self.layers = layers
         self._phase = "TRAIN"
 
+    def __repr__(self):
+        return "\n".join([str(l) for l in self.layers])
+
     def forward(self, inputs):
         for layer in self.layers:
             inputs = layer.forward(inputs)
@@ -46,10 +49,9 @@ class Net(object):
         self._phase = phase
 
     def init_params(self, input_shape):
-        """Manually init parameters by letting data forward throught the network."""
-        # TODO: better way to do this?
-        fake = np.ones((1, *input_shape))
-        self.forward(fake)
+        """Manually init params by letting data forward through the network."""
+        # TODO: better ways?
+        self.forward(np.ones((1, *input_shape)))
 
 
 class StructuredParam(object):
@@ -83,13 +85,6 @@ class StructuredParam(object):
             shape.append(l_shape)
         shape = tuple(shape)
         return shape
-
-    def __repr__(self):
-        cont = "%s with shape\n" % self.__class__.__name__
-        cont += ("-" * 10 + "\n")
-        cont += "\n".join([str(s) for s in self.shape])
-        cont += ("\n" + "-" * 10)
-        return cont
 
     def clip(self, min_=None, max_=None):
         self.values = [v.clip(min_, max_)for v in self.values]
