@@ -8,17 +8,13 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-from core.initializer import Normal
-from core.layer import Conv2D
-from core.layer import Dense
-from core.layer import Flatten
-from core.layer import LeakyReLU
-from core.layer import MaxPool2D
-from core.layer import Sigmoid
 from core.loss import SigmoidCrossEntropy
 from core.model import Model
-from core.net import Net
 from core.optimizer import Adam
+from examples.dcgan.nets import D_cnn
+from examples.dcgan.nets import G_cnn
+from examples.dcgan.nets import D_mlp
+from examples.dcgan.nets import G_mlp
 from utils.data_iterator import BatchIterator
 from utils.dataset import mnist
 from utils.seeder import random_seed
@@ -28,48 +24,6 @@ def get_noise(size):
     return np.random.normal(size=size)
 
 
-def mlp_G():
-    w_init = Normal(0.0, 0.02)
-    return Net([
-        Dense(100, w_init=w_init), 
-        LeakyReLU(), 
-        Dense(300, w_init=w_init), 
-        LeakyReLU(), 
-        Dense(784, w_init=w_init), 
-        Sigmoid()])
-
-
-def mlp_D():
-    w_init = Normal(0.0, 0.02)
-    return Net([
-        Dense(300, w_init=w_init), 
-        LeakyReLU(), 
-        Dense(100, w_init=w_init), 
-        LeakyReLU(), 
-        Dense(1, w_init=w_init)])
-
-
-def cnn_G():
-    # TODO
-    pass 
-
-
-def cnn_D():
-    return Net([
-        Conv2D(kernel=[5, 5, 1, 6], stride=[1, 1], padding="SAME"),
-        LeakyReLU(),
-        MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
-        Conv2D(kernel=[5, 5, 6, 16], stride=[1, 1], padding="SAME"),
-        LeakyReLU(),
-        MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
-        Flatten(),
-        Dense(120),
-        LeakyReLU(),
-        Dense(84),
-        LeakyReLU(),
-        Dense(1)])
-
-
 def train(args):
     # prepare dataset
     train_, valid, test = mnist(args.data_dir)
@@ -77,10 +31,10 @@ def train(args):
     y = np.concatenate([train_[1], valid[1], test[1]])
 
     if args.model_type == "cnn":
-        G_net, D_net = cnn_G(), cnn_D()
         X = X.reshape((-1, 28, 28, 1))
+        G_net, D_net = G_cnn(), D_cnn()
     elif args.model_type == "mlp":
-        G_net, D_net = mlp_G(), mlp_D()
+        G_net, D_net = G_mlp(), D_mlp()
     else:
         raise ValueError("Invalid argument: model_type")
 
@@ -145,7 +99,7 @@ def train(args):
 
 
 def evaluate(args):
-    G = Model(net=mlp_G(), loss=None, optimizer=None)
+    G = Model(net=G_mlp(), loss=None, optimizer=None)
     model_path = os.path.join(args.output_dir, args.model_name)
     print("Loading model from ", model_path)
     G.load(model_path)
