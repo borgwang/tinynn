@@ -93,9 +93,9 @@ ENV/
 # Costomize
 core/__pycache__/
 examples/mnist/data/*
+examples/mnist/models/*
 examples/distributed_training/data/*
 examples/nn_paint/output/*
-examples/binary_classification/data/*
 examples/dcgan/data/*
 examples/dcgan/samples/*
 examples/dae/data/*

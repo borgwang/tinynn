@@ -87,6 +87,14 @@ def main(args):
         res = accuracy(test_pred_idx, test_y_idx)
         print(res)
         model.set_phase("TRAIN")
+    
+    # save model
+    if not os.path.isdir(args.model_dir):
+        os.makedirs(args.model_dir)
+    model_name = "mnist-%s-epoch%d.pkl" % (args.model_type, args.num_ep)
+    model_path = os.path.join(args.model_dir, model_name) 
+    model.save(model_path)
+    print("model saved in %s" % model_path)
 
 
 if __name__ == "__main__":
@@ -95,9 +103,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_dir", type=str,
                         default=os.path.join(curr_dir, "data"))
+    parser.add_argument("--model_dir", type=str,
+                        default=os.path.join(curr_dir, "models"))
     parser.add_argument("--model_type", default="mlp", type=str,
                         help="cnn or mlp")
-    parser.add_argument("--num_ep", default=50, type=int)
+    parser.add_argument("--num_ep", default=3, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--batch_size", default=128, type=int)
     parser.add_argument("--seed", default=-1, type=int)
