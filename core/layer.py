@@ -87,8 +87,8 @@ class Conv2D(Layer):
         self.stride = stride
         self.initializers = {"w": w_init, "b": b_init}
 
-        # calculate padding needed for this layer
-        self.pad = self._get_padding(kernel[:2], padding)
+        self.padding_mode = padding
+        self.padding = None
 
         self.is_init = False
 
@@ -110,23 +110,21 @@ class Conv2D(Layer):
         if not self.is_init:
             self._init_params()
 
+        batch_sz, in_h, in_w, in_c = inputs.shape
         k_h, k_w, in_c, out_c = self.kernel_shape
         s_h, s_w = self.stride
-        pad = self.pad
-        # number of incomming channels should match
-        assert in_c == inputs.shape[3]
 
         # step1: zero-padding
-        pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
-        X = np.pad(inputs, pad_width=pad_width, mode="constant")
+        if self.padding is None:
+            self.padding = get_padding_2d(
+                (in_h, in_w), (k_h, k_w), (s_h, s_w), self.padding_mode)
+        X = np.pad(inputs, pad_width=self.padding, mode="constant")
 
-        # step2: im2col
-        # padded inputs to column matrix
+        # step2: padded inputs to column matrix
         col = im2col(X, k_h, k_w, s_h, s_w)
-        # flatten kernel
-        W = self.params["w"].reshape(-1, out_c)  # (k_h * k_w * in_c, out_c)
 
         # step3: perform convolution by matrix product.
+        W = self.params["w"].reshape(-1, out_c)  # (k_h * k_w * in_c, out_c)
         Z = col @ W
 
         # step4: reshape output 
@@ -159,7 +157,7 @@ class Conv2D(Layer):
         k_h, k_w, in_c, out_c = self.kernel_shape
         s_h, s_w = self.stride
         batch_sz, in_h, in_w, in_c = self.X_shape
-        pad = self.pad
+        pad_h, pad_w = self.padding[1:3]
 
         # calculate gradients of parameters
         flat_grad = grad.reshape((-1, out_c))
@@ -178,20 +176,8 @@ class Conv2D(Layer):
                 d_in[:, r:r+k_h, c:c+k_w, :] += patch
 
         # cut off gradients of padding
-        d_in = d_in[:, pad[0]:in_h-pad[1], pad[2]:in_w-pad[3], :]
+        d_in = d_in[:, pad_h[0]:in_h-pad_h[1], pad_w[0]:in_w-pad_w[1], :]
         return d_in
-
-    @staticmethod
-    def _get_padding(kernel_shape, mode):
-        def _get_padding_1d(k_s):
-            n_pad = 0 if mode == "VALID" else k_s - 1
-            half = n_pad // 2
-            pad = [half, half] if n_pad % 2 == 0 else [half, half + 1]
-            return pad
-
-        h_pad = _get_padding_1d(kernel_shape[0])
-        w_pad = _get_padding_1d(kernel_shape[1])
-        return h_pad + w_pad
 
     def _init_params(self):
         self.params["w"] = self.initializers["w"](self.kernel_shape)
@@ -215,17 +201,20 @@ class MaxPool2D(Layer):
 
         self.kernel_shape = pool_size
         self.stride = stride
-        self.pad = self._get_padding(pool_size, padding)
+
+        self.padding_mode = padding
+        self.padding = None
 
     def forward(self, inputs):
         s_h, s_w = self.stride
         k_h, k_w = self.kernel_shape
         batch_sz, in_h, in_w, in_c = inputs.shape
-        pad = self.pad
 
         # zero-padding
-        pad_width = ((0, 0), (pad[0], pad[1]), (pad[2], pad[3]), (0, 0))
-        X = np.pad(inputs, pad_width=pad_width, mode="constant")
+        if self.padding is None:
+            self.padding = get_padding_2d(
+                (in_h, in_w), (k_h, k_w), (s_h, s_w), self.padding_mode)
+        X = np.pad(inputs, pad_width=self.padding, mode="constant")
         padded_h, padded_w = X.shape[1:3]
     
         out_h = (padded_h - k_h) // s_h + 1
@@ -256,10 +245,10 @@ class MaxPool2D(Layer):
     def backward(self, grad):
         batch_sz, in_h, in_w, in_c = self.X_shape
         out_h, out_w = self.out_shape
-        pad = self.pad
         s_h, s_w = self.stride
         k_h, k_w = self.kernel_shape
         k_sz = k_h * k_w
+        pad_h, pad_w = self.padding[1:3]
 
         d_in = np.zeros(shape=(batch_sz, in_h, in_w, in_c))
         for r in range(out_h):
@@ -274,20 +263,8 @@ class MaxPool2D(Layer):
                 d_in[:, r_start:r_start+k_h, c_start:c_start+k_w, :] += patch
 
         # cut off gradients of padding
-        d_in = d_in[:, pad[0]:in_h-pad[1], pad[2]:in_w-pad[3], :]
+        d_in = d_in[:, pad_h[0]:in_h-pad_h[1], pad_w[0]:in_w-pad_w[1], :]
         return d_in
-
-    @staticmethod
-    def _get_padding(kernel_shape, mode):
-        def _get_padding_1d(k_s):
-            n_pad = 0 if mode == "VALID" else k_s - 1
-            half = n_pad // 2
-            pad = [half, half] if n_pad % 2 == 0 else [half, half + 1]
-            return pad
-
-        h_pad = _get_padding_1d(kernel_shape[0])
-        w_pad = _get_padding_1d(kernel_shape[1])
-        return h_pad + w_pad
 
 
 class ConvTranspose2D(Layer):
@@ -303,10 +280,9 @@ class ConvTranspose2D(Layer):
         self.kernel_shape = kernel
         self.stride = stride
         self.initializers = {"w": w_init, "b": b_init}
+        self.padding_mode = padding
 
-        # calculate padding needed for this layer
-        self.pad = self._get_padding(kernel[:2], padding)
-
+        self.padding = None
         self.is_init = False
 
     def forward(self, inputs):
@@ -314,21 +290,22 @@ class ConvTranspose2D(Layer):
         if not self.is_init:
             self._init_params()
 
-        # inputs (?, 7, 7, 32)
         k_h, k_w, in_c, out_c = self.kernel_shape
         s_h, s_w = self.stride
-        pad = self.pad
-
         # set stride - insert zeros to inputs
-        inputs = self._insert_zeros(inputs, s_h, s_w)
+        inputs = self._insert_zeros(inputs, s_h, s_w, self.padding_mode)
+        batch_sz, in_h, in_w, in_c = inputs.shape
 
         # handle padding
-        # TODO: buggy 
-        real_pad = [k_h - 1 - pad[0], k_h - 1 - pad[1],
-                    k_w - 1 - pad[2], k_w - 1 - pad[3]]
-        pad_width = ((0, 0), (real_pad[0], real_pad[1]), 
-                     (real_pad[2], real_pad[3]), (0, 0))
-        X = np.pad(inputs, pad_width=pad_width, mode="constant")
+        if self.padding is None:
+            if self.padding_mode == "SAME":
+                self.padding = get_padding_2d(
+                    (in_h, in_w), (k_h, k_w), (1, 1), self.padding_mode)
+            else:
+                self.padding = ((0, 0), (k_h - 1, k_h - 1),
+                                (k_w - 1, k_w - 1), (0, 0))
+
+        X = np.pad(inputs, pad_width=self.padding, mode="constant")
 
         col = im2col(X, k_h, k_w, s_h=1, s_w=1)
         # flatten kernel
@@ -353,7 +330,6 @@ class ConvTranspose2D(Layer):
         self.col = col
         self.W = W
         self.X_shape = X.shape
-        self.real_pad = real_pad
         return Z
 
     def backward(self, grad):
@@ -361,7 +337,7 @@ class ConvTranspose2D(Layer):
         k_h, k_w, in_c, out_c = self.kernel_shape
         s_h, s_w = self.stride
         batch_sz, in_h, in_w, in_c = self.X_shape
-        pad = self.real_pad
+        pad_h, pad_w = self.padding[1:3]
 
         # calculate gradients of parameters
         flat_grad = grad.reshape((-1, out_c))
@@ -380,28 +356,20 @@ class ConvTranspose2D(Layer):
                 d_in[:, r:r+k_h, c:c+k_w, :] += patch
 
         # cut off gradients of padding
-        d_in = d_in[:, pad[0]:in_h-pad[1], pad[2]:in_w-pad[3], :]
-        # ignore zeros inserted in forward process 
+        d_in = d_in[:, pad_h[0]:in_h-pad_h[1], pad_w[0]:in_w-pad_w[1], :]
+        # ignore zeros inserted in forward process
         return d_in[:, ::s_h, ::s_w, :]
 
     @staticmethod
-    def _get_padding(kernel_shape, mode):
-        def _get_padding_1d(k_s):
-            n_pad = 0 if mode == "VALID" else k_s - 1
-            half = n_pad // 2
-            pad = [half, half] if n_pad % 2 == 0 else [half, half + 1]
-            return pad
-
-        h_pad = _get_padding_1d(kernel_shape[0])
-        w_pad = _get_padding_1d(kernel_shape[1])
-        return h_pad + w_pad
-
-    @staticmethod
-    def _insert_zeros(inputs, s_h, s_w):
+    def _insert_zeros(inputs, s_h, s_w, mode):
         batch_sz, in_h, in_w, in_c = inputs.shape
 
-        out_h = (in_h - 1) * s_h + 1
-        out_w = (in_w - 1) * s_w + 1
+        if mode == "SAME":
+            out_h = in_h * s_h
+            out_w = in_w * s_w
+        else:
+            out_h = (in_h - 1) * s_h + 1
+            out_w = (in_w - 1) * s_h + 1
         expand = np.zeros((batch_sz, out_h, out_w, in_c))
         expand[:, ::s_h, ::s_w, :] = inputs
         return expand
@@ -555,3 +523,18 @@ def im2col(img, k_h, k_w, s_h, s_w):
             patch = patch.reshape(batch_sz, -1)
             col[matrix_r+c::batch_span, :] = patch
     return col
+
+
+def get_padding_2d(in_shape, k_shape, stride, mode):
+    def get_padding_1d(w, k, s):
+        if mode == "SAME":
+            pads = (w - 1) * s + k - w
+            half = pads // 2
+            padding = (half, half) if pads % 2 == 0 else (half, half + 1)
+        else:
+            padding = (0, 0)
+        return padding
+
+    h_pad = get_padding_1d(in_shape[0], k_shape[0], stride[0])
+    w_pad = get_padding_1d(in_shape[1], k_shape[1], stride[1])
+    return (0, 0), h_pad, w_pad, (0, 0)

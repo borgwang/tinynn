@@ -44,12 +44,10 @@ def test_conv_transpose_2d():
     output = layer.forward(input_)
     assert output.shape == (256, 7, 7, 64)
 
-    """
     layer = ConvTranspose2D(
         kernel=[4, 4, 32, 64], stride=[3, 3], padding="SAME")
     output = layer.forward(input_)
     assert output.shape == (256, 21, 21, 64)
-    """
 
     layer = ConvTranspose2D(
         kernel=[4, 4, 32, 64], stride=[1, 1], padding="VALID")
