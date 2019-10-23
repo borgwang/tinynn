@@ -8,9 +8,7 @@ from core.initializer import Zeros
 
 class Layer(object):
 
-    def __init__(self, name):
-        self.name = name
-
+    def __init__(self):
         self.params, self.grads = {}, {}
         self.is_training = True
 
@@ -23,6 +21,10 @@ class Layer(object):
     def set_phase(self, phase):
         self.is_training = True if phase == "TRAIN" else False
 
+    @property
+    def name(self):
+        return self.__class__.__name__
+
 
 class Dense(Layer):
 
@@ -31,21 +33,22 @@ class Dense(Layer):
                  num_in=None,
                  w_init=XavierUniform(),
                  b_init=Zeros()):
-        super().__init__("Linear")
+        super().__init__()
+
         self.initializers = {"w": w_init, "b": b_init}
         self.shapes = {"w": [num_in, num_out], "b": [num_out]}
         self.params = {"w": None, "b": None}
 
         self.is_init = False
         if num_in is not None:
-            self._init_parameters(num_in)
+            self._init_params(num_in)
 
         self.inputs = None
 
     def forward(self, inputs):
         # lazy initialize
         if not self.is_init:
-            self._init_parameters(inputs.shape[1])
+            self._init_params(inputs.shape[1])
 
         self.inputs = inputs
         return inputs @ self.params["w"] + self.params["b"]
@@ -55,7 +58,7 @@ class Dense(Layer):
         self.grads["b"] = np.sum(grad, axis=0)
         return grad @ self.params["w"].T
 
-    def _init_parameters(self, input_size):
+    def _init_params(self, input_size):
         self.shapes["w"][0] = input_size
         self.params["w"] = self.initializers["w"](shape=self.shapes["w"])
         self.params["b"] = self.initializers["b"](shape=self.shapes["b"])
@@ -78,12 +81,7 @@ class Conv2D(Layer):
                  padding="SAME",
                  w_init=XavierUniform(),
                  b_init=Zeros()):
-        super().__init__("Conv2D")
-
-        # verify arguments
-        assert len(kernel) == 4
-        assert len(stride) == 2
-        assert padding in ("SAME", "VALID")
+        super().__init__()
 
         self.kernel_shape = kernel
         self.stride = stride
@@ -110,7 +108,7 @@ class Conv2D(Layer):
         """
         # lazy initialization
         if not self.is_init:
-            self._init_parameters()
+            self._init_params()
 
         k_h, k_w, in_c, out_c = self.kernel_shape
         s_h, s_w = self.stride
@@ -224,7 +222,7 @@ class Conv2D(Layer):
         w_pad = _get_padding_1d(kernel_shape[1])
         return h_pad + w_pad
 
-    def _init_parameters(self):
+    def _init_params(self):
         self.params["w"] = self.initializers["w"](self.kernel_shape)
         self.params["b"] = self.initializers["b"](self.kernel_shape[-1])
         self.is_init = True
@@ -242,11 +240,7 @@ class MaxPool2D(Layer):
         :param stride: A list/tuple of 2 integers (stride_height, stride_width)
         :param padding: A string ("SAME", "VALID")
         """
-        super().__init__("MaxPool2D")
-        # validate arguments
-        assert len(pool_size) == 2
-        assert len(stride) == 2
-        assert padding in ("VALID", "SAME")
+        super().__init__()
 
         self.kernel_shape = pool_size
         self.stride = stride
@@ -333,12 +327,7 @@ class ConvTranspose2D(Layer):
                  padding="SAME",
                  w_init=XavierUniform(),    
                  b_init=Zeros()):
-        super().__init__("ConvTranspose2D")
-
-        # verify arguments
-        assert len(kernel) == 4
-        assert len(stride) == 2
-        assert padding in ("SAME", "VALID")
+        super().__init__()
 
         self.kernel_shape = kernel
         self.stride = stride
@@ -352,7 +341,7 @@ class ConvTranspose2D(Layer):
     def forward(self, inputs):
         # lazy initialization
         if not self.is_init:
-            self._init_parameters()
+            self._init_params()
 
         # inputs (?, 7, 7, 32)
         k_h, k_w, in_c, out_c = self.kernel_shape
@@ -475,8 +464,7 @@ class ConvTranspose2D(Layer):
         expand[:, ::s_h, ::s_w, :] = inputs
         return expand
 
-
-    def _init_parameters(self):
+    def _init_params(self):
         self.params["w"] = self.initializers["w"](self.kernel_shape)
         self.params["b"] = self.initializers["b"](self.kernel_shape[-1])
         self.is_init = True
@@ -485,7 +473,7 @@ class ConvTranspose2D(Layer):
 class Flatten(Layer):
 
     def __init__(self):
-        super().__init__("Flatten")
+        super().__init__()
         self.input_shape = None
 
     def forward(self, inputs):
@@ -499,7 +487,7 @@ class Flatten(Layer):
 class Dropout(Layer):
 
     def __init__(self, keep_prob=0.5):
-        super().__init__("Dropout")
+        super().__init__()
         self._keep_prob = keep_prob
         self._multiplier = None
 
@@ -520,10 +508,10 @@ class Dropout(Layer):
 
 class Activation(Layer):
 
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self):
+        super().__init__()
         self.inputs = None
-
+        
     def forward(self, inputs):
         self.inputs = inputs
         return self.func(inputs)
@@ -540,9 +528,6 @@ class Activation(Layer):
 
 class Sigmoid(Activation):
 
-    def __init__(self):
-        super().__init__("Sigmoid")
-
     def func(self, x):
         return 1.0 / (1.0 + np.exp(-x))
 
@@ -551,9 +536,6 @@ class Sigmoid(Activation):
 
 
 class Softplus(Activation):
-
-    def __init__(self):
-        super().__init__("Softplus")
 
     def func(self, x):
         return np.log(1.0 + np.exp(-np.abs(x))) + np.maximum(x, 0.0)
@@ -564,9 +546,6 @@ class Softplus(Activation):
 
 class Tanh(Activation):
 
-    def __init__(self):
-        super().__init__("Tanh")
-
     def func(self, x):
         return np.tanh(x)
 
@@ -575,9 +554,6 @@ class Tanh(Activation):
 
 
 class ReLU(Activation):
-
-    def __init__(self):
-        super().__init__("ReLU")
 
     def func(self, x):
         return np.maximum(x, 0.0)
@@ -589,7 +565,7 @@ class ReLU(Activation):
 class LeakyReLU(Activation):
 
     def __init__(self, slope=0.2):
-        super().__init__("LeakyReLU")
+        super().__init__()
         self._slope = slope
 
     def func(self, x):
