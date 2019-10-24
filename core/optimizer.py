@@ -17,7 +17,7 @@ class Optimizer(object):
 
         # apply weight_decay if specified
         if self.weight_decay:
-            grads -= self.weight_decay * params
+            grads -= self.lr * self.weight_decay * params
 
         # take a step
         params += grads
@@ -32,7 +32,7 @@ class SGD(Optimizer):
         super().__init__(lr, weight_decay)
 
     def _compute_step(self, grad):
-        return - self.lr * grad
+        return -self.lr * grad
 
 
 class Adam(Optimizer):
