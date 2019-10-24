@@ -66,6 +66,47 @@ class Adam(Optimizer):
         return step
 
 
+class RAdam(Optimizer):
+    """Rectified Adam
+    ref: https://arxiv.org/pdf/1908.03265v1.pdf
+    """
+    def __init__(self,
+                 lr=0.001,
+                 beta1=0.9,
+                 beta2=0.999,
+                 epsilon=1e-8,
+                 weight_decay=0.0):
+        super().__init__(lr, weight_decay)
+        self._b1 = beta1
+        self._b2 = beta2
+        self._eps = epsilon
+
+        self._t = 0
+        self._m = 0
+        self._v = 0
+
+        self.rho = 2 / (1 - self._b2) - 1
+
+    def _compute_step(self, grad):
+        self._t += 1
+
+        self._m += (1.0 - self._b1) * (grad - self._m)
+        self._v += (1.0 - self._b2) * (grad ** 2 - self._v)
+
+        # bias correction
+        _m = self._m / (1 - self._b1 ** self._t)
+
+        _rho = self.rho - 2 * self._b2 ** self._t / (1 - self._b2 ** self._t)
+        if _rho > 4:
+            _v = self._v / (1 - self._b2 ** self._t)
+            _r = (((_rho - 4) * (_rho - 2) * self.rho) / 
+                  ((self.rho - 4) * (self.rho - 2) * _rho))
+            step = -self.lr * _m * (_r ** 0.5) / (_v ** 0.5 + self._eps)
+        else:
+            step = -self.lr * _m
+        return step
+
+
 class RMSProp(Optimizer):
     """
     RMSProp maintain a moving (discounted) average of the square of gradients.
