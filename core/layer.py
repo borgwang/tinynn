@@ -10,9 +10,11 @@ from core.initializer import Ones
 class Layer(object):
 
     def __init__(self):
-        self.params, self.grads = {}, {}
+        self.params = {}
+        self.grads = {}
+        self.shapes = {}
+
         self.is_training = True
-        self.shapes = None
 
     def forward(self, inputs):
         raise NotImplementedError
@@ -54,7 +56,6 @@ class Dense(Layer):
         # lazy initialize
         if not self.is_init:
             self._init_params(inputs.shape[1])
-
         self.inputs = inputs
         return inputs @ self.params["w"] + self.params["b"]
 
@@ -339,15 +340,10 @@ class BatchNormalization(Layer):
         self.m = momentum
         self.epsilon = epsilon
 
-        self.running_mean = None
-        self.running_var = None
-
-        self.initializer = {"gamma": gamma_init, "beta": beta_init,
-                            "running_mean": running_mean_init,
-                            "running_var": running_var_init}
-        self.params = {"gamma": None, "beta": None}
-        self.shapes = {"gamma": None, "beta": None}
-
+        self.initializer = {"gamma": gamma_init, 
+                            "beta": beta_init,
+                            "r_mean": running_mean_init,
+                            "r_var": running_var_init}
         self.is_init = False
 
     def forward(self, inputs):
@@ -358,28 +354,41 @@ class BatchNormalization(Layer):
         if self.is_training:
             mean = inputs.mean(axis=0)
             var = inputs.var(axis=0)
-            self.running_mean = self.m * self.running_mean + (1 - self.m) * mean
-            self.running_var = self.m * self.running_var + (1 - self.m) * var
+            self.params["r_mean"] = self.m * self.params["r_mean"] + (1 - self.m) * mean
+            self.params["r_var"] = self.m * self.params["r_var"] + (1 - self.m) * var
         else:
-            mean = self.running_mean
-            var = self.running_var
+            mean = self.params["r_mean"]
+            var = self.params["r_var"]
 
         # normalize
         self.X_center = inputs - mean
         self.std = (var + self.epsilon) ** 0.5
-        X = self.X_center / self.std
-        return self.params["gamma"] * X + self.params["beta"]
+        X_norm = self.X_center / self.std
+        return self.params["gamma"] * X_norm + self.params["beta"]
 
     def backward(self, grad):
-        pass
+        self.grads["r_mean"] = 0
+        self.grads["r_var"] = 0
+
+        X_norm = self.X_center / self.std
+        self.grads["gamma"] = (X_norm * grad).sum(axis=0)
+        self.grads["beta"] = grad.sum(axis=0)
+
+        batch_size = grad.shape[0]
+        gamma = self.params["gamma"]
+
+        # gradients w.r.t inputs
+        # ref: http://cthorey.github.io./backpropagation/
+        d_in = (1. / batch_size) * gamma * self.std ** (-1.0) * (
+                batch_size * grad
+                - np.sum(grad, axis=0)
+                - self.X_center * self.std ** (-2.0) * np.sum(grad * self.X_center, axis=0))
+        return d_in
 
     def _init_params(self, input_size):
-        for param in ["gamma", "beta"]:
+        for param in ["gamma", "beta", "r_mean", "r_var"]:
             self.params[param] = self.initializer[param](input_size)
             self.shapes[param] = input_size
-
-        self.running_mean = self.initializer["running_mean"](input_size)
-        self.running_var = self.initializer["running_var"](input_size)
         self.is_init = True
 
 
