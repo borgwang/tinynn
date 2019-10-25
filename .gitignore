@@ -100,3 +100,5 @@ examples/dcgan/data/*
 examples/dcgan/samples/*
 examples/dae/data/*
 examples/dae/output/*
+examples/knowledge_distillation/data/*
+
