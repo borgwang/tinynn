@@ -71,13 +71,24 @@ def cifar10(data_dir, one_hot=False):
         train_x.append(cont[b'data'])
         train_y.extend(cont[b'labels'])
     train_x = np.concatenate(train_x, axis=0)
+
     # normalize
+    means, stds = (0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)
     train_x = train_x / 255.0
+    train_x = train_x.reshape((-1, 1024, 3))
+    for c in range(3):
+        train_x[:, :, c] = (train_x[:, :, c] - means[c]) / stds[c]
+    train_x = train_x.reshape(-1, 3072)
+
     train_y = np.asarray(train_y)
     train_set = (train_x, train_y)
 
     test_x = dataset["test_batch"][b"data"]
     test_x = test_x / 255.0
+    test_x = test_x.reshape((-1, 1024, 3))
+    for c in range(3):
+        test_x[:, :, c] = (test_x[:, :, c] - means[c]) / stds[c]
+    test_x = test_x.reshape(-1, 3072)
     test_y = np.asarray(dataset["test_batch"][b"labels"])
     test_set = (test_x, test_y)
 
