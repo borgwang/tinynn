@@ -39,10 +39,10 @@ python examples/rl/run.py
 
 ### Components
 
-- layers: Dense, Conv2D, MaxPool2D, Dropout
+- layers: Dense, Conv2D, ConvTranspose2D, MaxPool2D, Dropout, BatchNormalization
 - activation: ReLU, LeakyReLU, Sigmoid, Tanh, Softplus
 - losses: SoftmaxCrossEntropy, SigmoidCrossEntropy, MAE, MSE, Huber
-- optimizer: SGD, Adam, Momentum, RMSProp, Adagrad, Adadelta
+- optimizer: RAdam, Adam, SGD, Momentum, RMSProp, Adagrad, Adadelta
 
 ## Contribute 
 
