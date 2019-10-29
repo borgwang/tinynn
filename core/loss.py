@@ -2,6 +2,8 @@
 
 import numpy as np
 
+from utils.math import log_softmax
+
 
 class Loss(object):
 
@@ -71,9 +73,7 @@ class SoftmaxCrossEntropy(Loss):
 
     def loss(self, logits, labels):
         m = logits.shape[0]
-        exps = np.exp(logits - np.max(logits, axis=1, keepdims=True))
-        p = exps / np.sum(exps, axis=1, keepdims=True)
-        nll = -np.log(np.sum(p * labels, axis=1))
+        nll = -(log_softmax(logits, axis=1) * labels).sum(axis=1)
 
         if self._weight is not None:
             nll *= self._weight[labels]
@@ -83,29 +83,6 @@ class SoftmaxCrossEntropy(Loss):
         m = logits.shape[0]
         grad = np.copy(logits)
         grad -= labels
-        return grad / m
-
-
-class SparseSoftmaxCrossEntropy(Loss):
-
-    def __init__(self, weight=None):
-        weight = np.asarray(weight) if weight is not None else weight
-        self._weight = weight
-
-    def loss(self, logits, labels):
-        m = logits.shape[0]
-        exps = np.exp(logits - np.max(logits))
-        p = exps / np.sum(exps)
-        nll = -np.log(p[range(m), labels])
-
-        if self._weight is not None:
-            nll *= self._weight[labels]
-        return np.sum(nll) / m
-
-    def grad(self, logits, actual):
-        m = logits.shape[0]
-        grad = np.copy(logits)
-        grad[range(m), actual] -= 1.0
         return grad / m
 
 
@@ -125,7 +102,7 @@ class SigmoidCrossEntropy(Loss):
 
     def loss(self, logits, labels):
         m = logits.shape[0]
-        cost = - labels * logits + np.log(1 + np.exp(-logits)) + logits
+        cost = -labels * logits + np.log(1 + np.exp(-logits)) + logits
         return np.sum(cost) / m
 
     def grad(self, logits, labels):
