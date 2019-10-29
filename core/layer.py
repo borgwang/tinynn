@@ -327,6 +327,61 @@ class ConvTranspose2D(Conv2D):
         return expand
 
 
+class RNN(Layer):
+    
+    def __init__(self, 
+                 num_hidden, 
+                 activation, 
+                 bptt_trunc=5,
+                 w_init=XavierUniform()):
+        self.num_hidden = num_hidden
+        self.activation = activation
+        self.bptt_trunc = bptt_trunc
+
+        self.params = {"W": None, "V": None, "U": None}
+        self.initializer = {"W": w_init, "V": w_init, "U": w_init}
+
+        self.is_init = False
+
+    def forward(self, inputs):
+        """ 
+        s_{t} = atv(U x_{t} + W s_{t-1}) 
+        o_{t} = softmax(V s_{t})
+        """
+        if not self.is_init:
+            self.shape = {"W": (self.num_hidden, self.num_hidden),
+                          "V": (self.num_hidden, inputs.shape[-1]),
+                          "U": (inputs.shape[-1], self.num_hidden)}
+            self._init_params()
+
+        from utils.math import softmax
+
+        batch, timesteps, input_dim = inputs.shape
+
+        atv_in = np.empty((batch, timesteps, self.num_hidden))
+        state = np.empty((batch, timesteps+1, self.num_hidden))
+        #outputs = np.empty((batch, timesteps, input_dim))
+        logits = np.empty((batch, timesteps, input_dim))
+
+        state[:, -1] = np.zeros((batch, self.num_hidden))
+        for t in range(timesteps):
+            atv_in[:, t] = inputs[:, t] @ self.params["U"] + atv_in[:, t-1] @ self.params["W"]
+            state[:, t] = self.activation.forward(atv_in[:, t])
+            logits[:, t] = state[:, t] @ self.params["V"]
+            #outputs[:, t] = softmax(logits[:, t])
+
+        output2 = softmax(logits, axis=-1)
+        return outputs
+
+    def backward(self, grad):
+        pass
+
+    def _init_params(self):
+        for p in ["W", "U", "V"]:
+            self.params[p] = self.initializer[p](self.shape[p])
+        self.is_init = True
+
+
 class BatchNormalization(Layer):
 
     def __init__(self,
