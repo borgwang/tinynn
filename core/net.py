@@ -87,7 +87,9 @@ class StructuredParam(object):
         return shape
 
     def clip(self, min_=None, max_=None):
-        self.values = [v.clip(min_, max_)for v in self.values]
+        obj = copy.deepcopy(self)
+        obj.values = [v.clip(min_, max_)for v in self.values]
+        return obj
 
     @staticmethod
     def _ensure_values(obj):
