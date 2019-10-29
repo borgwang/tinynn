@@ -48,14 +48,15 @@ class Dense(Layer):
 
         self.is_init = False
         if num_in is not None:
-            self._init_params(num_in)
+            self._init_params()
 
         self.inputs = None
 
     def forward(self, inputs):
         # lazy initialize
         if not self.is_init:
-            self._init_params(inputs.shape[1])
+            self.shapes["w"][0] = inputs.shape[1]
+            self._init_params()
         self.inputs = inputs
         return inputs @ self.params["w"] + self.params["b"]
 
@@ -64,11 +65,14 @@ class Dense(Layer):
         self.grads["b"] = np.sum(grad, axis=0)
         return grad @ self.params["w"].T
 
-    def _init_params(self, input_size):
-        self.shapes["w"][0] = input_size
-        self.params["w"] = self.initializers["w"](shape=self.shapes["w"])
-        self.params["b"] = self.initializers["b"](shape=self.shapes["b"])
+    def _init_params(self):
+        for p in self.param_names:
+            self.params[p] = self.initializers[p](self.shapes[p])
         self.is_init = True
+
+    @property
+    def param_names(self):
+        return "w", "b"
 
 
 class Conv2D(Layer):
@@ -187,9 +191,13 @@ class Conv2D(Layer):
         return grads
 
     def _init_params(self):
-        self.params["w"] = self.initializers["w"](self.kernel_shape)
-        self.params["b"] = self.initializers["b"](self.kernel_shape[-1])
+        for p in self.param_names:
+            self.params[p] = self.initializers[p](self.shapes[p])
         self.is_init = True
+
+    @property
+    def param_names(self):
+        return "w", "b"
 
 
 class MaxPool2D(Layer):
@@ -202,8 +210,6 @@ class MaxPool2D(Layer):
         :param padding: A string ("SAME", "VALID")
         """
         super().__init__()
-        self.shape = None
-
         self.kernel_shape = pool_size
         self.stride = stride
 
@@ -321,13 +327,13 @@ class RNN(Layer):
     
     def __init__(self, 
                  num_hidden,
-                 activation, 
+                 activation,
                  bptt_trunc=None,
                  w_init=XavierUniform(),
                  b_init=Zeros()):
         super().__init__()
         self.num_hidden = num_hidden
-        self.atv = activation
+        self.activation = activation
         self.bptt_trunc = bptt_trunc
 
         self.initializer = {"W": w_init, "V": w_init, "U": w_init,
@@ -336,19 +342,19 @@ class RNN(Layer):
         self.is_init = False
 
     def forward(self, inputs):
-        """ 
+        """
+        Vanilla recurrent neural net forward pass
         a_{t} = U @ x_{t} + W @ s_{t-1} + b
         h_{t} = activation_func(a_{t}) 
         o_{t} = V @ h_{t} + c
         """
         batch_size, n_ts, input_dim = inputs.shape
         if not self.is_init:
-            self.shapes = {
-                "W": [self.num_hidden, self.num_hidden],
-                "V": [input_dim, self.num_hidden],
-                "U": [self.num_hidden, input_dim],
-                "b": [self.num_hidden],
-                "c": [input_dim]}
+            self.shapes = {"W": [self.num_hidden, self.num_hidden],
+                           "V": [input_dim, self.num_hidden],
+                           "U": [self.num_hidden, input_dim],
+                           "b": [self.num_hidden],
+                           "c": [input_dim]}
             self._init_params()
 
         a = np.empty((batch_size, n_ts, self.num_hidden))
@@ -359,7 +365,7 @@ class RNN(Layer):
         for t in range(n_ts):
             a[:, t] = (inputs[:, t] @ self.params["U"].T +
                        h[:, t-1] @ self.params["W"].T + self.params["b"])
-            h[:, t] = self.atv.forward(a[:, t])
+            h[:, t] = self.activation.forward(a[:, t])
             out[:, t] = h[:, t] @ self.params["V"].T + self.params["c"]
 
         # cache for backward pass
@@ -368,7 +374,7 @@ class RNN(Layer):
 
     def backward(self, grad):
         n_ts = self.X.shape[1]
-        for p in self._param_names:
+        for p in self.param_names:
             self.grads[p] = np.zeros_like(self.params[p])
 
         if self.bptt_trunc is None:
@@ -381,7 +387,7 @@ class RNN(Layer):
             self.grads["V"] += grad.T @ self.h[:, t]
             # grads w.r.t h
             d_h = grad @ self.params["V"]
-            d_a = d_h * self.atv.derivative_func(self.a[:, t])
+            d_a = d_h * self.activation.derivative(self.a[:, t])
             # grads w.r.t input X
             d_in[:, t] = d_a @ self.params["U"]
             # grads w.r.t params U, W and b
@@ -390,16 +396,16 @@ class RNN(Layer):
                 self.grads["W"] += d_a.T @ self.h[:, t - i - 1]
                 self.grads["b"] += d_a.sum(axis=0)
                 d_h = d_a @ self.params["W"]
-                d_a = d_h * self.atv.derivative_func(self.a[:, t - i - 1])
+                d_a = d_h * self.activation.derivative(self.a[:, t - i - 1])
         return d_in
 
     def _init_params(self):
-        for p in self._param_names:
+        for p in self.param_names:
             self.params[p] = self.initializer[p](self.shapes[p])
         self.is_init = True
 
     @property
-    def _param_names(self):
+    def param_names(self):
         return "W", "U", "V", "b", "c"
 
 
@@ -424,13 +430,17 @@ class BatchNormalization(Layer):
 
     def forward(self, inputs):
         if not self.is_init:
-            self._init_params(inputs.shape[1:])
+            for p in self.param_names:
+                self.shapes[p] = inputs.shape[1:]
+            self._init_params()
 
         if self.is_training:
             mean = inputs.mean(axis=0)
             var = inputs.var(axis=0)
-            self.params["r_mean"] = self.m * self.params["r_mean"] + (1 - self.m) * mean
-            self.params["r_var"] = self.m * self.params["r_var"] + (1 - self.m) * var
+            self.params["r_mean"] = (self.m * self.params["r_mean"] +
+                                     (1 - self.m) * mean)
+            self.params["r_var"] = (self.m * self.params["r_var"] +
+                                    (1 - self.m) * var)
         else:
             mean = self.params["r_mean"]
             var = self.params["r_var"]
@@ -459,19 +469,22 @@ class BatchNormalization(Layer):
                 - self.X_center * self.std ** (-2.0) * np.sum(grad * self.X_center, axis=0))
         return d_in
 
-    def _init_params(self, input_size):
-        for param in ["gamma", "beta", "r_mean", "r_var"]:
-            self.params[param] = self.initializer[param](input_size)
-            self.shapes[param] = input_size
+    def _init_params(self):
+        for p in self.param_names:
+            self.params[p] = self.initializer[p](self.shapes[p])
         self.is_init = True
+
+    @property
+    def param_names(self):
+        return "gamma", "beta", "r_mean", "r_var"
 
 
 class Reshape(Layer):
 
     def __init__(self, *output_shape):
         super().__init__()
-        self.input_shape = None
         self.output_shape = output_shape
+        self.input_shape = None
 
     def forward(self, inputs):
         self.input_shape = inputs.shape
@@ -514,18 +527,18 @@ class Activation(Layer):
     def __init__(self):
         super().__init__()
         self.inputs = None
-        
+
     def forward(self, inputs):
         self.inputs = inputs
         return self.func(inputs)
 
     def backward(self, grad):
-        return self.derivative_func(self.inputs) * grad
+        return self.derivative(self.inputs) * grad
 
     def func(self, x):
         raise NotImplementedError
 
-    def derivative_func(self, x):
+    def derivative(self, x):
         raise NotImplementedError
 
 
@@ -534,7 +547,7 @@ class Sigmoid(Activation):
     def func(self, x):
         return 1.0 / (1.0 + np.exp(-x))
 
-    def derivative_func(self, x):
+    def derivative(self, x):
         return self.func(x) * (1.0 - self.func(x))
 
 
@@ -543,7 +556,7 @@ class Softplus(Activation):
     def func(self, x):
         return np.log(1.0 + np.exp(-np.abs(x))) + np.maximum(x, 0.0)
 
-    def derivative_func(self, x):
+    def derivative(self, x):
         return 1.0 / (1.0 + np.exp(-x))
 
 
@@ -552,7 +565,7 @@ class Tanh(Activation):
     def func(self, x):
         return np.tanh(x)
 
-    def derivative_func(self, x):
+    def derivative(self, x):
         return 1.0 - self.func(x) ** 2
 
 
@@ -561,7 +574,7 @@ class ReLU(Activation):
     def func(self, x):
         return np.maximum(x, 0.0)
 
-    def derivative_func(self, x):
+    def derivative(self, x):
         return x > 0.0
 
 
@@ -576,7 +589,7 @@ class LeakyReLU(Activation):
         x[x < 0.0] *= self._slope
         return x
 
-    def derivative_func(self, x):
+    def derivative(self, x):
         dx = np.ones_like(x)
         dx[x < 0.0] = self._slope
         return dx
