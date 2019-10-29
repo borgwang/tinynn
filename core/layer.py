@@ -1,4 +1,4 @@
-"""Network layers and activation layers."""
+"""Network layers."""
 
 import numpy as np
 
@@ -113,7 +113,6 @@ class Conv2D(Layer):
                 | 34  76  35   8 |              | 7 |
                 | 76  95   8  46 |              | 9 |
         """
-        # lazy initialization
         if not self.is_init:
             self._init_params()
 
@@ -121,14 +120,12 @@ class Conv2D(Layer):
         s_h, s_w = self.stride
         X = self._inputs_preprocess(inputs)
 
-        # step2: padded inputs to column matrix
-        self.col = im2col(X, k_h, k_w, s_h, s_w)
-
-        # step3: perform convolution by matrix product.
-        self.W = self.params["w"].reshape(-1, out_c)  # (k_h * k_w * in_c, out_c)
-        Z = self.col @ self.W
-
-        # step4: reshape output 
+        # padded inputs to column matrix
+        col = im2col(X, k_h, k_w, s_h, s_w)
+        # perform convolution by matrix product.
+        W = self.params["w"].reshape(-1, out_c)
+        Z = col @ W
+        # reshape output 
         batch_sz, in_h, in_w, _ = X.shape
         # separate the batch size and feature map dimensions
         Z = Z.reshape(batch_sz, Z.shape[0] // batch_sz, out_c)
@@ -140,7 +137,7 @@ class Conv2D(Layer):
         # plus the bias for every filter
         Z += self.params["b"]
         # save results for backward function
-        self.X_shape = X.shape
+        self.X_shape, self.col, self.W = X.shape, col, W
         return Z
 
     def backward(self, grad):
@@ -157,13 +154,13 @@ class Conv2D(Layer):
         batch_sz, in_h, in_w, in_c = self.X_shape
         pad_h, pad_w = self.padding[1:3]
 
-        # calculate gradients of parameters
+        # grads w.r.t parameters
         flat_grad = grad.reshape((-1, out_c))
         d_W = self.col.T @ flat_grad
         self.grads["w"] = d_W.reshape(self.kernel_shape)
         self.grads["b"] = np.sum(flat_grad, axis=0)
 
-        # calculate backward gradients
+        # grads w.r.t inputs
         d_X = grad @ self.W.T
         # cast gradients back to original shape as d_in
         d_in = np.zeros(shape=self.X_shape)
@@ -172,7 +169,7 @@ class Conv2D(Layer):
                 patch = d_X[:, i, j, :]
                 patch = patch.reshape((batch_sz, k_h, k_w, in_c))
                 d_in[:, r:r+k_h, c:c+k_w, :] += patch
-
+                
         # cut off gradients of padding
         d_in = d_in[:, pad_h[0]:in_h-pad_h[1], pad_w[0]:in_w-pad_w[1], :]
         return self._grads_postprocess(d_in)
@@ -197,10 +194,7 @@ class Conv2D(Layer):
 
 class MaxPool2D(Layer):
 
-    def __init__(self,
-                 pool_size,
-                 stride,
-                 padding="VALID"):
+    def __init__(self, pool_size, stride, padding="VALID"):
         """
         Implement 2D max-pooling layer
         :param pool_size: A list/tuple of 2 integers (pool_height, pool_width)
@@ -292,13 +286,10 @@ class ConvTranspose2D(Conv2D):
 
     def _inputs_preprocess(self, inputs):
         k_h, k_w = self.kernel_shape[:2]
-
         # insert zeros to inputs
-        inputs = self._insert_zeros(inputs,
-                                    *self.origin_stride,
-                                    self.padding_mode)
+        inputs = self._insert_zeros(
+            inputs, *self.origin_stride, self.padding_mode)
         batch_sz, in_h, in_w, in_c = inputs.shape
-
         # padding calculation
         if self.padding is None:
             if self.padding_mode == "SAME":
@@ -315,7 +306,6 @@ class ConvTranspose2D(Conv2D):
     @staticmethod
     def _insert_zeros(inputs, s_h, s_w, mode):
         batch_sz, in_h, in_w, in_c = inputs.shape
-
         if mode == "SAME":
             out_h = in_h * s_h
             out_w = in_w * s_w
@@ -351,7 +341,7 @@ class RNN(Layer):
         h_{t} = activation_func(a_{t}) 
         o_{t} = V @ h_{t} + c
         """
-        batch, n_ts, input_dim = inputs.shape
+        batch_size, n_ts, input_dim = inputs.shape
         if not self.is_init:
             self.shapes = {
                 "W": [self.num_hidden, self.num_hidden],
@@ -361,11 +351,11 @@ class RNN(Layer):
                 "c": [input_dim]}
             self._init_params()
 
-        a = np.empty((batch, n_ts, self.num_hidden))
-        h = np.empty((batch, n_ts + 1, self.num_hidden))
-        out = np.empty((batch, n_ts, input_dim))
+        a = np.empty((batch_size, n_ts, self.num_hidden))
+        h = np.empty((batch_size, n_ts + 1, self.num_hidden))
+        out = np.empty((batch_size, n_ts, input_dim))
 
-        h[:, -1] = np.zeros((batch, self.num_hidden))
+        h[:, -1] = np.zeros((batch_size, self.num_hidden))
         for t in range(n_ts):
             a[:, t] = (inputs[:, t] @ self.params["U"].T +
                        h[:, t-1] @ self.params["W"].T + self.params["b"])
@@ -433,7 +423,6 @@ class BatchNormalization(Layer):
         self.is_init = False
 
     def forward(self, inputs):
-        # lazy initialize
         if not self.is_init:
             self._init_params(inputs.shape[1:])
 
@@ -463,11 +452,10 @@ class BatchNormalization(Layer):
         batch_size = grad.shape[0]
         gamma = self.params["gamma"]
 
-        # gradients w.r.t inputs
+        # grads w.r.t inputs
         # ref: http://cthorey.github.io./backpropagation/
         d_in = (1. / batch_size) * gamma * self.std ** (-1.0) * (
-                batch_size * grad
-                - np.sum(grad, axis=0)
+                batch_size * grad - np.sum(grad, axis=0)
                 - self.X_center * self.std ** (-2.0) * np.sum(grad * self.X_center, axis=0))
         return d_in
 

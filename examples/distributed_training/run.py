@@ -132,8 +132,8 @@ def main():
         print("Run synchronous training.")
         # In each iteration, workers request for the global model, 
         # compute local gradients and then send to the parameter server.
-        # The parameter server gathers grads from all workers, updates the global model
-        # and then broadcasts the new model to workers synchronously.
+        # The parameter server gathers grads from all workers,
+        # updates the global model and broadcasts to workers synchronously.
         for i in range(iterations):
             all_grads = []
             global_params = ps.get_params.remote()

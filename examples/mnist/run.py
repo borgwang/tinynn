@@ -8,13 +8,13 @@ import time
 
 import numpy as np
 
+from core.layer import RNN
 from core.layer import Conv2D
 from core.layer import Dense
 from core.layer import Flatten
 from core.layer import MaxPool2D
 from core.layer import ReLU
 from core.layer import Tanh
-from core.layer import RNN
 from core.loss import SoftmaxCrossEntropy
 from core.model import Model
 from core.net import Net
@@ -33,8 +33,8 @@ def main(args):
     train_x, train_y = train_set
     test_x, test_y = test_set
 
-
     if args.model_type == "mlp":
+        # A multilayer perceptron model
         net = Net([
             Dense(200),
             ReLU(),
@@ -47,14 +47,14 @@ def main(args):
             Dense(10)
         ])
     elif args.model_type == "cnn":
+        # A LeNet-5 model with activation function changed to ReLU
         train_x = train_x.reshape((-1, 28, 28, 1))
         test_x = test_x.reshape((-1, 28, 28, 1))
-        # a LeNet-5 model with activation function changed to ReLU
         net = Net([
-            Conv2D(kernel=[5, 5, 1, 6], stride=[1, 1], padding="SAME"),
+            Conv2D(kernel=[5, 5, 1, 6], stride=[1, 1]),
             ReLU(),
             MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
-            Conv2D(kernel=[5, 5, 6, 16], stride=[1, 1], padding="SAME"),
+            Conv2D(kernel=[5, 5, 6, 16], stride=[1, 1]),
             ReLU(),
             MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
             Flatten(),
@@ -65,6 +65,7 @@ def main(args):
             Dense(10)
         ])
     elif args.model_type == "rnn":
+        # A simple recurrent neural net to classify images.
         train_x = train_x.reshape((-1, 28, 28))
         test_x = test_x.reshape((-1, 28, 28))
         net = Net([
