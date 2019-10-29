@@ -72,7 +72,7 @@ class SoftmaxCrossEntropy(Loss):
     def loss(self, logits, labels):
         m = logits.shape[0]
         exps = np.exp(logits - np.max(logits, axis=1, keepdims=True))
-        p = exps / np.sum(exps)
+        p = exps / np.sum(exps, axis=1, keepdims=True)
         nll = -np.log(np.sum(p * labels, axis=1))
 
         if self._weight is not None:
