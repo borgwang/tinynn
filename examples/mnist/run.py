@@ -13,6 +13,8 @@ from core.layer import Dense
 from core.layer import Flatten
 from core.layer import MaxPool2D
 from core.layer import ReLU
+from core.layer import Tanh
+from core.layer import RNN
 from core.loss import SoftmaxCrossEntropy
 from core.model import Model
 from core.net import Net
@@ -31,11 +33,22 @@ def main(args):
     train_x, train_y = train_set
     test_x, test_y = test_set
 
-    if args.model_type == "cnn":
+
+    if args.model_type == "mlp":
+        net = Net([
+            Dense(200),
+            ReLU(),
+            Dense(100),
+            ReLU(),
+            Dense(70),
+            ReLU(),
+            Dense(30),
+            ReLU(),
+            Dense(10)
+        ])
+    elif args.model_type == "cnn":
         train_x = train_x.reshape((-1, 28, 28, 1))
         test_x = test_x.reshape((-1, 28, 28, 1))
-
-    if args.model_type == "cnn":
         # a LeNet-5 model with activation function changed to ReLU
         net = Net([
             Conv2D(kernel=[5, 5, 1, 6], stride=[1, 1], padding="SAME"),
@@ -51,17 +64,11 @@ def main(args):
             ReLU(),
             Dense(10)
         ])
-    elif args.model_type == "mlp":
+    elif args.model_type == "rnn":
+        train_x = train_x.reshape((-1, 28, 28))
+        test_x = test_x.reshape((-1, 28, 28))
         net = Net([
-            Dense(200),
-            ReLU(),
-            Dense(100),
-            ReLU(),
-            Dense(70),
-            ReLU(),
-            Dense(30),
-            ReLU(),
-            Dense(10)
+            RNN(10, 50, Tanh())
         ])
     else:
         raise ValueError("Invalid argument: model_type")
@@ -76,6 +83,7 @@ def main(args):
         for batch in iterator(train_x, train_y):
             pred = model.forward(batch.inputs)
             loss, grads = model.backward(pred, batch.targets)
+            import pdb; pdb.set_trace()
             model.apply_grads(grads)
             loss_list.append(loss)
         print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
@@ -106,7 +114,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_dir", type=str,
                         default=os.path.join(curr_dir, "models"))
     parser.add_argument("--model_type", default="mlp", type=str,
-                        help="cnn or mlp")
+                        help="[*mlp|cnn|rnn]")
     parser.add_argument("--num_ep", default=3, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--batch_size", default=128, type=int)

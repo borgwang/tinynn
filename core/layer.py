@@ -330,16 +330,20 @@ class ConvTranspose2D(Conv2D):
 class RNN(Layer):
     
     def __init__(self, 
-                 num_hidden, 
+                 num_out, 
+                 num_hidden,
                  activation, 
                  bptt_trunc=5,
-                 w_init=XavierUniform()):
+                 w_init=XavierUniform(),
+                 b_init=Zeros()):
+        super().__init__()
         self.num_hidden = num_hidden
+        self.num_out = num_out
+
         self.activation = activation
         self.bptt_trunc = bptt_trunc
 
-        self.params = {"W": None, "V": None, "U": None}
-        self.initializer = {"W": w_init, "V": w_init, "U": w_init}
+        self.initializer = {"W": w_init, "V": w_init, "U": w_init, "b": b_init, "c": b_init}
 
         self.is_init = False
 
@@ -348,38 +352,64 @@ class RNN(Layer):
         s_{t} = atv(U x_{t} + W s_{t-1}) 
         o_{t} = softmax(V s_{t})
         """
+        batch, timesteps, input_dim = inputs.shape
         if not self.is_init:
-            self.shape = {"W": (self.num_hidden, self.num_hidden),
-                          "V": (self.num_hidden, inputs.shape[-1]),
-                          "U": (inputs.shape[-1], self.num_hidden)}
+            self.shape = {"W": [self.num_hidden, self.num_hidden],
+                          "V": [self.num_hidden, self.num_out],
+                          "U": [self.num_hidden, input_dim],
+                          "b": [self.num_hidden],
+                          "c": [self.num_out]}
             self._init_params()
 
-        from utils.math import softmax
+        a = np.empty((batch, timesteps, self.num_hidden))
+        h = np.empty((batch, timesteps + 1, self.num_hidden))
+        out = np.empty((batch, timesteps, self.num_out))
 
-        batch, timesteps, input_dim = inputs.shape
-
-        atv_in = np.empty((batch, timesteps, self.num_hidden))
-        state = np.empty((batch, timesteps+1, self.num_hidden))
-        #outputs = np.empty((batch, timesteps, input_dim))
-        logits = np.empty((batch, timesteps, input_dim))
-
-        state[:, -1] = np.zeros((batch, self.num_hidden))
+        h[:, -1] = np.zeros((batch, self.num_hidden))
         for t in range(timesteps):
-            atv_in[:, t] = inputs[:, t] @ self.params["U"] + atv_in[:, t-1] @ self.params["W"]
-            state[:, t] = self.activation.forward(atv_in[:, t])
-            logits[:, t] = state[:, t] @ self.params["V"]
-            #outputs[:, t] = softmax(logits[:, t])
+            a[:, t] = inputs[:, t] @ self.params["U"].T + h[:, t-1] @ self.params["W"] + self.params["b"]
+            h[:, t] = self.activation.forward(a[:, t])
+            out[:, t] = h[:, t] @ self.params["V"] + self.params["c"]
 
-        output2 = softmax(logits, axis=-1)
-        return outputs
+        self.h = h
+        self.X = inputs
+        return out[:, -1]
 
     def backward(self, grad):
-        pass
+        timesteps = self.X.shape[1]
+        for p in self._param_names():
+            self.grads[p] = np.zeros_like(self.params[p])
+        
+        d_in = np.empty_like(self.X)
+
+        for t in reversed(range(timesteps)):
+            # grads w.r.t param V and c
+            self.grads["c"] += grad.sum(axis=0)
+            self.grads["V"] += self.h[:, t].T @ grad
+
+            # grads w.r.t h
+            d_h = grad @ self.params["V"].T
+            d_a = self.activation.backward(d_h)
+
+            # grads w.r.t input X
+            d_in[:, t] = d_a @ self.params["U"]
+
+            for offset in range(min(self.bptt_trunc, t+1)):
+                # grads w.r.t U, W, b
+                self.grads["U"] += d_a.T @ self.X[:, t - offset]
+                self.grads["W"] += d_a.T @ self.h[:, t - offset - 1]
+                self.grads["b"] += d_a.sum(axis=0)
+                d_h = d_a @ self.params["W"]
+                d_a = self.activation.backward(d_h)
+        return d_in
 
     def _init_params(self):
-        for p in ["W", "U", "V"]:
+        for p in self._param_names():
             self.params[p] = self.initializer[p](self.shape[p])
         self.is_init = True
+
+    def _param_names(self):
+        return ("W", "U", "V", "b", "c")
 
 
 class BatchNormalization(Layer):
