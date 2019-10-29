@@ -68,7 +68,8 @@ def main(args):
         train_x = train_x.reshape((-1, 28, 28))
         test_x = test_x.reshape((-1, 28, 28))
         net = Net([
-            RNN(10, 50, Tanh())
+            RNN(num_hidden=50, activation=Tanh()),
+            Dense(10)
         ])
     else:
         raise ValueError("Invalid argument: model_type")
@@ -83,7 +84,6 @@ def main(args):
         for batch in iterator(train_x, train_y):
             pred = model.forward(batch.inputs)
             loss, grads = model.backward(pred, batch.targets)
-            import pdb; pdb.set_trace()
             model.apply_grads(grads)
             loss_list.append(loss)
         print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
@@ -115,7 +115,7 @@ if __name__ == "__main__":
                         default=os.path.join(curr_dir, "models"))
     parser.add_argument("--model_type", default="mlp", type=str,
                         help="[*mlp|cnn|rnn]")
-    parser.add_argument("--num_ep", default=3, type=int)
+    parser.add_argument("--num_ep", default=10, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--batch_size", default=128, type=int)
     parser.add_argument("--seed", default=-1, type=int)

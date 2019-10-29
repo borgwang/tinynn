@@ -330,86 +330,87 @@ class ConvTranspose2D(Conv2D):
 class RNN(Layer):
     
     def __init__(self, 
-                 num_out, 
                  num_hidden,
                  activation, 
-                 bptt_trunc=5,
+                 bptt_trunc=None,
                  w_init=XavierUniform(),
                  b_init=Zeros()):
         super().__init__()
         self.num_hidden = num_hidden
-        self.num_out = num_out
-
-        self.activation = activation
+        self.atv = activation
         self.bptt_trunc = bptt_trunc
 
-        self.initializer = {"W": w_init, "V": w_init, "U": w_init, "b": b_init, "c": b_init}
+        self.initializer = {"W": w_init, "V": w_init, "U": w_init,
+                            "b": b_init, "c": b_init}
 
         self.is_init = False
 
     def forward(self, inputs):
         """ 
-        s_{t} = atv(U x_{t} + W s_{t-1}) 
-        o_{t} = softmax(V s_{t})
+        a_{t} = U @ x_{t} + W @ s_{t-1} + b
+        h_{t} = activation_func(a_{t}) 
+        o_{t} = V @ h_{t} + c
         """
-        batch, timesteps, input_dim = inputs.shape
+        batch, n_ts, input_dim = inputs.shape
         if not self.is_init:
-            self.shape = {"W": [self.num_hidden, self.num_hidden],
-                          "V": [self.num_hidden, self.num_out],
-                          "U": [self.num_hidden, input_dim],
-                          "b": [self.num_hidden],
-                          "c": [self.num_out]}
+            self.shapes = {
+                "W": [self.num_hidden, self.num_hidden],
+                "V": [input_dim, self.num_hidden],
+                "U": [self.num_hidden, input_dim],
+                "b": [self.num_hidden],
+                "c": [input_dim]}
             self._init_params()
 
-        a = np.empty((batch, timesteps, self.num_hidden))
-        h = np.empty((batch, timesteps + 1, self.num_hidden))
-        out = np.empty((batch, timesteps, self.num_out))
+        a = np.empty((batch, n_ts, self.num_hidden))
+        h = np.empty((batch, n_ts + 1, self.num_hidden))
+        out = np.empty((batch, n_ts, input_dim))
 
         h[:, -1] = np.zeros((batch, self.num_hidden))
-        for t in range(timesteps):
-            a[:, t] = inputs[:, t] @ self.params["U"].T + h[:, t-1] @ self.params["W"] + self.params["b"]
-            h[:, t] = self.activation.forward(a[:, t])
-            out[:, t] = h[:, t] @ self.params["V"] + self.params["c"]
+        for t in range(n_ts):
+            a[:, t] = (inputs[:, t] @ self.params["U"].T +
+                       h[:, t-1] @ self.params["W"].T + self.params["b"])
+            h[:, t] = self.atv.forward(a[:, t])
+            out[:, t] = h[:, t] @ self.params["V"].T + self.params["c"]
 
-        self.h = h
-        self.X = inputs
+        # cache for backward pass
+        self.h, self.a, self.X = h, a, inputs
         return out[:, -1]
 
     def backward(self, grad):
-        timesteps = self.X.shape[1]
-        for p in self._param_names():
+        n_ts = self.X.shape[1]
+        for p in self._param_names:
             self.grads[p] = np.zeros_like(self.params[p])
+
+        if self.bptt_trunc is None:
+            self.bptt_trunc = n_ts  # non-truncated
         
         d_in = np.empty_like(self.X)
-
-        for t in reversed(range(timesteps)):
+        for t in reversed(range(n_ts)):
             # grads w.r.t param V and c
             self.grads["c"] += grad.sum(axis=0)
-            self.grads["V"] += self.h[:, t].T @ grad
-
+            self.grads["V"] += grad.T @ self.h[:, t]
             # grads w.r.t h
-            d_h = grad @ self.params["V"].T
-            d_a = self.activation.backward(d_h)
-
+            d_h = grad @ self.params["V"]
+            d_a = d_h * self.atv.derivative_func(self.a[:, t])
             # grads w.r.t input X
             d_in[:, t] = d_a @ self.params["U"]
-
-            for offset in range(min(self.bptt_trunc, t+1)):
-                # grads w.r.t U, W, b
-                self.grads["U"] += d_a.T @ self.X[:, t - offset]
-                self.grads["W"] += d_a.T @ self.h[:, t - offset - 1]
+            # grads w.r.t params U, W and b
+            for i in range(min(self.bptt_trunc, t+1)):
+                self.grads["U"] += d_a.T @ self.X[:, t - i]
+                self.grads["W"] += d_a.T @ self.h[:, t - i - 1]
                 self.grads["b"] += d_a.sum(axis=0)
                 d_h = d_a @ self.params["W"]
-                d_a = self.activation.backward(d_h)
+                d_a = d_h * self.atv.derivative_func(self.a[:, t - i - 1])
         return d_in
 
     def _init_params(self):
-        for p in self._param_names():
-            self.params[p] = self.initializer[p](self.shape[p])
+        for p in self._param_names:
+            self.params[p] = self.initializer[p](self.shapes[p])
         self.is_init = True
 
+    @property
     def _param_names(self):
-        return ("W", "U", "V", "b", "c")
+        return "W", "U", "V", "b", "c"
 
 
 class BatchNormalization(Layer):
