@@ -11,7 +11,7 @@ import numpy as np
 from core.loss import SoftmaxCrossEntropy
 from core.model import Model
 from core.optimizer import Adam
-from examples.knowledge_distillation.vgg16 import net
+from examples.knowledge_distillation.nets import vgg16
 from utils.data_iterator import BatchIterator
 from utils.dataset import cifar10
 from utils.metric import accuracy
@@ -28,7 +28,7 @@ def main(args):
     train_x = train_x.reshape((-1, 32, 32, 3))
     test_x = train_x.reshape((-1, 32, 32, 3))
 
-    model = Model(net=net, loss=SoftmaxCrossEntropy(),
+    model = Model(net=vgg16, loss=SoftmaxCrossEntropy(),
                   optimizer=Adam(lr=args.lr))
 
     train_iterator = BatchIterator(batch_size=args.batch_size)
@@ -74,9 +74,9 @@ if __name__ == "__main__":
                         default=os.path.join(curr_dir, "data"))
     parser.add_argument("--model_dir", type=str,
                         default=os.path.join(curr_dir, "models"))
-    parser.add_argument("--model_type", default="mlp", type=str,
-                        help="cnn or mlp")
-    parser.add_argument("--num_ep", default=3, type=int)
+    parser.add_argument("--model_type", default="vgg16", type=str,
+                        help="[*vgg16]")
+    parser.add_argument("--num_ep", default=50, type=int)
     parser.add_argument("--lr", default=1e-2, type=float)
     parser.add_argument("--batch_size", default=128, type=int)
     parser.add_argument("--seed", default=-1, type=int)

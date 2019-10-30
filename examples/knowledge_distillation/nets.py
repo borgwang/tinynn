@@ -16,7 +16,7 @@ def max_pool():
     return MaxPool2D(pool_size=(2, 2), stride=(2, 2), padding="SAME")
 
 
-net = Net([
+vgg16 = Net([
     *conv_bn_relu((3, 3, 3, 64)),
     *conv_bn_relu((3, 3, 64, 64)),
     max_pool(),
