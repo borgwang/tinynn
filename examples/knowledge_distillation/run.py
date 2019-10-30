@@ -32,7 +32,6 @@ def main(args):
                   optimizer=Adam(lr=args.lr))
 
     train_iterator = BatchIterator(batch_size=args.batch_size)
-    test_generator = BatchIterator(batch_size=args.batch_size)(test_x, test_y)
     running_loss = None
     for epoch in range(args.num_ep):
         t_start = time.time()
@@ -49,10 +48,9 @@ def main(args):
         print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
         # evaluate
         model.set_phase("TEST")
-        batch = next(test_generator)
-        test_pred = model.forward(batch.inputs)
+        test_pred = model.forward(test_x)
         test_pred_idx = np.argmax(test_pred, axis=1)
-        test_y_idx = np.argmax(batch.targets, axis=1)
+        test_y_idx = np.argmax(test_y, axis=1)
         res = accuracy(test_pred_idx, test_y_idx)
         print(res)
         model.set_phase("TRAIN")
