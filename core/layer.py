@@ -417,7 +417,7 @@ class BatchNormalization(Layer):
                  beta_init=Zeros(),
                  running_mean_init=Zeros(),
                  running_var_init=Ones(),
-                 epsilon=1e-3):
+                 epsilon=1e-5):
         super().__init__()
         self.m = momentum
         self.epsilon = epsilon
@@ -438,35 +438,37 @@ class BatchNormalization(Layer):
             mean = inputs.mean(axis=0)
             var = inputs.var(axis=0)
             self.params["r_mean"] = (self.m * self.params["r_mean"] +
-                                     (1 - self.m) * mean)
+                                     (1.0 - self.m) * mean)
             self.params["r_var"] = (self.m * self.params["r_var"] +
-                                    (1 - self.m) * var)
+                                    (1.0 - self.m) * var)
         else:
+            n = inputs.shape[0]
             mean = self.params["r_mean"]
-            var = self.params["r_var"]
+            # unbiased variance estimate
+            var = (n / (n - 1)) * self.params["r_var"]
 
         # normalize
         self.X_center = inputs - mean
         self.std = (var + self.epsilon) ** 0.5
-        X_norm = self.X_center / self.std
-        return self.params["gamma"] * X_norm + self.params["beta"]
+        self.X_norm = self.X_center / self.std
+        return self.params["gamma"] * self.X_norm + self.params["beta"]
 
     def backward(self, grad):
+        # TODO: BUG HERE. The optimizer will change r_mean and r_var
+        #  even though their gradients are zeros.
         self.grads["r_mean"] = 0
         self.grads["r_var"] = 0
 
-        X_norm = self.X_center / self.std
-        self.grads["gamma"] = (X_norm * grad).sum(axis=0)
+        self.grads["gamma"] = (self.X_norm * grad).sum(axis=0)
         self.grads["beta"] = grad.sum(axis=0)
 
         batch_size = grad.shape[0]
-        gamma = self.params["gamma"]
-
+        std_inv = 1.0 / self.std
         # grads w.r.t inputs
         # ref: http://cthorey.github.io./backpropagation/
-        d_in = (1. / batch_size) * gamma * self.std ** (-1.0) * (
-                batch_size * grad - np.sum(grad, axis=0)
-                - self.X_center * self.std ** (-2.0) * np.sum(grad * self.X_center, axis=0))
+        d_in = (1.0 / batch_size) * self.params["gamma"] * std_inv * (
+            batch_size * grad - np.sum(grad, axis=0) - 
+            self.X_center * std_inv ** 2 * np.sum(grad * self.X_center, axis=0))
         return d_in
 
     def _init_params(self):

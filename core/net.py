@@ -49,8 +49,7 @@ class Net(object):
         self._phase = phase
 
     def init_params(self, input_shape):
-        """Manually init params by letting data forward through the network."""
-        # TODO: better ways?
+        # manually init params by letting data forward through the network
         self.forward(np.ones((1, *input_shape)))
 
 
@@ -74,9 +73,6 @@ class StructuredParam(object):
 
     @property
     def shape(self):
-        return self._get_shape()
-
-    def _get_shape(self):
         shape = list()
         for d in self.layer_data:
             l_shape = dict()
@@ -86,15 +82,15 @@ class StructuredParam(object):
         shape = tuple(shape)
         return shape
 
-    def clip(self, min_=None, max_=None):
-        obj = copy.deepcopy(self)
-        obj.values = [v.clip(min_, max_)for v in self.values]
-        return obj
-
     @staticmethod
     def _ensure_values(obj):
         if isinstance(obj, StructuredParam):
             obj = obj.values
+        return obj
+
+    def clip(self, min_=None, max_=None):
+        obj = copy.deepcopy(self)
+        obj.values = [v.clip(min_, max_)for v in self.values]
         return obj
 
     def __add__(self, other):
