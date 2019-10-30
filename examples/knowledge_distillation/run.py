@@ -26,7 +26,7 @@ def main(args):
     train_x, train_y = train_set
     test_x, test_y = test_set
     train_x = train_x.reshape((-1, 32, 32, 3))
-    test_x = train_x.reshape((-1, 32, 32, 3))
+    test_x = test_x.reshape((-1, 32, 32, 3))
 
     model = Model(net=vgg16, loss=SoftmaxCrossEntropy(),
                   optimizer=Adam(lr=args.lr))
