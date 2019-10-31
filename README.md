@@ -21,15 +21,17 @@ pip install tinynn
 ### Examples
 
 ```bash
-cd tinynn
+git clone https://github.com/borgwang/tinynn.git
+cd tinynn/examples
+
 # MNIST classification
-python examples/mnist/run.py  
+python mnist/run.py  
 
 # a toy regression task
-python examples/nn_paint/run.py  
+python nn_paint/run.py  
 
 # reinforcement learning demo (gym environment required)
-python examples/rl/run.py
+python rl/run.py
 ```
 
 ### Components
