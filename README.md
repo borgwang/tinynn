@@ -10,17 +10,12 @@ tinynn is a lightweight deep learning framework written in Python3 (with NumPy).
   <img src="http://ww4.sinaimg.cn/large/006tNc79gy1g63tkgdh1pj30to0fwjsk.jpg" width="80%" alt="tinynn-architecture" referrerPolicy="no-referrer"/>
 </p>
 
-There are two branches (`master` and `mini`) in thie repo. The `mini` branch contains the minimal components to run a neural network. The `master` branch holds the latest stable code with more components and features. See [Components](#components) down below.
-
-
 ## Getting Started
 
 ### Install
 
 ```bash
-git clone https://github.com/borgwang/tinynn.git
-cd tinynn
-pip install -r requirements.txt
+pip install tinynn
 ```
 
 ### Examples
@@ -39,7 +34,7 @@ python examples/rl/run.py
 
 ### Components
 
-- layers: Dense, Conv2D, ConvTranspose2D, MaxPool2D, Dropout, BatchNormalization
+- layers: Dense, Conv2D, ConvTranspose2D, RNN, MaxPool2D, Dropout, BatchNormalization
 - activation: ReLU, LeakyReLU, Sigmoid, Tanh, Softplus
 - losses: SoftmaxCrossEntropy, SigmoidCrossEntropy, MAE, MSE, Huber
 - optimizer: RAdam, Adam, SGD, Momentum, RMSProp, Adagrad, Adadelta
