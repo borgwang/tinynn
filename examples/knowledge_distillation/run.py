@@ -5,8 +5,6 @@ import os
 import time
 
 import numpy as np
-
-from nets import vgg16
 from tinynn.core.loss import SoftmaxCrossEntropy
 from tinynn.core.model import Model
 from tinynn.core.optimizer import Adam
@@ -14,6 +12,8 @@ from tinynn.utils.data_iterator import BatchIterator
 from tinynn.utils.dataset import cifar10
 from tinynn.utils.metric import accuracy
 from tinynn.utils.seeder import random_seed
+
+from nets import vgg16
 
 
 def main(args):

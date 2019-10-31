@@ -5,10 +5,12 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="tinynn",
-    version="0.0.1",
+    version="0.0.2",
     author="borgwang",
     author_email="borgwang@126.com",
-    description="A small example package",
+    description="A lightweight deep learning library",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url="https://github.com/borgwang/tinynn",
     packages=setuptools.find_packages(),
     classifiers=[
@@ -16,6 +18,12 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
     ],
-    python_requires='>=3.6',
+    install_requires=[
+        "numpy==1.16.0",
+        "scipy==1.3.1"
+    ],
+    python_requires='>=3.6'
 )

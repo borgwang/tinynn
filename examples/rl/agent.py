@@ -1,13 +1,14 @@
 """DQN agent class"""
 
-import numpy as np
 import random
 from collections import deque
 
-from tinynn.core.net import Net
-from tinynn.core.layer import Dense, ReLU
-from tinynn.core.model import Model
+import numpy as np
+from tinynn.core.layer import Dense
+from tinynn.core.layer import ReLU
 from tinynn.core.loss import MSE
+from tinynn.core.model import Model
+from tinynn.core.net import Net
 from tinynn.core.optimizer import RMSProp
 
 

@@ -7,7 +7,6 @@ import time
 
 import numpy as np
 import ray
-
 from tinynn.core.layer import Dense
 from tinynn.core.layer import ReLU
 from tinynn.core.loss import SoftmaxCrossEntropy

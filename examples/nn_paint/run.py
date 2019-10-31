@@ -5,7 +5,6 @@ import os
 
 import numpy as np
 from PIL import Image
-
 from tinynn.core.layer import Dense
 from tinynn.core.layer import ReLU
 from tinynn.core.layer import Sigmoid

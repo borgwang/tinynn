@@ -5,7 +5,6 @@ import os
 import time
 
 import numpy as np
-
 from tinynn.core.layer import RNN
 from tinynn.core.layer import Conv2D
 from tinynn.core.layer import Dense

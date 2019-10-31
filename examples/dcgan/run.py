@@ -5,17 +5,17 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 from tinynn.core.loss import SigmoidCrossEntropy
 from tinynn.core.model import Model
 from tinynn.core.optimizer import Adam
-from examples.dcgan.nets import D_cnn
-from examples.dcgan.nets import G_cnn
-from examples.dcgan.nets import D_mlp
-from examples.dcgan.nets import G_mlp
 from tinynn.utils.data_iterator import BatchIterator
 from tinynn.utils.dataset import mnist
 from tinynn.utils.seeder import random_seed
+
+from nets import D_cnn
+from nets import D_mlp
+from nets import G_cnn
+from nets import G_mlp
 
 
 def get_noise(size):

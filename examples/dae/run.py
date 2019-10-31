@@ -7,7 +7,6 @@ import os
 
 import numpy as np
 from matplotlib import pyplot as plt
-
 from tinynn.core.layer import Dense
 from tinynn.core.layer import ReLU
 from tinynn.core.layer import Tanh

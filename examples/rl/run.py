@@ -2,11 +2,11 @@
 
 import argparse
 
-import matplotlib.pyplot as plt
-
 import gym
-from examples.rl.agent import DQN
+import matplotlib.pyplot as plt
 from tinynn.utils.seeder import random_seed
+
+from examples.rl.agent import DQN
 
 
 def main(args):
