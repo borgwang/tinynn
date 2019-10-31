@@ -91,7 +91,6 @@ ENV/
 .mypy_cache/
 
 # Costomize
-core/__pycache__/
 examples/mnist/data/*
 examples/mnist/models/*
 examples/distributed_training/data/*
@@ -101,4 +100,3 @@ examples/dcgan/samples/*
 examples/dae/data/*
 examples/dae/output/*
 examples/knowledge_distillation/data/*
-

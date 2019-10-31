@@ -2,24 +2,23 @@
 Example code for a denoising autoencoder (DAE).
 """
 
-import runtime_path  # isort:skip
-
 import argparse
 import os
 
 import numpy as np
 from matplotlib import pyplot as plt
 
-from core.layer import Dense
-from core.layer import ReLU
-from core.layer import Tanh
-from core.loss import MSE
-from core.net import Net
-from core.optimizer import Adam
-from examples.dae.autoencoder import AutoEncoder
-from utils.data_iterator import BatchIterator
-from utils.dataset import mnist
-from utils.seeder import random_seed
+from tinynn.core.layer import Dense
+from tinynn.core.layer import ReLU
+from tinynn.core.layer import Tanh
+from tinynn.core.loss import MSE
+from tinynn.core.net import Net
+from tinynn.core.optimizer import Adam
+from tinynn.utils.data_iterator import BatchIterator
+from tinynn.utils.dataset import mnist
+from tinynn.utils.seeder import random_seed
+
+from autoencoder import AutoEncoder
 
 
 def save_batch_as_images(path, batch, titles=None):

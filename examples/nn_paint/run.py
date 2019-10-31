@@ -1,24 +1,21 @@
 """Use a neural network to mimic images."""
 
-import runtime_path  # isort:skip
-
 import argparse
 import os
-import time
 
 import numpy as np
 from PIL import Image
 
-from core.layer import Dense
-from core.layer import ReLU
-from core.layer import Sigmoid
-from core.loss import MSE
-from core.model import Model
-from core.net import Net
-from core.optimizer import Adam
-from utils.data_iterator import BatchIterator
-from utils.metric import mean_square_error
-from utils.seeder import random_seed
+from tinynn.core.layer import Dense
+from tinynn.core.layer import ReLU
+from tinynn.core.layer import Sigmoid
+from tinynn.core.loss import MSE
+from tinynn.core.model import Model
+from tinynn.core.net import Net
+from tinynn.core.optimizer import Adam
+from tinynn.utils.data_iterator import BatchIterator
+from tinynn.utils.metric import mean_square_error
+from tinynn.utils.seeder import random_seed
 
 
 def prepare_dataset(img_path):

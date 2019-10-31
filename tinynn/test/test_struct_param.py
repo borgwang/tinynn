@@ -2,9 +2,9 @@ import runtime_path  # isort:skip
 
 import numpy as np
 
-from core.layer import Dense
-from core.net import Net
-from core.net import StructuredParam
+from tinynn.core.layer import Dense
+from tinynn.core.net import Net
+from tinynn.core.net import StructuredParam
 
 
 def test_struct_param():

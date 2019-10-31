@@ -1,10 +1,10 @@
-from core.layer import BatchNormalization
-from core.layer import Conv2D
-from core.layer import Dense
-from core.layer import Flatten
-from core.layer import MaxPool2D
-from core.layer import ReLU
-from core.net import Net
+from tinynn.core.layer import BatchNormalization
+from tinynn.core.layer import Conv2D
+from tinynn.core.layer import Dense
+from tinynn.core.layer import Flatten
+from tinynn.core.layer import MaxPool2D
+from tinynn.core.layer import ReLU
+from tinynn.core.net import Net
 
 
 def conv_bn_relu(kernel):

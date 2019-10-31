@@ -3,7 +3,7 @@
 import runtime_path  # isort:skip
 
 import pytest
-from utils.seeder import random_seed
+from tinynn.utils.seeder import random_seed
 
 
 def test_random_seed():

@@ -1,28 +1,26 @@
 """Example code for MNIST classification."""
 
-# import runtime_path  # isort:skip
-
 import argparse
 import os
 import time
 
 import numpy as np
 
-from core.layer import RNN
-from core.layer import Conv2D
-from core.layer import Dense
-from core.layer import Flatten
-from core.layer import MaxPool2D
-from core.layer import ReLU
-from core.layer import Tanh
-from core.loss import SoftmaxCrossEntropy
-from core.model import Model
-from core.net import Net
-from core.optimizer import Adam
-from utils.data_iterator import BatchIterator
-from utils.dataset import mnist
-from utils.metric import accuracy
-from utils.seeder import random_seed
+from tinynn.core.layer import RNN
+from tinynn.core.layer import Conv2D
+from tinynn.core.layer import Dense
+from tinynn.core.layer import Flatten
+from tinynn.core.layer import MaxPool2D
+from tinynn.core.layer import ReLU
+from tinynn.core.layer import Tanh
+from tinynn.core.loss import SoftmaxCrossEntropy
+from tinynn.core.model import Model
+from tinynn.core.net import Net
+from tinynn.core.optimizer import Adam
+from tinynn.utils.data_iterator import BatchIterator
+from tinynn.utils.dataset import mnist
+from tinynn.utils.metric import accuracy
+from tinynn.utils.seeder import random_seed
 
 
 def main(args):

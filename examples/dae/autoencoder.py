@@ -1,6 +1,6 @@
 """AutoEncoder class."""
 
-from core.model import Model
+from tinynn.core.model import Model
 
 
 class AutoEncoder(Model):

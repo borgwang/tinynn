@@ -1,7 +1,5 @@
 """Implementation of asynchronous and synchronous SGD."""
 
-import runtime_path  # isort:skip
-
 import argparse
 import copy
 import os
@@ -10,16 +8,16 @@ import time
 import numpy as np
 import ray
 
-from core.layer import Dense
-from core.layer import ReLU
-from core.loss import SoftmaxCrossEntropy
-from core.model import Model
-from core.net import Net
-from core.optimizer import Adam
-from utils.data_iterator import BatchIterator
-from utils.dataset import mnist
-from utils.metric import accuracy
-from utils.seeder import random_seed
+from tinynn.core.layer import Dense
+from tinynn.core.layer import ReLU
+from tinynn.core.loss import SoftmaxCrossEntropy
+from tinynn.core.model import Model
+from tinynn.core.net import Net
+from tinynn.core.optimizer import Adam
+from tinynn.utils.data_iterator import BatchIterator
+from tinynn.utils.dataset import mnist
+from tinynn.utils.metric import accuracy
+from tinynn.utils.seeder import random_seed
 
 
 def get_model(lr):

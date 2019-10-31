@@ -4,7 +4,7 @@ import runtime_path  # isort:skip
 
 import numpy as np
 
-from utils.data_iterator import BatchIterator
+from tinynn.utils.data_iterator import BatchIterator
 
 
 def test_batch_iterator():

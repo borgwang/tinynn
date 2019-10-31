@@ -4,11 +4,11 @@ import numpy as np
 import random
 from collections import deque
 
-from core.net import Net
-from core.layer import Dense, ReLU
-from core.model import Model
-from core.loss import MSE
-from core.optimizer import RMSProp
+from tinynn.core.net import Net
+from tinynn.core.layer import Dense, ReLU
+from tinynn.core.model import Model
+from tinynn.core.loss import MSE
+from tinynn.core.optimizer import RMSProp
 
 
 class DQN(object):

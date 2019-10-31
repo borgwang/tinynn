@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from utils.math import log_softmax
+from tinynn.utils.math import log_softmax
 
 
 class Loss(object):

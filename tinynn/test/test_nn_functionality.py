@@ -1,17 +1,19 @@
 """Test the functionality of tinynn. Inspired by https://github.com/Thenerdstation/mltest"""
 
+import runtime_path  # isort:skip
+
 import numpy as np
 
 import pytest
-from core.layer import Conv2D
-from core.layer import Dense
-from core.layer import Flatten
-from core.layer import MaxPool2D
-from core.loss import MSE
-from core.model import Model
-from core.net import Net
-from core.optimizer import SGD
-from utils.seeder import random_seed
+from tinynn.core.layer import Conv2D
+from tinynn.core.layer import Dense
+from tinynn.core.layer import Flatten
+from tinynn.core.layer import MaxPool2D
+from tinynn.core.loss import MSE
+from tinynn.core.model import Model
+from tinynn.core.net import Net
+from tinynn.core.optimizer import SGD
+from tinynn.utils.seeder import random_seed
 
 random_seed(0)
 

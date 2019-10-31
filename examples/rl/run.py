@@ -1,14 +1,12 @@
 """Vanilla Deep Q Network (https://www.nature.com/articles/nature14236?wm=book_wap_0005) with tinynn."""
 
-import runtime_path  # isort:skip
-
 import argparse
 
 import matplotlib.pyplot as plt
 
 import gym
 from examples.rl.agent import DQN
-from utils.seeder import random_seed
+from tinynn.utils.seeder import random_seed
 
 
 def main(args):

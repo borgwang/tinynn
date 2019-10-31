@@ -2,8 +2,8 @@
 
 import runtime_path  # isort:skip
 
-from core.initializer import *
-from utils.seeder import random_seed
+from tinynn.core.initializer import *
+from tinynn.utils.seeder import random_seed
 
 random_seed(0)
 

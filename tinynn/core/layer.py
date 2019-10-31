@@ -2,9 +2,9 @@
 
 import numpy as np
 
-from core.initializer import XavierUniform
-from core.initializer import Zeros
-from core.initializer import Ones
+from tinynn.core.initializer import XavierUniform
+from tinynn.core.initializer import Zeros
+from tinynn.core.initializer import Ones
 
 
 class Layer(object):

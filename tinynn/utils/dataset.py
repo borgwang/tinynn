@@ -1,7 +1,5 @@
 """Common datasets"""
 
-import runtime_path  # isort:skip
-
 import gzip
 import os
 import pickle
@@ -10,7 +8,7 @@ import tarfile
 
 import numpy as np
 
-from utils.downloader import download_url
+from tinynn.utils.downloader import download_url
 
 
 def get_one_hot(targets, nb_classes):

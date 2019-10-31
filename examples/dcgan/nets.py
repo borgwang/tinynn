@@ -1,13 +1,13 @@
-from core.initializer import Normal
-from core.layer import Conv2D
-from core.layer import ConvTranspose2D
-from core.layer import Dense
-from core.layer import Flatten
-from core.layer import LeakyReLU
-from core.layer import MaxPool2D
-from core.layer import Reshape
-from core.layer import Sigmoid
-from core.net import Net
+from tinynn.core.initializer import Normal
+from tinynn.core.layer import Conv2D
+from tinynn.core.layer import ConvTranspose2D
+from tinynn.core.layer import Dense
+from tinynn.core.layer import Flatten
+from tinynn.core.layer import LeakyReLU
+from tinynn.core.layer import MaxPool2D
+from tinynn.core.layer import Reshape
+from tinynn.core.layer import Sigmoid
+from tinynn.core.net import Net
 
 
 def G_mlp():

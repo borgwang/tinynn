@@ -1,21 +1,19 @@
 """Example code for MNIST classification."""
 
-import runtime_path  # isort:skip
-
 import argparse
 import os
 import time
 
 import numpy as np
 
-from core.loss import SoftmaxCrossEntropy
-from core.model import Model
-from core.optimizer import Adam
-from examples.knowledge_distillation.nets import vgg16
-from utils.data_iterator import BatchIterator
-from utils.dataset import cifar10
-from utils.metric import accuracy
-from utils.seeder import random_seed
+from nets import vgg16
+from tinynn.core.loss import SoftmaxCrossEntropy
+from tinynn.core.model import Model
+from tinynn.core.optimizer import Adam
+from tinynn.utils.data_iterator import BatchIterator
+from tinynn.utils.dataset import cifar10
+from tinynn.utils.metric import accuracy
+from tinynn.utils.seeder import random_seed
 
 
 def main(args):

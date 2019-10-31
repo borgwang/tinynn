@@ -1,23 +1,21 @@
 """tinynn implementation of Deep Convolution Generative Adversarial Network."""
 
-import runtime_path  # isort:skip
-
 import argparse
 import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from core.loss import SigmoidCrossEntropy
-from core.model import Model
-from core.optimizer import Adam
+from tinynn.core.loss import SigmoidCrossEntropy
+from tinynn.core.model import Model
+from tinynn.core.optimizer import Adam
 from examples.dcgan.nets import D_cnn
 from examples.dcgan.nets import G_cnn
 from examples.dcgan.nets import D_mlp
 from examples.dcgan.nets import G_mlp
-from utils.data_iterator import BatchIterator
-from utils.dataset import mnist
-from utils.seeder import random_seed
+from tinynn.utils.data_iterator import BatchIterator
+from tinynn.utils.dataset import mnist
+from tinynn.utils.seeder import random_seed
 
 
 def get_noise(size):
