@@ -15,6 +15,7 @@ class Layer(object):
         self.shapes = {}
 
         self.is_training = True
+        self.is_init = False
 
     def forward(self, inputs):
         raise NotImplementedError
@@ -37,23 +38,17 @@ class Dense(Layer):
 
     def __init__(self,
                  num_out,
-                 num_in=None,
                  w_init=XavierUniform(),
                  b_init=Zeros()):
         super().__init__()
 
         self.initializers = {"w": w_init, "b": b_init}
-        self.shapes = {"w": [num_in, num_out], "b": [num_out]}
+        self.shapes = {"w": [None, num_out], "b": [num_out]}
         self.params = {"w": None, "b": None}
-
-        self.is_init = False
-        if num_in is not None:
-            self._init_params()
 
         self.inputs = None
 
     def forward(self, inputs):
-        # lazy initialize
         if not self.is_init:
             self.shapes["w"][0] = inputs.shape[1]
             self._init_params()
@@ -100,8 +95,6 @@ class Conv2D(Layer):
 
         self.padding_mode = padding
         self.padding = None
-
-        self.is_init = False
 
     def forward(self, inputs):
         """
@@ -200,6 +193,51 @@ class Conv2D(Layer):
         return "w", "b"
 
 
+class ConvTranspose2D(Conv2D):
+
+    def __init__(self,
+                 kernel,
+                 stride=(1, 1),
+                 padding="SAME",
+                 w_init=XavierUniform(),
+                 b_init=Zeros()):
+        super().__init__(kernel, stride, padding, w_init, b_init)
+        self.origin_stride = stride
+        self.stride = (1, 1)
+
+    def _inputs_preprocess(self, inputs):
+        k_h, k_w = self.kernel_shape[:2]
+        # insert zeros to inputs
+        inputs = self._insert_zeros(
+            inputs, *self.origin_stride, self.padding_mode)
+        batch_sz, in_h, in_w, in_c = inputs.shape
+        # padding calculation
+        if self.padding is None:
+            if self.padding_mode == "SAME":
+                self.padding = get_padding_2d(
+                    (in_h, in_w), (k_h, k_w), self.padding_mode)
+            else:
+                self.padding = ((0, 0), (k_h - 1, k_h - 1),
+                                (k_w - 1, k_w - 1), (0, 0))
+        return np.pad(inputs, pad_width=self.padding, mode="constant")
+
+    def _grads_postprocess(self, grads):
+        return grads[:, ::self.origin_stride[0], ::self.origin_stride[1], :]
+
+    @staticmethod
+    def _insert_zeros(inputs, s_h, s_w, mode):
+        batch_sz, in_h, in_w, in_c = inputs.shape
+        if mode == "SAME":
+            out_h = in_h * s_h
+            out_w = in_w * s_w
+        else:
+            out_h = (in_h - 1) * s_h + 1
+            out_w = (in_w - 1) * s_h + 1
+        expand = np.zeros((batch_sz, out_h, out_w, in_c))
+        expand[:, ::s_h, ::s_w, :] = inputs
+        return expand
+
+
 class MaxPool2D(Layer):
 
     def __init__(self, pool_size, stride, padding="VALID"):
@@ -278,51 +316,6 @@ class MaxPool2D(Layer):
         return d_in
 
 
-class ConvTranspose2D(Conv2D):
-
-    def __init__(self,
-                 kernel,
-                 stride=(1, 1),
-                 padding="SAME",
-                 w_init=XavierUniform(),
-                 b_init=Zeros()):
-        super().__init__(kernel, stride, padding, w_init, b_init)
-        self.origin_stride = stride
-        self.stride = (1, 1)
-
-    def _inputs_preprocess(self, inputs):
-        k_h, k_w = self.kernel_shape[:2]
-        # insert zeros to inputs
-        inputs = self._insert_zeros(
-            inputs, *self.origin_stride, self.padding_mode)
-        batch_sz, in_h, in_w, in_c = inputs.shape
-        # padding calculation
-        if self.padding is None:
-            if self.padding_mode == "SAME":
-                self.padding = get_padding_2d(
-                    (in_h, in_w), (k_h, k_w), self.padding_mode)
-            else:
-                self.padding = ((0, 0), (k_h - 1, k_h - 1),
-                                (k_w - 1, k_w - 1), (0, 0))
-        return np.pad(inputs, pad_width=self.padding, mode="constant")
-
-    def _grads_postprocess(self, grads):
-        return grads[:, ::self.origin_stride[0], ::self.origin_stride[1], :]
-
-    @staticmethod
-    def _insert_zeros(inputs, s_h, s_w, mode):
-        batch_sz, in_h, in_w, in_c = inputs.shape
-        if mode == "SAME":
-            out_h = in_h * s_h
-            out_w = in_w * s_w
-        else:
-            out_h = (in_h - 1) * s_h + 1
-            out_w = (in_w - 1) * s_h + 1
-        expand = np.zeros((batch_sz, out_h, out_w, in_c))
-        expand[:, ::s_h, ::s_w, :] = inputs
-        return expand
-
-
 class RNN(Layer):
     
     def __init__(self, 
@@ -338,8 +331,6 @@ class RNN(Layer):
 
         self.initializer = {"W": w_init, "V": w_init, "U": w_init,
                             "b": b_init, "c": b_init}
-
-        self.is_init = False
 
     def forward(self, inputs):
         """
@@ -426,7 +417,6 @@ class BatchNormalization(Layer):
                             "beta": beta_init,
                             "r_mean": running_mean_init,
                             "r_var": running_var_init}
-        self.is_init = False
 
     def forward(self, inputs):
         if not self.is_init:
@@ -454,7 +444,7 @@ class BatchNormalization(Layer):
         return self.params["gamma"] * self.X_norm + self.params["beta"]
 
     def backward(self, grad):
-        # TODO: BUG HERE. The optimizer will change r_mean and r_var
+        # BUG: The optimizer will change r_mean and r_var
         #  even though their gradients are zeros.
         self.grads["r_mean"] = 0
         self.grads["r_var"] = 0

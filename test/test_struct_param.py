@@ -8,7 +8,9 @@ from core.net import StructuredParam
 
 
 def test_struct_param():
-    net = Net([Dense(10, 1)])
+    net = Net([Dense(10)])
+    net.init_params(input_shape=(1, ))
+
     params = net.params
     assert isinstance(params, StructuredParam)
     assert isinstance(params.values, np.ndarray)

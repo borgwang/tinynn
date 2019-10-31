@@ -17,11 +17,8 @@ import sys
 
 def add_base_path(cur_main_path):
     cur_dir = os.path.abspath(os.path.dirname(cur_main_path))
-    base_dir = os.path.split(cur_dir)[0]
     if cur_dir not in sys.path:
         sys.path.insert(0, cur_dir)
-    if base_dir not in sys.path:
-        sys.path.insert(0, base_dir)
 
 
 parent_file = inspect.getfile(sys._getframe(1))

@@ -1,6 +1,6 @@
 """Example code for MNIST classification."""
 
-import runtime_path  # isort:skip
+# import runtime_path  # isort:skip
 
 import argparse
 import os
