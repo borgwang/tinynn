@@ -7,10 +7,7 @@ Here we use a 2-layers fully-connected network to fit the Q function since this 
 ### Run
 
 ```bash
-# in the project directory
 pip install -r requirements.txt
-pip install -r examples/rl/requirements.txt
-
 # run
-python examples/rl/run.py
+python run.py
 ```

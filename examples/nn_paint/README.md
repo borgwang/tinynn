@@ -16,10 +16,7 @@ Basically it's a regression task in which our neural network tries to learn the 
 ### How to run
 
 ```bash
-# in the root directory
 pip install -r requirements.txt
-pip install -r examples/nn_paint/requirements.txt
-
 # run
 python examples/nn_paint/run.py --img your-img-file 
 ```

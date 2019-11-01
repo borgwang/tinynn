@@ -6,10 +6,7 @@ tinynn implementation of [Deep Convolution Generative Adversarial Network](https
 ### How to run
 
 ```bash
-# in the root directory
 pip install -r requirements.txt
-pip install -r examples/dcgan/requirements.txt
-
 # train
-python examples/dcgan/run.py --train
+python run.py --train
 ```

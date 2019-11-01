@@ -9,7 +9,8 @@ setuptools.setup(
     author="borgwang",
     author_email="borgwang@126.com",
     description="A lightweight deep learning library",
-    long_description=long_description,
+    long_description="tinynn is an open source, lightweight deep learning library "
+                     "written in Python.",
     long_description_content_type="text/markdown",
     url="https://github.com/borgwang/tinynn",
     packages=setuptools.find_packages(),
