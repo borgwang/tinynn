@@ -1,15 +1,10 @@
 """DQN agent class"""
 
+import copy
 import random
 from collections import deque
 
 import numpy as np
-from tinynn.core.layer import Dense
-from tinynn.core.layer import ReLU
-from tinynn.core.loss import MSE
-from tinynn.core.model import Model
-from tinynn.core.net import Net
-from tinynn.core.optimizer import RMSProp
 
 
 class DQN(object):
@@ -31,20 +26,10 @@ class DQN(object):
 
         self.target_network_update_interval = args.target_network_update
 
-    def build_net(self):
-        q_net = Net([
-            Dense(100),
-            ReLU(),
-            Dense(self.action_dim)
-        ])
-        return q_net
-
-    def construct_model(self):
-        self.q_net = self.build_net()
-        self.model = Model(net=self.q_net, loss=MSE(),
-                           optimizer=RMSProp(self.args.lr))
-        # Target network
-        self.target_q_net = self.build_net()
+    def set_model(self, model):
+        self.q_net = model.net
+        self.target_q_net = copy.deepcopy(self.q_net)
+        self.model = model
 
     def sample_action(self, state, policy):
         self.global_step += 1
@@ -62,7 +47,7 @@ class DQN(object):
         elif policy == "random":
             return random.randint(0, self.action_dim - 1)
 
-    def learn(self, state, action, reward, next_state, done):
+    def train(self, state, action, reward, next_state, done):
         onehot_action = np.zeros(self.action_dim)
         onehot_action[action] = 1
 
@@ -73,14 +58,14 @@ class DQN(object):
             self.update_model()
 
     def update_model(self):
+        # update target network. Assign params in q_net to target_q_net
         if self.global_step % self.target_network_update_interval == 0:
-            # Update target network. Assign params in q_net to target_q_net
             self.target_q_net.params = self.q_net.params
 
-        # Sample experience
+        # sample experience
         minibatch = random.sample(self.replay_buffer, self.batch_size)
 
-        # Transpose minibatch
+        # transpose minibatch
         s_batch, a_batch, r_batch, next_s_batch, done_batch = \
             np.array(minibatch).T.tolist()
 
@@ -88,7 +73,7 @@ class DQN(object):
         next_s_all_action_Q = self.target_q_net.forward(next_s_batch)
         next_s_Q_batch = np.max(next_s_all_action_Q, 1)
 
-        # Calculate target_Q_batch
+        # calculate target_Q_batch
         target_Q_batch = []
         for i in range(self.batch_size):
             done_state = done_batch[i]
@@ -98,7 +83,7 @@ class DQN(object):
                 target_Q_batch.append(
                     r_batch[i] + self.gamma * next_s_Q_batch[i])
 
-        # Train the network
+        # train the network
         preds = self.model.forward(np.asarray(s_batch))
         preds = np.multiply(preds, a_batch)
 

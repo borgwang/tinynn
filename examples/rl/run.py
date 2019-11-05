@@ -4,9 +4,26 @@ import argparse
 
 import gym
 import matplotlib.pyplot as plt
+from tinynn.core.layer import Dense
+from tinynn.core.layer import ReLU
+from tinynn.core.loss import MSE
+from tinynn.core.model import Model
+from tinynn.core.net import Net
+from tinynn.core.optimizer import RMSProp
 from tinynn.utils.seeder import random_seed
 
-from examples.rl.agent import DQN
+from agent import DQN
+
+
+def get_model(out_dim, lr):
+    q_net = Net([
+        Dense(100),
+        ReLU(),
+        Dense(out_dim)
+    ])
+    model = Model(net=q_net, loss=MSE(),
+                  optimizer=RMSProp(lr))
+    return model
 
 
 def main(args):
@@ -17,7 +34,8 @@ def main(args):
         env.seed(args.seed)
 
     agent = DQN(env, args)
-    agent.construct_model()
+    model = get_model(out_dim=env.action_space.n, lr=args.lr)
+    agent.set_model(model)
 
     rewards_history, steps_history = [], []
     train_steps = 0
@@ -26,26 +44,28 @@ def main(args):
         state = env.reset()
         ep_rewards = 0
         for step in range(env.spec.timestep_limit):
-            # pick action
+            # sample action
             action = agent.sample_action(state, policy="egreedy")
-            # Execution action.
+            # apply action
             next_state, reward, done, debug = env.step(action)
             train_steps += 1
             ep_rewards += reward
             # modified reward to speed up learning
             reward = 0.1 if not done else -1
-            # Learn and Update net parameters
-            agent.learn(state, action, reward, next_state, done)
+            # train
+            agent.train(state, action, reward, next_state, done)
 
             state = next_state
             if done:
                 break
+
         steps_history.append(train_steps)
         if not rewards_history:
             rewards_history.append(ep_rewards)
         else:
             rewards_history.append(
                 rewards_history[-1] * 0.9 + ep_rewards * 0.1)
+
         # Decay epsilon
         if agent.epsilon > args.final_epsilon:
             decay = (args.init_epsilon - args.final_epsilon) / args.max_ep
