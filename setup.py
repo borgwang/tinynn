@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="tinynn",
-    version="0.0.2",
+    version="0.0.3",
     author="borgwang",
     author_email="borgwang@126.com",
     description="A lightweight deep learning library",
@@ -23,8 +23,8 @@ setuptools.setup(
         "Programming Language :: Python :: 3.7",
     ],
     install_requires=[
-        "numpy==1.16.0",
-        "scipy==1.3.1"
+        "numpy>=1.16.0",
+        "scipy>=1.3.1"
     ],
     python_requires='>=3.6'
 )
