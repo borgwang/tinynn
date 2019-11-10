@@ -10,7 +10,7 @@ from tinynn.core.initializer import Zeros
 class Layer(object):
 
     def __init__(self):
-        self.params = {}
+        self.params = {p: None for p in self.param_names}
         self.grads = {}
         self.shapes = {}
 
@@ -33,6 +33,10 @@ class Layer(object):
     def __repr__(self):
         return "layer: %s \t shape: %s" % (self.name, self.shapes)
 
+    @property
+    def param_names(self):
+        return ()
+
 
 class Dense(Layer):
 
@@ -44,7 +48,6 @@ class Dense(Layer):
 
         self.initializers = {"w": w_init, "b": b_init}
         self.shapes = {"w": [None, num_out], "b": [num_out]}
-        self.params = {"w": None, "b": None}
 
         self.inputs = None
 

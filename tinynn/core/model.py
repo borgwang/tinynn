@@ -30,7 +30,10 @@ class Model(object):
     def load(self, path):
         with open(path, "rb") as f:
             params = pickle.load(f)
+
         self.net.params = params
+        for layer in self.net.layers:
+            layer.is_init = True
 
     def get_phase(self):
         return self.net.get_phase()
