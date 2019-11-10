@@ -1,19 +1,13 @@
-"""Example code for knowledge distillation task.."""
+"""Example code for knowledge distillation task."""
 
 import argparse
 import os
 import time
 
 import numpy as np
-from tinynn.core.layer import Conv2D
-from tinynn.core.layer import Dense
-from tinynn.core.layer import Flatten
-from tinynn.core.layer import MaxPool2D
-from tinynn.core.layer import ReLU
 from tinynn.core.loss import Loss
 from tinynn.core.loss import SoftmaxCrossEntropy
 from tinynn.core.model import Model
-from tinynn.core.net import Net
 from tinynn.core.optimizer import Adam
 from tinynn.utils.data_iterator import BatchIterator
 from tinynn.utils.dataset import fashion_mnist

@@ -1,7 +1,6 @@
 """Network layers."""
 
 import numpy as np
-
 from tinynn.core.initializer import Ones
 from tinynn.core.initializer import XavierUniform
 from tinynn.core.initializer import Zeros

@@ -1,16 +1,15 @@
 """Loss functions"""
 
 import numpy as np
-
 from tinynn.utils.math import log_softmax
 
 
 class Loss(object):
 
-    def loss(self, predicted, actual):
+    def loss(self, *args, **kwargs):
         raise NotImplementedError
 
-    def grad(self, predicted, actual):
+    def grad(self, *args, **kwargs):
         raise NotImplementedError
 
 
