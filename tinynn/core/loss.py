@@ -2,6 +2,7 @@
 
 import numpy as np
 from tinynn.utils.math import log_softmax
+from tinynn.utils.math import softmax
 
 
 class Loss(object):
@@ -82,9 +83,7 @@ class SoftmaxCrossEntropy(Loss):
 
     def grad(self, logits, labels):
         m = logits.shape[0]
-        grad = np.copy(logits)
-        grad -= labels
-        return grad / m
+        return (softmax(logits) - label) / m
 
 
 class SigmoidCrossEntropy(Loss):
