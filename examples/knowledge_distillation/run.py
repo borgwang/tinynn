@@ -84,28 +84,33 @@ def train_distill_model(dataset, args):
     # load dataset
     train_x, train_y, test_x, test_y = dataset
 
-    # load teacher model
-    teacher = Model(net=teacher_net, loss=None, optimizer=None)
+    # load or train a teacher model
+    teacher = Model(net=teacher_net, 
+                    loss=SoftmaxCrossEntropy(), 
+                    optimizer=Adam(lr=args.lr))
     teacher_model_path = os.path.join(args.model_dir, "teacher.model") 
+    if not os.path.isfile(teacher_model_path):
+        print("No teacher model founded. Training a new one...")
+        train_single_model(teacher, dataset, args, name="teacher")
     teacher.load(teacher_model_path)
 
-    # define student model
+    # define a student model
     student = Model(net=student_net, 
                     loss=DistillationLoss(alpha=args.alpha, T=args.T),
                     optimizer=Adam(lr=args.lr))
 
     # run training
-    train_iterator = BatchIterator(batch_size=args.batch_size)
+    iterator = BatchIterator(batch_size=args.batch_size)
     for epoch in range(args.num_ep):
         t_start = time.time()
-        for i, batch in enumerate(train_iterator(train_x, train_y)):
+        for i, batch in enumerate(iterator(train_x, train_y)):
             pred = student.forward(batch.inputs)
             teacher_out = teacher.forward(batch.inputs)
             teacher_out_prob = softmax(teacher_out, t=args.T)
+
             loss = student.loss.loss(pred, batch.targets, teacher_out_prob)
             grad_from_loss = student.loss.grad(pred, batch.targets, teacher_out)
             grads = student.net.backward(grad_from_loss)
-
             student.apply_grads(grads)
 
         print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
@@ -118,7 +123,7 @@ def train_distill_model(dataset, args):
         print(res)
         student.set_phase("TRAIN")
     
-    # save student model
+    # save the distilled model
     if not os.path.isdir(args.model_dir):
         os.makedirs(args.model_dir)
     model_path = os.path.join(args.model_dir, "distill-%d.model" % args.T) 
