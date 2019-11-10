@@ -63,17 +63,19 @@ class Huber(Loss):
 
 class SoftmaxCrossEntropy(Loss):
 
-    def __init__(self, weight=None):
+    def __init__(self, T=1.0, weight=None):
         """
         L = weight[class] * (-log(exp(x[class]) / sum(exp(x))))
+        :paras T: temperature
         :param weight: A 1D tensor [n_classes] assigning weight to each corresponding sample.
         """
         weight = np.asarray(weight) if weight is not None else weight
         self._weight = weight
+        self._T = T
 
     def loss(self, logits, labels):
         m = logits.shape[0]
-        nll = -(log_softmax(logits, axis=1) * labels).sum(axis=1)
+        nll = -(log_softmax(logits, t=self._T, axis=1) * labels).sum(axis=1)
 
         if self._weight is not None:
             nll *= self._weight[labels]
