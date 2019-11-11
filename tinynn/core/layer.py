@@ -10,6 +10,8 @@ class Layer(object):
 
     def __init__(self):
         self.params = {p: None for p in self.param_names}
+        self.ut_params = {p: None for p in self.ut_param_names}
+
         self.grads = {}
         self.shapes = {}
 
@@ -30,10 +32,15 @@ class Layer(object):
         return self.__class__.__name__
 
     def __repr__(self):
-        return "layer: %s \t shape: %s" % (self.name, self.shapes)
+        shape = None if not self.shapes else self.shapes
+        return "layer: %s \t shape: %s" % (self.name, shape)
 
     @property
     def param_names(self):
+        return ()
+
+    @property
+    def ut_param_names(self):
         return ()
 
 
@@ -422,22 +429,22 @@ class BatchNormalization(Layer):
 
     def forward(self, inputs):
         if not self.is_init:
-            for p in self.param_names:
+            for p in self.param_names + self.ut_param_names:
                 self.shapes[p] = inputs.shape[1:]
             self._init_params()
 
         if self.is_training:
             mean = inputs.mean(axis=0)
             var = inputs.var(axis=0)
-            self.params["r_mean"] = (self.m * self.params["r_mean"] +
-                                     (1.0 - self.m) * mean)
-            self.params["r_var"] = (self.m * self.params["r_var"] +
-                                    (1.0 - self.m) * var)
+            self.ut_params["r_mean"] = (self.m * self.ut_params["r_mean"] + 
+                                        (1.0 - self.m) * mean)
+            self.ut_params["r_var"] = (self.m * self.ut_params["r_var"] + 
+                                       (1.0 - self.m) * var)
         else:
             n = inputs.shape[0]
-            mean = self.params["r_mean"]
+            mean = self.ut_params["r_mean"]
             # unbiased variance estimate
-            var = (n / (n - 1)) * self.params["r_var"]
+            var = (n / (n - 1)) * self.ut_params["r_var"]
 
         # normalize
         self.X_center = inputs - mean
@@ -446,11 +453,7 @@ class BatchNormalization(Layer):
         return self.params["gamma"] * self.X_norm + self.params["beta"]
 
     def backward(self, grad):
-        # BUG: The optimizer will change r_mean and r_var
-        #  even though their gradients are zeros.
-        self.grads["r_mean"] = 0
-        self.grads["r_var"] = 0
-
+        # grads w.r.t params
         self.grads["gamma"] = (self.X_norm * grad).sum(axis=0)
         self.grads["beta"] = grad.sum(axis=0)
 
@@ -466,11 +469,18 @@ class BatchNormalization(Layer):
     def _init_params(self):
         for p in self.param_names:
             self.params[p] = self.initializer[p](self.shapes[p])
+        for p in self.ut_param_names:
+            self.ut_params[p] = self.initializer[p](self.shapes[p])
+
         self.is_init = True
 
     @property
     def param_names(self):
-        return "gamma", "beta", "r_mean", "r_var"
+        return "gamma", "beta"
+
+    @property
+    def ut_param_names(self):
+        return "r_mean", "r_var"
 
 
 class Reshape(Layer):
@@ -590,8 +600,7 @@ class LeakyReLU(Activation):
 
 
 def im2col(img, k_h, k_w, s_h, s_w):
-    """
-    Transform padded image into column matrix.
+    """Transform padded image into column matrix.
     :param img: padded inputs of shape (B, in_h, in_w, in_c)
     :param k_h: kernel height
     :param k_w: kernel width
@@ -619,6 +628,7 @@ def im2col(img, k_h, k_w, s_h, s_w):
 
 
 def get_padding_2d(in_shape, k_shape, mode):
+
     def get_padding_1d(w, k):
         if mode == "SAME":
             pads = (w - 1) + k - w

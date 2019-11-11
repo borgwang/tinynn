@@ -34,11 +34,14 @@ class Net(object):
 
     @property
     def params(self):
-        return StructuredParam([l.params for l in self.layers])
+        trainable = [l.params for l in self.layers]
+        untrainable = [l.ut_params for l in self.layers]
+        return StructuredParam(trainable, untrainable)
 
     @params.setter
     def params(self, params):
         self.params.values = params.values
+        self.params.ut_values = params.ut_values
 
     def get_phase(self):
         return self._phase
@@ -56,17 +59,30 @@ class Net(object):
 class StructuredParam(object):
     """A helper class represents network parameters or gradients."""
 
-    def __init__(self, layer_data):
-        self.layer_data = layer_data
+    def __init__(self, param_list, ut_param_list=None):
+        self.param_list = param_list
+        self.ut_param_list = ut_param_list
 
     @property
     def values(self):
-        return np.array([v for d in self.layer_data for v in d.values()])
+        return np.array([v for p in self.param_list for v in p.values()])
 
     @values.setter
     def values(self, values):
         i = 0
-        for d in self.layer_data:
+        for d in self.param_list:
+            for name in d.keys():
+                d[name] = values[i]
+                i += 1
+
+    @property
+    def ut_values(self):
+        return np.array([v for p in self.ut_param_list for v in p.values()])
+
+    @ut_values.setter
+    def ut_values(self, values):
+        i = 0
+        for d in self.ut_param_list:
             for name in d.keys():
                 d[name] = values[i]
                 i += 1
@@ -74,7 +90,7 @@ class StructuredParam(object):
     @property
     def shape(self):
         shape = list()
-        for d in self.layer_data:
+        for d in self.param_list:
             l_shape = dict()
             for k, v in d.items():
                 l_shape[k] = v.shape

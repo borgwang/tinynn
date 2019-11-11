@@ -83,7 +83,7 @@ class SoftmaxCrossEntropy(Loss):
 
     def grad(self, logits, labels):
         m = logits.shape[0]
-        return (softmax(logits) - label) / m
+        return (softmax(logits) - labels) / m
 
 
 class SigmoidCrossEntropy(Loss):
