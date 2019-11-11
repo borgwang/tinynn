@@ -415,23 +415,23 @@ class BatchNormalization(Layer):
                  momentum=0.99,
                  gamma_init=Ones(),
                  beta_init=Zeros(),
-                 running_mean_init=Zeros(),
-                 running_var_init=Ones(),
                  epsilon=1e-5):
         super().__init__()
         self.m = momentum
         self.epsilon = epsilon
 
         self.initializer = {"gamma": gamma_init, 
-                            "beta": beta_init,
-                            "r_mean": running_mean_init,
-                            "r_var": running_var_init}
+                            "beta": beta_init}
 
     def forward(self, inputs):
         if not self.is_init:
-            for p in self.param_names + self.ut_param_names:
+            for p in self.param_names:
                 self.shapes[p] = inputs.shape[1:]
             self._init_params()
+
+        if self.ut_params["r_mean"] is None:
+            self.ut_params["r_mean"] = inputs.mean(0)
+            self.ut_params["r_var"] = inputs.var(0)
 
         if self.is_training:
             mean = inputs.mean(axis=0)
@@ -441,12 +441,10 @@ class BatchNormalization(Layer):
             self.ut_params["r_var"] = (self.m * self.ut_params["r_var"] + 
                                        (1.0 - self.m) * var)
         else:
-            n = inputs.shape[0]
             mean = self.ut_params["r_mean"]
-            # unbiased variance estimate
-            var = (n / (n - 1)) * self.ut_params["r_var"]
+            var = self.ut_params["r_var"]
 
-        # normalize
+        # standardize
         self.X_center = inputs - mean
         self.std = (var + self.epsilon) ** 0.5
         self.X_norm = self.X_center / self.std
@@ -469,9 +467,6 @@ class BatchNormalization(Layer):
     def _init_params(self):
         for p in self.param_names:
             self.params[p] = self.initializer[p](self.shapes[p])
-        for p in self.ut_param_names:
-            self.ut_params[p] = self.initializer[p](self.shapes[p])
-
         self.is_init = True
 
     @property

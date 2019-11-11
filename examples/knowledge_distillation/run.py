@@ -80,7 +80,6 @@ def train_single_model(model, dataset, args, name="teacher"):
 
 
 def train_distill_model(dataset, args):
-    print("training distill model")
     # load dataset
     train_x, train_y, test_x, test_y = dataset
 
@@ -93,7 +92,9 @@ def train_distill_model(dataset, args):
         print("No teacher model founded. Training a new one...")
         train_single_model(teacher, dataset, args, name="teacher")
     teacher.load(teacher_model_path)
+    teacher.set_phase("TEST")
 
+    print("training distill model")
     # define a student model
     student = Model(net=student_net, 
                     loss=DistillationLoss(alpha=args.alpha, T=args.T),
@@ -109,7 +110,7 @@ def train_distill_model(dataset, args):
             teacher_out_prob = softmax(teacher_out, t=args.T)
 
             loss = student.loss.loss(pred, batch.targets, teacher_out_prob)
-            grad_from_loss = student.loss.grad(pred, batch.targets, teacher_out)
+            grad_from_loss = student.loss.grad(pred, batch.targets, teacher_out_prob)
             grads = student.net.backward(grad_from_loss)
             student.apply_grads(grads)
 
@@ -164,7 +165,7 @@ if __name__ == "__main__":
                         help="[*cnn]")
 
     parser.add_argument("--num_ep", default=10, type=int)
-    parser.add_argument("--lr", default=7.5e-4, type=float)
+    parser.add_argument("--lr", default=1e-2, type=float)
     parser.add_argument("--batch_size", default=128, type=int)
     parser.add_argument("--seed", default=-1, type=int)
 
