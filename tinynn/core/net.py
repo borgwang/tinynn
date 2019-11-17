@@ -5,7 +5,7 @@ import copy
 import numpy as np
 
 
-class Net(object):
+class Net:
 
     def __init__(self, layers):
         self.layers = layers
@@ -56,7 +56,7 @@ class Net(object):
         self.forward(np.ones((1, *input_shape)))
 
 
-class StructuredParam(object):
+class StructuredParam:
     """A helper class represents network parameters or gradients."""
 
     def __init__(self, param_list, ut_param_list=None):

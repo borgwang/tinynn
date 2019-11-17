@@ -3,7 +3,7 @@
 import numpy as np
 
 
-class Optimizer(object):
+class Optimizer:
 
     def __init__(self, lr, weight_decay):
         self.lr = lr
@@ -192,7 +192,7 @@ class Adadelta(Optimizer):
         return step
 
 
-class BaseScheduler(object):
+class BaseScheduler:
     """
     BaseScheduler model receive a optimizer and Adjust the lr by calling
     step() method during training.

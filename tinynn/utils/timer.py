@@ -5,7 +5,7 @@ import time
 import numpy as np
 
 
-class Timer(object):
+class Timer:
 
     def __init__(self, task_name="UntitledTask"):
         self.task_name = task_name

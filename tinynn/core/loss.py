@@ -5,7 +5,7 @@ from tinynn.utils.math import log_softmax
 from tinynn.utils.math import softmax
 
 
-class Loss(object):
+class Loss:
 
     def loss(self, *args, **kwargs):
         raise NotImplementedError

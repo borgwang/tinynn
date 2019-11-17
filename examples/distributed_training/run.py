@@ -36,7 +36,7 @@ def get_model(lr):
 
 
 @ray.remote
-class ParamServer(object):
+class ParamServer:
 
     def __init__(self, model, test_set):
         self.test_set = test_set
@@ -50,7 +50,7 @@ class ParamServer(object):
 
 
 @ray.remote
-class Worker(object):
+class Worker:
 
     def __init__(self, model, train_set):
         self.model = model

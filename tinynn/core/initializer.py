@@ -10,7 +10,7 @@ def get_fans(shape):
     return fan_in, fan_out
 
 
-class Initializer(object):
+class Initializer:
 
     def __call__(self, shape):
         return self.init(shape).astype(np.float32)

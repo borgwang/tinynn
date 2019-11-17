@@ -7,7 +7,7 @@ import numpy as np
 Batch = namedtuple("Batch", ["inputs", "targets"])
 
 
-class BaseIterator(object):
+class BaseIterator:
 
     def __call__(self, inputs, targets):
         raise NotImplementedError

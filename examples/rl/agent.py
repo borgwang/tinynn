@@ -7,7 +7,7 @@ from collections import deque
 import numpy as np
 
 
-class DQN(object):
+class DQN:
 
     def __init__(self, env, args):
         self.args = args

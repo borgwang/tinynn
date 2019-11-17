@@ -4,6 +4,9 @@ import argparse
 import os
 import time
 
+import sys
+sys.path.insert(0, "/Users/abbo/workspace/tinynn")
+
 import numpy as np
 from tinynn.core.loss import Loss
 from tinynn.core.loss import SoftmaxCrossEntropy
@@ -59,6 +62,7 @@ def train_single_model(model, dataset, args, name="teacher"):
         for i, batch in enumerate(train_iterator(train_x, train_y)):
             pred = model.forward(batch.inputs)
             loss, grads = model.backward(pred, batch.targets)
+            print(loss)
             model.apply_grads(grads)
 
         print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))

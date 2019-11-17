@@ -6,7 +6,7 @@ from tinynn.core.initializer import XavierUniform
 from tinynn.core.initializer import Zeros
 
 
-class Layer(object):
+class Layer:
 
     def __init__(self):
         self.params = {p: None for p in self.param_names}
