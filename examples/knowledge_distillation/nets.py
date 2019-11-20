@@ -8,8 +8,7 @@ from tinynn.core.layer import BatchNormalization
 
 
 def conv_bn_relu(kernel):
-    return [Conv2D(kernel=kernel, stride=(1, 1), padding="SAME"),
-            BatchNormalization(), ReLU()]
+    return [Conv2D(kernel=kernel, stride=(1, 1), padding="SAME"), ReLU()]
 
 
 def max_pool():

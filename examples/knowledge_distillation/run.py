@@ -53,26 +53,27 @@ def train_single_model(model, dataset, args, name="teacher"):
     print("training %s model" % name)
     train_x, train_y, test_x, test_y = dataset
 
-    train_iterator = BatchIterator(batch_size=args.batch_size)
+    iterator = BatchIterator(batch_size=args.batch_size)
     for epoch in range(args.num_ep):
         t_start = time.time()
         
-        for i, batch in enumerate(train_iterator(train_x, train_y)):
+        for i, batch in enumerate(iterator(train_x, train_y)):
             pred = model.forward(batch.inputs)
             loss, grads = model.backward(pred, batch.targets)
             model.apply_grads(grads)
             log = accuracy(np.argmax(pred, 1), np.argmax(batch.targets, 1))
-            log["loss"] = loss
+            log.update({"batch": i, "loss": loss})
             print(log)
-
         print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
         # evaluate
         model.set_phase("TEST")
-        test_pred = model.forward(test_x)
-        test_pred_idx = np.argmax(test_pred, axis=1)
-        test_y_idx = np.argmax(test_y, axis=1)
-        res = accuracy(test_pred_idx, test_y_idx)
-        print(res)
+        hit, total = 0, 0
+        for i, batch in enumerate(iterator(test_x, test_y)):
+            pred = model.forward(batch.inputs)
+            res = accuracy(np.argmax(pred, 1), np.argmax(batch.targets, 1))
+            hit += res["hit_num"]
+            total += res["total_num"]
+        print("accuracy: %.4f" % (1.0 * hit / total) )
         model.set_phase("TRAIN")
     
     # save model
@@ -86,7 +87,6 @@ def train_single_model(model, dataset, args, name="teacher"):
 def train_distill_model(dataset, args):
     # load dataset
     train_x, train_y, test_x, test_y = dataset
-
     # load or train a teacher model
     teacher = Model(net=teacher_net, 
                     loss=SoftmaxCrossEntropy(), 
@@ -117,17 +117,18 @@ def train_distill_model(dataset, args):
             grad_from_loss = student.loss.grad(pred, batch.targets, teacher_out_prob)
             grads = student.net.backward(grad_from_loss)
             student.apply_grads(grads)
-
         print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
         # evaluate
         student.set_phase("TEST")
-        test_pred = student.forward(test_x)
-        test_pred_idx = np.argmax(test_pred, axis=1)
-        test_y_idx = np.argmax(test_y, axis=1)
-        res = accuracy(test_pred_idx, test_y_idx)
-        print(res)
+        hit, total = 0, 0
+        for i, batch in enumerate(iterator(test_x, test_y)):
+            pred = student.forward(batch.inputs)
+            res = accuracy(np.argmax(pred, 1), np.argmax(batch.targets, 1))
+            hit += res["hit_num"]
+            total += res["total_num"]
+        print("accuracy: %.4f" % (1.0 * hit / total) )
         student.set_phase("TRAIN")
-    
+
     # save the distilled model
     if not os.path.isdir(args.model_dir):
         os.makedirs(args.model_dir)
@@ -169,7 +170,7 @@ if __name__ == "__main__":
                         help="[*cnn]")
 
     parser.add_argument("--num_ep", default=10, type=int)
-    parser.add_argument("--lr", default=1e-2, type=float)
+    parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--batch_size", default=128, type=int)
     parser.add_argument("--seed", default=-1, type=int)
 
