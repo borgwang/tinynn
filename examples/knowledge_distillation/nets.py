@@ -17,24 +17,16 @@ def max_pool():
 
 
 teacher_net = Net([
-    *conv_bn_relu((3, 3, 1, 64)),
+    *conv_bn_relu((3, 3, 1, 32)),
+    *conv_bn_relu((3, 3, 32, 32)),
+    max_pool(),
+
+    *conv_bn_relu((3, 3, 32, 64)),
     *conv_bn_relu((3, 3, 64, 64)),
     max_pool(),
 
     *conv_bn_relu((3, 3, 64, 128)),
     *conv_bn_relu((3, 3, 128, 128)),
-    max_pool(),
-
-    *conv_bn_relu((3, 3, 128, 256)),
-    *conv_bn_relu((3, 3, 256, 256)),
-    max_pool(),
-
-    *conv_bn_relu((3, 3, 256, 512)),
-    *conv_bn_relu((3, 3, 512, 512)),
-    max_pool(),
-
-    *conv_bn_relu((3, 3, 512, 512)),
-    *conv_bn_relu((3, 3, 512, 512)),
     max_pool(),
 
     Flatten(),

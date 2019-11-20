@@ -56,10 +56,14 @@ def train_single_model(model, dataset, args, name="teacher"):
     train_iterator = BatchIterator(batch_size=args.batch_size)
     for epoch in range(args.num_ep):
         t_start = time.time()
+        
         for i, batch in enumerate(train_iterator(train_x, train_y)):
             pred = model.forward(batch.inputs)
             loss, grads = model.backward(pred, batch.targets)
             model.apply_grads(grads)
+            log = accuracy(np.argmax(pred, 1), np.argmax(batch.targets, 1))
+            log["loss"] = loss
+            print(log)
 
         print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
         # evaluate
