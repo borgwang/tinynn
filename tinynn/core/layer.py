@@ -597,6 +597,34 @@ class LeakyReLU(Activation):
         return dx
 
 
+class GELU(Activation):
+    """Gaussian Error Linear Units
+    ref: https://arxiv.org/pdf/1606.08415.pdf"""
+
+    def _sigmoid(self, x):
+        return 1.0 / (1.0 + np.exp(-x))
+
+    def func(self, x):
+        self.cache = self._sigmoid(1.702 * x)
+        return x * self.cache
+
+    def derivative(self, x):
+        return self.cache + x * 1.702 * self.cache * (1.0 - self.cache)
+
+
+class ELU(Activation):
+
+    def __init__(self, alpha=1.0):
+        super().__init__()
+        self._alpha = alpha
+
+    def func(self, x):
+        return np.maximum(x, 0) + np.minimum(0, self._alpha * (np.exp(x) - 1))
+
+    def derivative(self, x):
+        return x > 0.0 + (x < 0.0) * self._alpha * np.exp(x)
+
+
 def im2col(img, k_h, k_w, s_h, s_w):
     """Transform padded image into column matrix.
     :param img: padded inputs of shape (B, in_h, in_w, in_c)
