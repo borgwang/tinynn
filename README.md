@@ -1,4 +1,3 @@
-
 ## tinynn 
 
 [![Build Status](https://travis-ci.com/borgwang/tinynn.svg?branch=master)](https://travis-ci.com/borgwang/tinynn)
@@ -12,13 +11,13 @@ tinynn is a lightweight deep learning framework written in Python3 (with NumPy).
 
 ## Getting Started
 
-### Install
+#### Install
 
 ```bash
 pip install tinynn
 ```
 
-### Examples
+#### Run examples
 
 ```bash
 git clone https://github.com/borgwang/tinynn.git
@@ -34,7 +33,21 @@ python nn_paint/run.py
 python rl/run.py
 ```
 
-### Components
+#### Intuitive APIs
+
+```python
+# define a model
+net = Net([Dense(50), ReLU(), Dense(100), ReLU(), Dense(10)]) 
+model = Model(net=net, loss=MSE(), optimizer=Adam(lr))
+
+# train
+for batch in iterator(train_x, train_y):
+    preds = model.forward(batch.inputs)
+    loss, grads = model.backward(preds, batch.targets)
+    model.apply_grads(grads)
+```
+
+#### Components
 
 - layers: Dense, Conv2D, ConvTranspose2D, RNN, MaxPool2D, Dropout, BatchNormalization
 - activation: ReLU, LeakyReLU, Sigmoid, Tanh, Softplus
@@ -44,8 +57,6 @@ python rl/run.py
 ## Contribute 
 
 Please follow the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) for Python coding style.
-
-In addition, please sort the module import order alphabetically in each file. To do this, one can use tools like [isort](https://github.com/timothycrosley/isort) (be sure to use `--force-single-line-imports` option to enforce the coding style).
 
 ## License
 
