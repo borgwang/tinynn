@@ -75,32 +75,41 @@ def main(args):
     model = Model(net=net, loss=SoftmaxCrossEntropy(),
                   optimizer=Adam(lr=args.lr))
 
-    iterator = BatchIterator(batch_size=args.batch_size)
-    loss_list = list()
-    for epoch in range(args.num_ep):
-        t_start = time.time()
-        for batch in iterator(train_x, train_y):
-            pred = model.forward(batch.inputs)
-            loss, grads = model.backward(pred, batch.targets)
-            model.apply_grads(grads)
-            loss_list.append(loss)
-        print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
-        # evaluate
-        model.set_phase("TEST")
-        test_pred = model.forward(test_x)
-        test_pred_idx = np.argmax(test_pred, axis=1)
-        test_y_idx = np.argmax(test_y, axis=1)
-        res = accuracy(test_pred_idx, test_y_idx)
-        print(res)
-        model.set_phase("TRAIN")
-    
-    # save model
-    if not os.path.isdir(args.model_dir):
-        os.makedirs(args.model_dir)
-    model_name = "mnist-%s-epoch%d.pkl" % (args.model_type, args.num_ep)
-    model_path = os.path.join(args.model_dir, model_name) 
-    model.save(model_path)
-    print("model saved in %s" % model_path)
+    if args.model_path is not None:
+        model.load(args.model_path)
+        evaluate(model, test_x, test_y)
+    else:
+        iterator = BatchIterator(batch_size=args.batch_size)
+        loss_list = list()
+        for epoch in range(args.num_ep):
+            t_start = time.time()
+            for batch in iterator(train_x, train_y):
+                pred = model.forward(batch.inputs)
+                loss, grads = model.backward(pred, batch.targets)
+                model.apply_grads(grads)
+                loss_list.append(loss)
+            print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
+            # evaluate
+            evaluate(model, test_x, test_y)
+
+        # save model
+        print(model.net.layers[0].params["b"].mean())
+        if not os.path.isdir(args.model_dir):
+            os.makedirs(args.model_dir)
+        model_name = "mnist-%s-epoch%d.pkl" % (args.model_type, args.num_ep)
+        model_path = os.path.join(args.model_dir, model_name)
+        model.save(model_path)
+        print("model saved in %s" % model_path)
+
+
+def evaluate(model, test_x, test_y):
+    model.set_phase("TEST")
+    test_pred = model.forward(test_x)
+    test_pred_idx = np.argmax(test_pred, axis=1)
+    test_y_idx = np.argmax(test_y, axis=1)
+    res = accuracy(test_pred_idx, test_y_idx)
+    model.set_phase("TRAIN")
+    print(res)
 
 
 if __name__ == "__main__":
@@ -111,6 +120,7 @@ if __name__ == "__main__":
                         default=os.path.join(curr_dir, "data"))
     parser.add_argument("--model_dir", type=str,
                         default=os.path.join(curr_dir, "models"))
+    parser.add_argument("--model_path", type=str, default=None)
     parser.add_argument("--model_type", default="mlp", type=str,
                         help="[*mlp|cnn|rnn]")
     parser.add_argument("--num_ep", default=10, type=int)
