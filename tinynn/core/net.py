@@ -65,7 +65,7 @@ class StructuredParam:
 
     @property
     def values(self):
-        return np.array([v for p in self.param_list for v in p.values()])
+        return np.array([v for p in self.param_list for v in p.values()], dtype=object)
 
     @values.setter
     def values(self, values):
