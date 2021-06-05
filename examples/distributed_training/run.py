@@ -7,30 +7,22 @@ import time
 
 import numpy as np
 import ray
-from tinynn.core.layer import Dense
-from tinynn.core.layer import ReLU
-from tinynn.core.loss import SoftmaxCrossEntropy
-from tinynn.core.model import Model
-from tinynn.core.net import Net
-from tinynn.core.optimizer import Adam
-from tinynn.utils.data_iterator import BatchIterator
-from tinynn.utils.dataset import mnist
-from tinynn.utils.metric import accuracy
-from tinynn.utils.seeder import random_seed
+import tinynn as tn
 
 
 def get_model(lr):
-    net = Net([Dense(200), 
-               ReLU(), 
-               Dense(100), 
-               ReLU(), 
-               Dense(70), 
-               ReLU(), 
-               Dense(30), 
-               ReLU(), 
-               Dense(10)])
-    model = Model(net=net, loss=SoftmaxCrossEntropy(),
-                  optimizer=Adam(lr=lr))
+    net = tn.net.Net([
+        tn.layer.Dense(200),
+        tn.layer.ReLU(),
+        tn.layer.Dense(100),
+        tn.layer.ReLU(),
+        tn.layer.Dense(70),
+        tn.layer.ReLU(),
+        tn.layer.Dense(30),
+        tn.layer.ReLU(),
+        tn.layer.Dense(10)])
+    model = tn.model.Model(net=net, loss=tn.loss.SoftmaxCrossEntropy(),
+                           optimizer=tn.optimizer.Adam(lr=lr))
     model.net.init_params(input_shape=(784,))
     return model
 
@@ -56,7 +48,7 @@ class Worker:
         self.model = model
         self.train_set = train_set
 
-        self.iterator = BatchIterator(batch_size=args.batch_size)
+        self.iterator = tn.data_iterator.BatchIterator(batch_size=args.batch_size)
         self.batch_gen = None
 
     def get_next_batch(self):
@@ -83,13 +75,14 @@ class Worker:
 
 def main():
     if args.seed >= 0:
-        random_seed(args.seed)
+        tn.seeder.random_seed(args.seed)
 
     # data preparation
-    train_set, valid_set, test_set = mnist(args.data_dir, one_hot=True)
+    train_set, valid_set, test_set = tn.dataset.mnist(args.data_dir, one_hot=True)
 
     # init ray
     ray.init()
+
     # init model
     model = get_model(args.lr)
 
@@ -109,7 +102,7 @@ def main():
         print("Run asynchronous training.")
         # Workers repeatedly fetch global parameters, train one batch locally
         # and send their local gradients to the parameter server.
-        # The parameter server updates global parameters once it receives 
+        # The parameter server updates global parameters once it receives
         # gradients from any workers.
         for i in range(iterations):
             global_params = ps.get_params.remote()
@@ -127,7 +120,7 @@ def main():
                   (time.time() - start_time, i + 1, acc))
     elif args.mode == "sync":
         print("Run synchronous training.")
-        # In each iteration, workers request for the global model, 
+        # In each iteration, workers request for the global model,
         # compute local gradients and then send to the parameter server.
         # The parameter server gathers grads from all workers,
         # updates the global model and broadcasts to workers synchronously.
@@ -162,14 +155,14 @@ def evaluate(test_set, model):
 
     test_pred_idx = np.argmax(test_pred, axis=1)
     test_y_idx = np.argmax(test_y, axis=1)
-    return accuracy(test_pred_idx, test_y_idx)
+    return tn.metric.accuracy(test_pred_idx, test_y_idx)
 
 
 if __name__ == "__main__":
     curr_dir = os.path.dirname(os.path.abspath(__file__))
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", default="sync", type=str, 
+    parser.add_argument("--mode", default="sync", type=str,
                         help="Train mode [sync|async]. Defaults to 'sync'.")
     parser.add_argument("--data_dir", type=str,
                         default=os.path.join(curr_dir, "data"))

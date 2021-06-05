@@ -4,17 +4,8 @@ import argparse
 import os
 
 import numpy as np
+import tinynn as tn
 from PIL import Image
-from tinynn.core.layer import Dense
-from tinynn.core.layer import ReLU
-from tinynn.core.layer import Sigmoid
-from tinynn.core.loss import MSE
-from tinynn.core.model import Model
-from tinynn.core.net import Net
-from tinynn.core.optimizer import Adam
-from tinynn.utils.data_iterator import BatchIterator
-from tinynn.utils.metric import mean_square_error
-from tinynn.utils.seeder import random_seed
 
 
 def prepare_dataset(img_path):
@@ -33,26 +24,26 @@ def prepare_dataset(img_path):
 
 def main(args):
     if args.seed >= 0:
-        random_seed(args.seed)
+        tn.seeder.random_seed(args.seed)
 
     # data preparing
     train_x, train_y, img_shape = prepare_dataset(args.img)
 
-    net = Net([
-        Dense(30),
-        ReLU(),
-        Dense(100),
-        ReLU(),
-        Dense(100),
-        ReLU(),
-        Dense(30),
-        ReLU(),
-        Dense(3),
-        Sigmoid()
+    net = tn.net.Net([
+        tn.layer.Dense(30),
+        tn.layer.ReLU(),
+        tn.layer.Dense(100),
+        tn.layer.ReLU(),
+        tn.layer.Dense(100),
+        tn.layer.ReLU(),
+        tn.layer.Dense(30),
+        tn.layer.ReLU(),
+        tn.layer.Dense(3),
+        tn.layer.Sigmoid()
     ])
 
-    model = Model(net=net, loss=MSE(), optimizer=Adam())
-    iterator = BatchIterator(batch_size=args.batch_size)
+    model = tn.model.Model(net=net, loss=tn.loss.MSE(), optimizer=tn.optimizer.Adam())
+    iterator = tn.data_iterator.BatchIterator(batch_size=args.batch_size)
     for epoch in range(args.num_ep):
         for batch in iterator(train_x, train_y):
             preds = model.forward(batch.inputs)
@@ -61,7 +52,7 @@ def main(args):
 
         # evaluate
         preds = net.forward(train_x)
-        mse = mean_square_error(preds, train_y)
+        mse = tn.metric.mean_square_error(preds, train_y)
         print("Epoch %d %s" % (epoch, mse))
 
         # generate painting

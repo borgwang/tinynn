@@ -4,33 +4,25 @@ import argparse
 
 import gym
 import matplotlib.pyplot as plt
-from tinynn.core.layer import Dense
-from tinynn.core.layer import ReLU
-from tinynn.core.loss import MSE
-from tinynn.core.model import Model
-from tinynn.core.net import Net
-from tinynn.core.optimizer import RMSProp
-from tinynn.utils.seeder import random_seed
+import tinynn as tn
 
 from agent import DQN
 
 
 def get_model(out_dim, lr):
-    q_net = Net([
-        Dense(100),
-        ReLU(),
-        Dense(out_dim)
+    q_net = tn.net.Net([
+        tn.layer.Dense(100),
+        tn.layer.ReLU(),
+        tn.layer.Dense(out_dim)
     ])
-    model = Model(net=q_net, loss=MSE(),
-                  optimizer=RMSProp(lr))
-    return model
+    return tn.model.Model(net=q_net, loss=tn.loss.MSE(), optimizer=tn.optimizer.RMSProp(lr))
 
 
 def main(args):
     env = gym.make("CartPole-v0")
 
     if args.seed >= 0:
-        random_seed(args.seed)
+        tn.seeder.random_seed(args.seed)
         env.seed(args.seed)
 
     agent = DQN(env, args)

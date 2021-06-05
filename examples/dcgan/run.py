@@ -5,12 +5,7 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-from tinynn.core.loss import SigmoidCrossEntropy
-from tinynn.core.model import Model
-from tinynn.core.optimizer import Adam
-from tinynn.utils.data_iterator import BatchIterator
-from tinynn.utils.dataset import mnist
-from tinynn.utils.seeder import random_seed
+import tinynn as tn
 
 from nets import D_cnn
 from nets import D_mlp
@@ -24,7 +19,7 @@ def get_noise(size):
 
 def train(args):
     # prepare dataset
-    train_, valid, test = mnist(args.data_dir)
+    train_, valid, test = tn.dataset.mnist(args.data_dir)
     X = np.concatenate([train_[0], valid[0], test[0]])
     y = np.concatenate([train_[1], valid[1], test[1]])
 
@@ -37,14 +32,14 @@ def train(args):
         raise ValueError("Invalid argument: model_type")
 
     fix_noise = get_noise(size=(args.batch_size, args.nz))
-    loss = SigmoidCrossEntropy()
-    G = Model(net=G_net, loss=loss,
-              optimizer=Adam(args.lr_g, beta1=args.beta1))
-    D = Model(net=D_net, loss=loss,
-              optimizer=Adam(args.lr_d, beta1=args.beta1))
+    loss = tn.loss.SigmoidCrossEntropy()
+    G = tn.model.Model(net=G_net, loss=loss,
+              optimizer=tn.optimizer.Adam(args.lr_g, beta1=args.beta1))
+    D = tn.model.Model(net=D_net, loss=loss,
+              optimizer=tn.optimizer.Adam(args.lr_d, beta1=args.beta1))
 
     running_g_err, running_d_err = 0, 0
-    iterator = BatchIterator(batch_size=args.batch_size)
+    iterator = tn.data_iterator.BatchIterator(batch_size=args.batch_size)
     for epoch in range(args.num_ep):
         for i, batch in enumerate(iterator(X, y)):
             # --- Train Discriminator ---
@@ -97,7 +92,7 @@ def train(args):
 
 
 def evaluate(args):
-    G = Model(net=G_mlp(), loss=None, optimizer=None)
+    G = tn.model.Model(net=G_mlp(), loss=None, optimizer=None)
     model_path = os.path.join(args.output_dir, args.model_name)
     print("Loading model from ", model_path)
     G.load(model_path)
@@ -132,7 +127,7 @@ def save_batch_as_images(path, batch, titles=None):
 
 def main(args):
     if args.seed >= 0:
-        random_seed(args.seed)
+        tn.seeder.random_seed(args.seed)
 
     if args.train:
         train(args)

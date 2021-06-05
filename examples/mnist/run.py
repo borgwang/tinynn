@@ -5,81 +5,68 @@ import os
 import time
 
 import numpy as np
-from tinynn.core.layer import RNN
-from tinynn.core.layer import Conv2D
-from tinynn.core.layer import Dense
-from tinynn.core.layer import Flatten
-from tinynn.core.layer import MaxPool2D
-from tinynn.core.layer import ReLU
-from tinynn.core.layer import Tanh
-from tinynn.core.loss import SoftmaxCrossEntropy
-from tinynn.core.model import Model
-from tinynn.core.net import Net
-from tinynn.core.optimizer import Adam
-from tinynn.utils.data_iterator import BatchIterator
-from tinynn.utils.dataset import mnist
-from tinynn.utils.metric import accuracy
-from tinynn.utils.seeder import random_seed
+import tinynn as tn
 
 
 def main(args):
     if args.seed >= 0:
-        random_seed(args.seed)
+        tn.seeder.random_seed(args.seed)
 
-    train_set, _, test_set = mnist(args.data_dir, one_hot=True)
+    train_set, _, test_set = tn.dataset.mnist(args.data_dir, one_hot=True)
     train_x, train_y = train_set
     test_x, test_y = test_set
 
     if args.model_type == "mlp":
         # A multilayer perceptron model
-        net = Net([
-            Dense(200),
-            ReLU(),
-            Dense(100),
-            ReLU(),
-            Dense(70),
-            ReLU(),
-            Dense(30),
-            ReLU(),
-            Dense(10)
+        net = tn.net.Net([
+            tn.layer.Dense(200),
+            tn.layer.ReLU(),
+            tn.layer.Dense(100),
+            tn.layer.ReLU(),
+            tn.layer.Dense(70),
+            tn.layer.ReLU(),
+            tn.layer.Dense(30),
+            tn.layer.ReLU(),
+            tn.layer.Dense(10)
         ])
     elif args.model_type == "cnn":
         # A LeNet-5 model with activation function changed to ReLU
         train_x = train_x.reshape((-1, 28, 28, 1))
         test_x = test_x.reshape((-1, 28, 28, 1))
-        net = Net([
-            Conv2D(kernel=[5, 5, 1, 6], stride=[1, 1]),
-            ReLU(),
-            MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
-            Conv2D(kernel=[5, 5, 6, 16], stride=[1, 1]),
-            ReLU(),
-            MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
-            Flatten(),
-            Dense(120),
-            ReLU(),
-            Dense(84),
-            ReLU(),
-            Dense(10)
+        net = tn.net.Net([
+            tn.layer.Conv2D(kernel=[5, 5, 1, 6], stride=[1, 1]),
+            tn.layer.ReLU(),
+            tn.layer.MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
+            tn.layer.Conv2D(kernel=[5, 5, 6, 16], stride=[1, 1]),
+            tn.layer.ReLU(),
+            tn.layer.MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
+            tn.layer.Flatten(),
+            tn.layer.Dense(120),
+            tn.layer.ReLU(),
+            tn.layer.Dense(84),
+            tn.layer.ReLU(),
+            tn.layer.Dense(10)
         ])
     elif args.model_type == "rnn":
         # A simple recurrent neural net to classify images.
         train_x = train_x.reshape((-1, 28, 28))
         test_x = test_x.reshape((-1, 28, 28))
-        net = Net([
-            RNN(num_hidden=50, activation=Tanh()),
-            Dense(10)
+        net = tn.net.Net([
+            tn.layer.RNN(num_hidden=50, activation=tn.layer.Tanh()),
+            tn.layer.Dense(10)
         ])
     else:
         raise ValueError("Invalid argument: model_type")
 
-    model = Model(net=net, loss=SoftmaxCrossEntropy(),
-                  optimizer=Adam(lr=args.lr))
+    loss = tn.loss.SoftmaxCrossEntropy()
+    optimizer = tn.optimizer.Adam(lr=args.lr)
+    model = tn.model.Model(net=net, loss=loss, optimizer=optimizer)
 
     if args.model_path is not None:
         model.load(args.model_path)
         evaluate(model, test_x, test_y)
     else:
-        iterator = BatchIterator(batch_size=args.batch_size)
+        iterator = tn.data_iterator.BatchIterator(batch_size=args.batch_size)
         loss_list = list()
         for epoch in range(args.num_ep):
             t_start = time.time()
@@ -107,7 +94,7 @@ def evaluate(model, test_x, test_y):
     test_pred = model.forward(test_x)
     test_pred_idx = np.argmax(test_pred, axis=1)
     test_y_idx = np.argmax(test_y, axis=1)
-    res = accuracy(test_pred_idx, test_y_idx)
+    res = tn.metric.accuracy(test_pred_idx, test_y_idx)
     model.set_phase("TRAIN")
     print(res)
 

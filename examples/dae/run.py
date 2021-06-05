@@ -6,18 +6,9 @@ import argparse
 import os
 
 import numpy as np
-from matplotlib import pyplot as plt
-from tinynn.core.layer import Dense
-from tinynn.core.layer import ReLU
-from tinynn.core.layer import Tanh
-from tinynn.core.loss import MSE
-from tinynn.core.net import Net
-from tinynn.core.optimizer import Adam
-from tinynn.utils.data_iterator import BatchIterator
-from tinynn.utils.dataset import mnist
-from tinynn.utils.seeder import random_seed
-
+import tinynn as tn
 from autoencoder import AutoEncoder
+from matplotlib import pyplot as plt
 
 
 def save_batch_as_images(path, batch, titles=None):
@@ -61,26 +52,27 @@ def main(args):
         os.makedirs(args.output_dir)
 
     # prepare and read dataset
-    train_set, _, test_set = mnist(args.data_dir)
+    train_set, _, test_set = tn.dataset.mnist(args.data_dir)
     train_x, train_y = train_set
     test_x, test_y = test_set
 
     # specify the encoder and decoder net structure
-    encoder_net = Net([
-        Dense(256),
-        ReLU(),
-        Dense(64)
+    encoder_net = tn.net.Net([
+        tn.layer.Dense(256),
+        tn.layer.ReLU(),
+        tn.layer.Dense(64)
     ])
-    decoder_net = Net([
-        ReLU(),
-        Dense(256),
-        Tanh(),
-        Dense(784),
-        Tanh()
+    decoder_net = tn.net.Net([
+        tn.layer.ReLU(),
+        tn.layer.Dense(256),
+        tn.layer.Tanh(),
+        tn.layer.Dense(784),
+        tn.layer.Tanh()
     ])
     nets = (encoder_net, decoder_net)
-    optimizers = (Adam(args.lr), Adam(args.lr))
-    model = AutoEncoder(nets, loss=MSE(), optimizer=optimizers)
+    optimizers = (tn.optimizer.Adam(args.lr), tn.optimizer.Adam(args.lr))
+    loss = tn.loss.MSE()
+    model = AutoEncoder(nets, loss=loss, optimizer=optimizers)
 
     # for pre-trained model, test generated images from latent space
     if args.load_model is not None:
@@ -114,7 +106,7 @@ def main(args):
         quit()
 
     # train the auto-encoder
-    iterator = BatchIterator(batch_size=args.batch_size)
+    iterator = tn.data_iterator.BatchIterator(batch_size=args.batch_size)
     for epoch in range(args.num_ep):
         for batch in iterator(train_x, train_y):
             origin_in = batch.inputs
