@@ -212,3 +212,4 @@ class StructuredParam:
         obj = copy.deepcopy(self)
         obj.values = self._ensure_values(other) | self.values
         return obj
+

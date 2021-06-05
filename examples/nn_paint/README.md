@@ -3,20 +3,21 @@ Mimic an image using a fully-connected neural network. The input to the network 
 
 Basically it's a regression task in which our neural network tries to learn the mapping between coordinate and RGB value of a specified image. We use the [Square Loss](https://en.wikipedia.org/wiki/Mean_squared_error) to make blurry effect.
 
-### Example  
+### Example
 
-- Input image   
+- Input image
 
-<img src="test-img.jpg"  alt="paint" align=center referrerPolicy="no-referrer"/>   
+<img src="test-img.jpg"  alt="paint" align=center referrerPolicy="no-referrer"/>
 
 - training process
 
-<img src="https://tva1.sinaimg.cn/large/006y8mN6gy1g7j78286rng308c09r7wi.gif"  alt="paint" align=center referrerPolicy="no-referrer"/>   
+<img src="https://tva1.sinaimg.cn/large/006y8mN6gy1g7j78286rng308c09r7wi.gif"  alt="paint" align=center referrerPolicy="no-referrer"/>
 
 ### How to run
 
 ```bash
 pip install -r requirements.txt
 # run
-python examples/nn_paint/run.py --img your-img-file 
+python examples/nn_paint/run.py --img your-img-file
 ```
+

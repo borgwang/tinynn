@@ -53,7 +53,7 @@ class DQN:
 
         # Store experience in deque
         self.replay_buffer.append(
-            np.array([state, onehot_action, reward, next_state, done]))
+            np.array([state, onehot_action, reward, next_state, done], dtype="object"))
         if len(self.replay_buffer) > self.batch_size:
             self.update_model()
 
@@ -93,3 +93,4 @@ class DQN:
         loss, grads = self.model.backward(preds, targets)
 
         self.model.apply_grads(grads)
+

@@ -112,7 +112,7 @@ class Conv2D(Layer):
          input = | 43  16  78 |         kernel = | 4  6 |
           (X)    | 34  76  95 |                  | 7  9 |
                  | 35   8  46 |
-        
+
         After im2col and kernel flattening:
          col  = | 43  16  34  76 |     kernel = | 4 |
                 | 16  78  76  95 |      (W)     | 6 |
@@ -131,7 +131,7 @@ class Conv2D(Layer):
         # perform convolution by matrix product.
         W = self.params["w"].reshape(-1, out_c)
         Z = col @ W
-        # reshape output 
+        # reshape output
         batch_sz, in_h, in_w, _ = X.shape
         # separate the batch size and feature map dimensions
         Z = Z.reshape(batch_sz, Z.shape[0] // batch_sz, out_c)
@@ -149,9 +149,9 @@ class Conv2D(Layer):
     def backward(self, grad):
         """
         Compute gradients w.r.t layer parameters and backward gradients.
-        :param grad: gradients from previous layer 
+        :param grad: gradients from previous layer
             with shape (batch_sz, out_h, out_w, out_c)
-        :return d_in: gradients to next layers 
+        :return d_in: gradients to next layers
             with shape (batch_sz, in_h, in_w, in_c)
         """
         # read size parameters
@@ -175,7 +175,7 @@ class Conv2D(Layer):
                 patch = d_X[:, i, j, :]
                 patch = patch.reshape((batch_sz, k_h, k_w, in_c))
                 d_in[:, r:r+k_h, c:c+k_w, :] += patch
-                
+
         # cut off gradients of padding
         d_in = d_in[:, pad_h[0]:in_h-pad_h[1], pad_w[0]:in_w-pad_w[1], :]
         return self._grads_postprocess(d_in)
@@ -274,7 +274,7 @@ class MaxPool2D(Layer):
                 (in_h, in_w), (k_h, k_w), self.padding_mode)
         X = np.pad(inputs, pad_width=self.padding, mode="constant")
         padded_h, padded_w = X.shape[1:3]
-    
+
         out_h = (padded_h - k_h) // s_h + 1
         out_w = (padded_w - k_w) // s_w + 1
 
@@ -326,8 +326,8 @@ class MaxPool2D(Layer):
 
 
 class RNN(Layer):
-    
-    def __init__(self, 
+
+    def __init__(self,
                  num_hidden,
                  activation,
                  bptt_trunc=None,
@@ -345,7 +345,7 @@ class RNN(Layer):
         """
         Vanilla recurrent neural net forward pass
         a_{t} = U @ x_{t} + W @ s_{t-1} + b
-        h_{t} = activation_func(a_{t}) 
+        h_{t} = activation_func(a_{t})
         o_{t} = V @ h_{t} + c
         """
         batch_size, n_ts, input_dim = inputs.shape
@@ -379,7 +379,7 @@ class RNN(Layer):
 
         if self.bptt_trunc is None:
             self.bptt_trunc = n_ts  # non-truncated
-        
+
         d_in = np.empty_like(self.X)
         for t in reversed(range(n_ts)):
             # grads w.r.t param V and c
@@ -420,8 +420,7 @@ class BatchNormalization(Layer):
         self.m = momentum
         self.epsilon = epsilon
 
-        self.initializer = {"gamma": gamma_init, 
-                            "beta": beta_init}
+        self.initializer = {"gamma": gamma_init, "beta": beta_init}
         self.reduce = None
 
     def forward(self, inputs):
@@ -438,9 +437,9 @@ class BatchNormalization(Layer):
         if self.is_training:
             mean = inputs.mean(self.reduce, keepdims=True)
             var = inputs.var(self.reduce, keepdims=True)
-            self.ut_params["r_mean"] = (self.m * self.ut_params["r_mean"] + 
+            self.ut_params["r_mean"] = (self.m * self.ut_params["r_mean"] +
                                         (1.0 - self.m) * mean)
-            self.ut_params["r_var"] = (self.m * self.ut_params["r_var"] + 
+            self.ut_params["r_var"] = (self.m * self.ut_params["r_var"] +
                                        (1.0 - self.m) * var)
         else:
             mean = self.ut_params["r_mean"]
@@ -463,7 +462,7 @@ class BatchNormalization(Layer):
         # grads w.r.t inputs
         # ref: http://cthorey.github.io./backpropagation/
         d_in = (1.0 / N) * self.params["gamma"] * std_inv * (
-            N * grad - np.sum(grad, axis=self.reduce, keepdims=True) - 
+            N * grad - np.sum(grad, axis=self.reduce, keepdims=True) -
             self.X_center * std_inv ** 2 * np.sum(grad * self.X_center, axis=self.reduce, keepdims=True))
         return d_in
 
@@ -667,3 +666,4 @@ def get_padding_2d(in_shape, k_shape, mode):
     h_pad = get_padding_1d(in_shape[0], k_shape[0])
     w_pad = get_padding_1d(in_shape[1], k_shape[1])
     return (0, 0), h_pad, w_pad, (0, 0)
+

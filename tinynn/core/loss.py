@@ -109,3 +109,4 @@ class SigmoidCrossEntropy(Loss):
         m = logits.shape[0]
         grad = -labels + 1.0 / (1 + np.exp(-logits))
         return grad / m
+

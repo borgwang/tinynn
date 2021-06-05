@@ -63,8 +63,7 @@ def main(args):
         if not rewards_history:
             rewards_history.append(ep_rewards)
         else:
-            rewards_history.append(
-                rewards_history[-1] * 0.9 + ep_rewards * 0.1)
+            rewards_history.append(rewards_history[-1] * 0.9 + ep_rewards * 0.1)
 
         # Decay epsilon
         if agent.epsilon > args.final_epsilon:
@@ -128,3 +127,4 @@ def args_parse():
 
 if __name__ == "__main__":
     main(args_parse())
+

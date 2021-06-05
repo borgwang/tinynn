@@ -27,7 +27,7 @@ def download_url(url, file_path, checksum):
         # check md5
         if md5_checksum(file_path) == checksum:
             print("{} already exists.".format(file_path))
-            return 
+            return
         else:
             print("Wrong checksum!")
 

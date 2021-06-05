@@ -102,3 +102,4 @@ def test_backprop_cnn(cnn_model, img_dataset):
         # loss should decrease monotonically
         assert loss < previous_loss
         previous_loss = loss
+

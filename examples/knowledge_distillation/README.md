@@ -30,3 +30,4 @@ Implement a basic knowledge distillation model with tinynn.
 #### Results
 
 ![result](https://tva1.sinaimg.cn/large/006y8mN6ly1g8t8pu69zfj30d8084aam.jpg)
+

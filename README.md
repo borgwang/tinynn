@@ -1,4 +1,4 @@
-## tinynn 
+## tinynn
 
 [![Build Status](https://travis-ci.com/borgwang/tinynn.svg?branch=master)](https://travis-ci.com/borgwang/tinynn)
 
@@ -24,10 +24,10 @@ git clone https://github.com/borgwang/tinynn.git
 cd tinynn/examples
 
 # MNIST classification
-python mnist/run.py  
+python mnist/run.py
 
 # a toy regression task
-python nn_paint/run.py  
+python nn_paint/run.py
 
 # reinforcement learning demo (gym environment required)
 python rl/run.py
@@ -37,7 +37,7 @@ python rl/run.py
 
 ```python
 # define a model
-net = Net([Dense(50), ReLU(), Dense(100), ReLU(), Dense(10)]) 
+net = Net([Dense(50), ReLU(), Dense(100), ReLU(), Dense(10)])
 model = Model(net=net, loss=MSE(), optimizer=Adam(lr))
 
 # train
@@ -54,10 +54,11 @@ for batch in iterator(train_x, train_y):
 - losses: SoftmaxCrossEntropy, SigmoidCrossEntropy, MAE, MSE, Huber
 - optimizer: RAdam, Adam, SGD, Momentum, RMSProp, Adagrad, Adadelta
 
-## Contribute 
+## Contribute
 
 Please follow the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) for Python coding style.
 
 ## License
 
 MIT
+

@@ -23,3 +23,4 @@ def test_batch_iterator():
         n_batches += 1
 
     assert n_batches == 10
+

@@ -40,3 +40,4 @@ class Model:
 
     def set_phase(self, phase):
         self.net.set_phase(phase)
+

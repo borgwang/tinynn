@@ -99,7 +99,7 @@ class RAdam(Optimizer):
         _rho = self.rho - 2 * self._b2 ** self._t / (1 - self._b2 ** self._t)
         if _rho > 4:
             _v = self._v / (1 - self._b2 ** self._t)
-            _r = (((_rho - 4) * (_rho - 2) * self.rho) / 
+            _r = (((_rho - 4) * (_rho - 2) * self.rho) /
                   ((self.rho - 4) * (self.rho - 2) * _rho))
             step = -self.lr * _m * (_r ** 0.5) / (_v ** 0.5 + self._eps)
         else:
@@ -325,3 +325,4 @@ class CyclicalLR(BaseScheduler):
             return self.curr_lr + self._abs_lr_delta
         else:
             return self.curr_lr - self._abs_lr_delta
+
