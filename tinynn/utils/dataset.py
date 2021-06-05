@@ -25,8 +25,8 @@ def mnist(data_dir, one_hot=False):
     feature: numerical in range [0, 1]
     target: categorical from 0 to 9
     """
-    url = "http://deeplearning.net/data/mnist/mnist.pkl.gz"
-    checksum = "a02cd19f81d51c426d7ca14024243ce9"
+    url = "https://raw.githubusercontent.com/mnielsen/neural-networks-and-deep-learning/master/data/mnist.pkl.gz"
+    checksum = "98100ca27dc0e07ddd9f822cf9d244db"
 
     save_path = os.path.join(data_dir, url.split("/")[-1])
     print("Preparing MNIST dataset ...")
