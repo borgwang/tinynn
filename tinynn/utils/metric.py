@@ -3,6 +3,28 @@
 import numpy as np
 
 
+def _roc_curve(predictions, targets, partition, pos_class, neg_class):
+    """ROC curve (for binary classification only)"""
+    thresholds = np.arange(0.0, 1.0, 1.0 / partition)[::-1]
+    fpr_list, tpr_list = [], []
+    for threshold in thresholds:
+        pred_class = (predictions >= threshold).astype(int)
+        fp = np.sum((pred_class == pos_class) & (targets == neg_class))
+        fpr_list.append(fp / np.sum(targets == neg_class))
+        tp = np.sum((pred_class == pos_class) & (targets == pos_class))
+        tpr_list.append(tp / np.sum(targets == pos_class))
+    return fpr_list, tpr_list, thresholds
+
+
+def auc(predictions, targets, partition=300, pos_class=1, neg_class=0):
+    """Area unser the ROC curve (for binary classification only)"""
+    fprs, tprs, thresholds = _roc_curve(predictions, targets, partition, pos_class, neg_class)
+    auc = 0.0
+    for i in range(len(thresholds) - 1):
+        auc += tprs[i] * (fprs[i + 1] - fprs[i])
+    return {"auc": auc}
+
+
 def accuracy(predictions, targets):
     total_num = len(predictions)
     hit_num = int(np.sum(predictions == targets))
@@ -13,45 +35,33 @@ def accuracy(predictions, targets):
 
 def log_loss(predictions, targets):
     assert len(predictions) == len(targets)
-    total_num = len(predictions)
-
     predictions = np.asarray(predictions)
     targets = np.asarray(targets)
-
-    total_log = np.log(predictions[range(total_num), targets])
-    logloss = 1.0 - np.mean(total_log)
+    logloss = np.mean(-(targets * np.log(predictions) + (1 - targets) * np.log(1 - predictions)))
     return {"log_loss": logloss}
 
 
 def precision(predictions, targets, pos_class=1, neg_class=0):
     """precision = TP / (TP + FP)"""
-    true_pos, false_pos = 0, 0
-    for pred, tar in zip(predictions, targets):
-        if pred == pos_class and tar == pos_class:
-            true_pos += 1.0
-        elif pred == pos_class and tar == neg_class:
-            false_pos += 1.0
-    precision = true_pos / (true_pos + false_pos)
-    return {"precision": precision, "true_positive": true_pos, 
-            "false_positive": false_pos}
+    assert len(predictions) == len(targets)
+    true_pos = np.sum((predictions == pos_class) & (targets == pos_class))
+    false_pos = np.sum((predictions == pos_class) & (targets == neg_class))
+    precision = 1. * true_pos / (true_pos + false_pos)
+    return {"precision": precision, "true_positive": true_pos, "false_positive": false_pos}
 
 
 def recall(predictions, targets, pos_class=1, neg_class=0):
     """recall = TP / (TP + FN)"""
-    true_pos, false_neg = 0, 0
-    for pred, tar in zip(predictions, targets):
-        if pred == pos_class and tar == pos_class:
-            true_pos += 1.0
-        elif pred == neg_class and tar == pos_class:
-            false_neg += 1.0
-    recall = true_pos / (true_pos + false_neg)
-    return {"recall": recall, "true_positive": true_pos,
-            "false_negative": false_neg}
+    assert len(predictions) == len(targets)
+    true_pos = np.sum((predictions == pos_class) & (targets == pos_class))
+    false_neg = np.sum((predictions == neg_class) & (targets == pos_class))
+    recall = 1. * true_pos / (true_pos + false_neg)
+    return {"recall": recall, "true_positive": true_pos, "false_negative": false_neg}
 
 
 def f1(predictions, targets, pos_class=1, neg_class=0):
-    p = precision(predictions, targets, pos_class, neg_class)
-    r = recall(predictions, targets, pos_class, neg_class)
+    p = precision(predictions, targets, pos_class, neg_class)["precision"]
+    r = recall(predictions, targets, pos_class, neg_class)["recall"]
     return {"f1": 2 * (p * r) / (p + r), "precision": p, "recall": r}
 
 
@@ -69,20 +79,19 @@ def explained_variation(predictions, targets):
     if predictions.ndim == 1:
         diff_var = np.var(targets - predictions)
         target_var = np.var(targets)
+        ev = 1.0 - diff_var / target_var
     elif predictions.ndim == 2:
         diff_var = np.var(targets - predictions, axis=0)
         target_var = np.var(targets, axis=0)
-
-    non_zero_idx = np.where(target_var != 0)[0]
-
-    ev = np.mean(1.0 - diff_var[non_zero_idx] / target_var[non_zero_idx])
+        non_zero_idx = np.where(target_var != 0)[0]
+        ev = np.mean(1.0 - diff_var[non_zero_idx] / target_var[non_zero_idx])
     return {"mean_ev": ev}
 
 
 def r_square(predictions, targets):
     assert predictions.shape == targets.shape
-    ss_residual = np.sum(targets - predictions, axis=0)
-    ss_total = np.sum(targets - np.mean(targets, axis=0), axis=0)
+    ss_residual = np.sum((targets - predictions) ** 2, axis=0)
+    ss_total = np.sum((targets - np.mean(targets, axis=0)) ** 2, axis=0)
     r2 = np.mean(1 - ss_residual / ss_total)
     return {"r_square": r2}
 
@@ -107,3 +116,4 @@ def mean_absolute_error(predictions, targets):
     else:
         raise ValueError("predictions supposes to have 1 or 2 dim.")
     return {"mae": mae}
+

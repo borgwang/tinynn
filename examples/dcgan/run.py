@@ -34,9 +34,9 @@ def train(args):
     fix_noise = get_noise(size=(args.batch_size, args.nz))
     loss = tn.loss.SigmoidCrossEntropy()
     G = tn.model.Model(net=G_net, loss=loss,
-              optimizer=tn.optimizer.Adam(args.lr_g, beta1=args.beta1))
+                       optimizer=tn.optimizer.Adam(args.lr_g, beta1=args.beta1))
     D = tn.model.Model(net=D_net, loss=loss,
-              optimizer=tn.optimizer.Adam(args.lr_d, beta1=args.beta1))
+                       optimizer=tn.optimizer.Adam(args.lr_d, beta1=args.beta1))
 
     running_g_err, running_d_err = 0, 0
     iterator = tn.data_iterator.BatchIterator(batch_size=args.batch_size)

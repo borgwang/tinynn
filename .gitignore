@@ -101,3 +101,6 @@ examples/dae/data/*
 examples/dae/output/*
 examples/knowledge_distillation/data/*
 examples/knowledge_distillation/models/*
+examples/binary_classification/data/*
+examples/binary_classification/models/*
+
