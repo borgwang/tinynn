@@ -38,3 +38,4 @@ def download_url(url, file_path, checksum):
         raise RuntimeError("Error downloading resource!")
     except KeyboardInterrupt:
         print("Interrupted")
+

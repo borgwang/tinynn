@@ -29,8 +29,11 @@ def test_classification_metrics():
     # accuracy
     assert accuracy(preds, targets)["accuracy"] == 0.4
     # auc
-    auc_score = auc(scores, targets)["auc"]
+    auc_score = auc_roc_curve(scores, targets)["auc"]
     assert approximately_equal(auc_score, 0.45833)
+    auc_score2 = auc(scores, targets)["auc"]
+    assert approximately_equal(auc_score, 0.45833)
+
     # logloss
     log_loss_score = log_loss(scores, targets)["log_loss"]
     assert approximately_equal(log_loss_score, 0.87889)

@@ -16,12 +16,25 @@ def _roc_curve(predictions, targets, partition, pos_class, neg_class):
     return fpr_list, tpr_list, thresholds
 
 
-def auc(predictions, targets, partition=300, pos_class=1, neg_class=0):
+def auc_roc_curve(predictions, targets, partition=300, pos_class=1, neg_class=0):
     """Area unser the ROC curve (for binary classification only)"""
     fprs, tprs, thresholds = _roc_curve(predictions, targets, partition, pos_class, neg_class)
     auc = 0.0
     for i in range(len(thresholds) - 1):
         auc += tprs[i] * (fprs[i + 1] - fprs[i])
+    return {"auc": auc, "fprs": fprs, "tprs": tprs, "thresholds": thresholds}
+
+
+def auc(predictions, targets, pos_class=1, neg_class=0):
+    num_pos = np.sum(targets == pos_class)
+    num_neg = np.sum(targets == neg_class)
+    idx = np.argsort(predictions)
+    sorted_targets = targets[idx]
+    cnt = 0
+    for i, target in enumerate(sorted_targets):
+        if target == pos_class:
+            cnt += np.sum(sorted_targets[:i] == neg_class)
+    auc = 1. * cnt / (num_pos * num_neg)
     return {"auc": auc}
 
 
