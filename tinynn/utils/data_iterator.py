@@ -20,15 +20,14 @@ class BatchIterator(BaseIterator):
         self.shuffle = shuffle
 
     def __call__(self, inputs, targets):
-        starts = np.arange(0, len(inputs), self.batch_size)
+        indices = np.arange(len(inputs))
         if self.shuffle:
-            idx = np.arange(len(inputs))
-            np.random.shuffle(idx)
-            inputs = inputs[idx]
-            targets = targets[idx]
+            np.random.shuffle(indices)
 
+        starts = np.arange(0, len(inputs), self.batch_size)
         for start in starts:
             end = start + self.batch_size
-            batch_inputs = inputs[start: end]
-            batch_targets = targets[start: end]
+            batch_inputs = inputs[indices[start: end]]
+            batch_targets = targets[indices[start: end]]
             yield Batch(inputs=batch_inputs, targets=batch_targets)
+
