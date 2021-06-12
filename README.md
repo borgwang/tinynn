@@ -2,8 +2,7 @@
 
 [![Build Status](https://travis-ci.com/borgwang/tinynn.svg?branch=master)](https://travis-ci.com/borgwang/tinynn)
 
-
-tinynn is a lightweight deep learning framework written in Python3 (with NumPy).
+tinynn is a lightweight deep learning framework written in Python3 (for leaning purposes).
 
 <p align="center">
   <img src="http://ww4.sinaimg.cn/large/006tNc79gy1g63tkgdh1pj30to0fwjsk.jpg" width="80%" alt="tinynn-architecture" referrerPolicy="no-referrer"/>
