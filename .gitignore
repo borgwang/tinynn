@@ -90,7 +90,8 @@ ENV/
 # mypy cache
 .mypy_cache/
 
-# Costomize
+# Customize
+devops.sh
 examples/mnist/data/*
 examples/mnist/models/*
 examples/distributed_training/data/*
@@ -103,4 +104,6 @@ examples/knowledge_distillation/data/*
 examples/knowledge_distillation/models/*
 examples/binary_classification/data/*
 examples/binary_classification/models/*
+examples/word2vec/data/*
+examples/word2vec/models/*
 
