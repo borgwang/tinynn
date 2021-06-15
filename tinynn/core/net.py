@@ -203,6 +203,26 @@ class StructuredParam:
             obj.values = [v > other[i] for i, v in enumerate(self.values)]
         return obj
 
+    def __le__(self, other):
+        obj = copy.deepcopy(self)
+        other = self._ensure_values(other)
+
+        if isinstance(other, float):
+            obj.values = [v <= other for v in self.values]
+        else:
+            obj.values = [v <= other[i] for i, v in enumerate(self.values)]
+        return obj
+
+    def __ge__(self, other):
+        obj = copy.deepcopy(self)
+        other = self._ensure_values(other)
+
+        if isinstance(other, float):
+            obj.values = [v >= other for v in self.values]
+        else:
+            obj.values = [v >= other[i] for i, v in enumerate(self.values)]
+        return obj
+
     def __and__(self, other):
         obj = copy.deepcopy(self)
         obj.values = self._ensure_values(other) & self.values
