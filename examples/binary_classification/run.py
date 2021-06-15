@@ -81,7 +81,6 @@ def main(args):
             evaluate(model, test_x, test_y)
 
         # save model
-        print(model.net.layers[0].params["b"].mean())
         if not os.path.isdir(args.model_dir):
             os.makedirs(args.model_dir)
         model_name = "mnist-%s-epoch%d.pkl" % (args.model_type, args.num_ep)
