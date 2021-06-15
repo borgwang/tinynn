@@ -105,7 +105,6 @@ def train_distill_model(dataset, args):
             teacher_out = teacher.forward(batch.inputs)
             teacher_out_prob = tn.math.softmax(teacher_out, t=args.T)
 
-            loss = student.loss.loss(pred, batch.targets, teacher_out_prob)
             grad_from_loss = student.loss.grad(pred, batch.targets, teacher_out_prob)
             grads = student.net.backward(grad_from_loss)
             student.apply_grads(grads)
