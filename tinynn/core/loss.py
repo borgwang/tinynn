@@ -46,7 +46,7 @@ class Huber(Loss):
         mse_mask = l1_dist < self._delta  # MSE part
         mae_mask = ~mse_mask  # MAE part
         mse = 0.5 * (predicted - actual) ** 2
-        mae = self._delta * np.abs(predicted - actual) - 0.5 * self._delta ** 2
+        mae = self._delta * l1_dist - 0.5 * self._delta ** 2
 
         m = predicted.shape[0]
         return np.sum(mse * mse_mask + mae * mae_mask) / m
