@@ -4,6 +4,7 @@ import numpy as np
 from tinynn.core.initializer import Ones
 from tinynn.core.initializer import XavierUniform
 from tinynn.core.initializer import Zeros
+from tinynn.utils.math import sigmoid
 
 
 class Layer:
@@ -553,7 +554,7 @@ class Activation(Layer):
 class Sigmoid(Activation):
 
     def func(self, x):
-        return 1.0 / (1.0 + np.exp(-x))
+        return sigmoid(x)
 
     def derivative(self, x):
         return self.func(x) * (1.0 - self.func(x))
@@ -565,7 +566,7 @@ class Softplus(Activation):
         return np.log(1.0 + np.exp(-np.abs(x))) + np.maximum(x, 0.0)
 
     def derivative(self, x):
-        return 1.0 / (1.0 + np.exp(-x))
+        return sigmoid(x)
 
 
 class Tanh(Activation):
@@ -612,12 +613,8 @@ class GELU(Activation):
         self._alpha = 0.1702
         self._cache = None
 
-    @staticmethod
-    def _sigmoid(x):
-        return 1.0 / (1.0 + np.exp(-x))
-
     def func(self, x):
-        self._cache = self._sigmoid(self._alpha * x)
+        self._cache = sigmoid(self._alpha * x)
         return x * self._cache
 
     def derivative(self, x):

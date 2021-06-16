@@ -19,9 +19,9 @@ def log_softmax(x, t=1.0, axis=-1):
 
 
 def sigmoid(x):
+    x = np.asarray(x)
     ret = np.zeros_like(x, dtype=float)
-    pos_mask = x > 0
-    ret[pos_mask] = 1. / (1. + np.exp(-x[pos_mask]))
-    a = np.exp(x[~pos_mask])
-    ret[~pos_mask] = a / (1. + a)
+    ret[x > 0] = 1. / (1. + np.exp(-x[x > 0]))
+    a = np.exp(x[x <= 0])
+    ret[x <= 0] = a / (1. + a)
     return ret
