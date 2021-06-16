@@ -22,14 +22,12 @@ class DistillationLoss(tn.loss.Loss):
     def loss(self, pred, label, teacher_prob):
         student_loss = self.ce_loss.loss(pred, label)
         distill_loss = self.ce_loss_t.loss(pred, teacher_prob)
-        return (self.alpha * distill_loss +
-                (1 - self.alpha) * student_loss)
+        return self.alpha * distill_loss + (1 - self.alpha) * student_loss
 
     def grad(self, pred, label, teacher_prob):
         student_grad = self.ce_loss.grad(pred, label)
         distill_grad = self.ce_loss_t.grad(pred, teacher_prob)
-        return (self.alpha * distill_grad +
-                (1 - self.alpha) * student_grad)
+        return self.alpha * distill_grad + (1 - self.alpha) * student_grad
 
 
 def prepare_dataset(data_dir):

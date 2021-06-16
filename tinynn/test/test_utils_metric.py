@@ -10,9 +10,9 @@ def approximately_equal(a, b, tol=1e-3):
 
 
 def test_classification_metrics():
-    scores = np.array([.1, .2, .6, .7, .8, .9, .8, .7, .3, .4])
+    scores = np.array([.1, .2, .6, .7, .8, .9, .8, .7, .3, .4]).reshape((-1, 1))
     predictions = (scores >= 0.5).astype(int)
-    targets = np.array([0, 1, 0, 1, 0, 1, 0, 1, 1, 1])
+    targets = np.array([0, 1, 0, 1, 0, 1, 0, 1, 1, 1]).reshape((-1, 1))
 
     # precision
     result = precision(predictions, targets)
@@ -32,7 +32,7 @@ def test_classification_metrics():
     auc_score = auc_roc_curve(scores, targets)["auc"]
     assert approximately_equal(auc_score, 0.45833)
     auc_score2 = auc(scores, targets)["auc"]
-    assert approximately_equal(auc_score, 0.45833)
+    assert approximately_equal(auc_score2, 0.45833)
 
     # log loss
     log_loss_score = log_loss(scores, targets)["log_loss"]
@@ -40,8 +40,8 @@ def test_classification_metrics():
 
 
 def test_regression_metrics():
-    predictions = np.array([1., 2.1, 3., 4.1, 5.])
-    targets = np.array([1.1, 2., 3.1, 4., 5.1])
+    predictions = np.array([1., 2.1, 3., 4.1, 5.]).reshape((-1, 1))
+    targets = np.array([1.1, 2., 3.1, 4., 5.1]).reshape((-1, 1))
     # mse
     mse = mean_square_error(predictions, targets)["mse"]
     assert approximately_equal(mse, 0.01)
