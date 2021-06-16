@@ -8,7 +8,7 @@ import numpy as np
 import tinynn as tn
 
 
-def main(args):
+def main():
     if args.seed >= 0:
         tn.seeder.random_seed(args.seed)
 
@@ -114,4 +114,4 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", default=128, type=int)
     parser.add_argument("--seed", default=-1, type=int)
     args = parser.parse_args()
-    main(args)
+    main()

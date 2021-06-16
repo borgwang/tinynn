@@ -13,14 +13,14 @@ def prepare_dataset(args):
     url = "https://raw.githubusercontent.com/borgwang/toys/master/word2vec/data/shakespeare.csv"
     save_path = os.path.join(args.data_dir, "shakespeare.csv")
     checksum = "c947523a426577fa80294c20086f1e58"
-    tn.utils.downloader.download_url(url, save_path, checksum)
+    tn.downloader.download_url(url, save_path, checksum)
 
     corpus = pd.read_csv(save_path)
     raw_lines = corpus[~corpus.ActSceneLine.isna()].PlayerLine.values
     raw_lines = np.random.choice(raw_lines,
                                  size=int(len(raw_lines) * args.sample_rate),
                                  replace=False)
-    print(f"corpus lines: {len(raw_lines)}" )
+    print(f"corpus lines: {len(raw_lines)}")
     table = str.maketrans("", "", string.punctuation)
     vocab = set()
     lines = []
@@ -39,13 +39,13 @@ def prepare_dataset(args):
 
     idx_pairs = []
     for line in lines:
-        indexs = [word2idx[word] for word in line]
-        for center_pos in range(len(indexs)):
+        indices = [word2idx[word] for word in line]
+        for center_pos in range(len(indices)):
             for offset in range(-args.window_size, args.window_size + 1):
                 context_pos = center_pos + offset
-                if context_pos < 0 or context_pos >= len(indexs) or context_pos == center_pos:
+                if context_pos < 0 or context_pos >= len(indices) or context_pos == center_pos:
                     continue
-                idx_pairs.append((indexs[center_pos], indexs[context_pos]))
+                idx_pairs.append((indices[center_pos], indices[context_pos]))
     idx_pairs = np.asarray(idx_pairs)
 
     train_x = np.zeros((len(idx_pairs), vocab_size), dtype=np.int8)
@@ -60,7 +60,7 @@ def main(args):
     if args.seed >= 0:
         tn.seeder.random_seed(args.seed)
 
-    train_x, train_y, idx2word  = prepare_dataset(args)
+    train_x, train_y, idx2word = prepare_dataset(args)
     vocab_size = len(idx2word)
 
     net = tn.net.Net([
@@ -88,7 +88,7 @@ def main(args):
         # save model
         if not os.path.isdir(args.model_dir):
             os.makedirs(args.model_dir)
-        model_name = f"skipgram-epoch{args.num_ep}.pkl"
+        model_name = f"skip-gram-epoch{args.num_ep}.pkl"
         model_path = os.path.join(args.model_dir, model_name)
         model.save(model_path)
         print("model saved in %s" % model_path)
@@ -101,7 +101,7 @@ def visualize(model, idx2word, args):
     embedding = test_x @ embed_layer.params["w"] + embed_layer.params["b"]
     labels = list(idx2word.values())
 
-    # reduce dimension with TSNE
+    # reduce dimension with T-SNE
     embedding_reduced = TSNE().fit_transform(embedding)
 
     # visualization

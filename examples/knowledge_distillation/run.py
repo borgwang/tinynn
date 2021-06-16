@@ -114,7 +114,7 @@ def train_distill_model(dataset, args):
         hit, total = 0, 0
         for i, batch in enumerate(iterator(test_x, test_y)):
             pred = student.forward(batch.inputs)
-            res = accuracy(np.argmax(pred, 1), np.argmax(batch.targets, 1))
+            res = tn.metric.accuracy(np.argmax(pred, 1), np.argmax(batch.targets, 1))
             hit += res["hit_num"]
             total += res["total_num"]
         print("accuracy: %.4f" % (1.0 * hit / total) )
@@ -128,22 +128,22 @@ def train_distill_model(dataset, args):
     print("model saved in %s" % model_path)
 
 
-def main(args):
+def main():
     if args.seed >= 0:
-        random_seed(args.seed)
+        tn.seeder.random_seed(args.seed)
 
     dataset = prepare_dataset(args.data_dir)
 
     if args.train_teacher:
-        model = Model(net=teacher_net,
-                      loss=SoftmaxCrossEntropy(),
-                      optimizer=Adam(lr=args.lr))
+        model = tn.model.Model(net=teacher_net,
+                               loss=tn.loss.SoftmaxCrossEntropy(),
+                               optimizer=tn.optimizer.Adam(lr=args.lr))
         train_single_model(model, dataset, args, name="teacher")
 
     if args.train_student:
-        model = Model(net=student_net,
-                      loss=SoftmaxCrossEntropy(),
-                      optimizer=Adam(lr=args.lr))
+        model = tn.model.Model(net=student_net,
+                               loss=tn.loss.SoftmaxCrossEntropy(),
+                               optimizer=tn.optimizer.Adam(lr=args.lr))
         train_single_model(model, dataset, args, name="student")
 
     train_distill_model(dataset, args)
@@ -170,4 +170,4 @@ if __name__ == "__main__":
     parser.add_argument("--T", default=20.0, type=float)
     parser.add_argument("--alpha", default=0.9, type=float)
     args = parser.parse_args()
-    main(args)
+    main()

@@ -43,9 +43,9 @@ def transition(code1, code2, n):
         c += steps  # towards code2 ...
 
 
-def main(args):
+def main():
     if args.seed >= 0:
-        random_seed(args.seed)
+        tn.utils.seeder.random_seed(args.seed)
 
     # create output directory for saving result images
     if not os.path.exists(args.output_dir):
@@ -156,4 +156,4 @@ if __name__ == "__main__":
     parser.add_argument("--save_model", default="model", type=str)
     parser.add_argument("--seed", default=-1, type=int)
     args = parser.parse_args()
-    main(args)
+    main()

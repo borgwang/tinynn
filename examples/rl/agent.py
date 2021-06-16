@@ -63,11 +63,11 @@ class DQN:
             self.target_q_net.params = self.q_net.params
 
         # sample experience
-        minibatch = random.sample(self.replay_buffer, self.batch_size)
+        mini_batch = random.sample(self.replay_buffer, self.batch_size)
 
-        # transpose minibatch
+        # transpose mini_batch
         s_batch, a_batch, r_batch, next_s_batch, done_batch = \
-            np.array(minibatch).T.tolist()
+            np.array(mini_batch).T.tolist()
 
         next_s_batch = np.array(next_s_batch)
         next_s_all_action_Q = self.target_q_net.forward(next_s_batch)
