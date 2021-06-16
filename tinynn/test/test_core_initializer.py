@@ -27,7 +27,7 @@ def test_normal_init():
 
 
 def test_truncated_normal_init():
-    val = TruncatedNormal(mean=0.0, std=1.0).init(TEST_SHAPE)
+    val = TruncatedNormal(-2, 2, mean=0.0, std=1.0).init(TEST_SHAPE)
     assert -TOR <= val.mean() <= TOR
     assert all(val >= -2.0) and all(val <= 2.0)
 

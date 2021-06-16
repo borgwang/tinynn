@@ -23,8 +23,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.7",
     ],
     install_requires=[
-        "numpy>=1.16.0",
-        "scipy>=1.4.1"
+        "numpy>=1.16.0"
     ],
     python_requires='>=3.6'
 )

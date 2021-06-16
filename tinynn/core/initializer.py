@@ -1,7 +1,6 @@
 """Various of network parameter initializers."""
 
 import numpy as np
-import scipy.stats as stats
 
 
 def get_fans(shape):
@@ -31,11 +30,18 @@ class Normal(Initializer):
 
 class TruncatedNormal(Initializer):
 
-    def __init__(self, mean=0.0, std=1.0):
-        self._tn = stats.truncnorm(- 2 * std, 2 * std, loc=mean, scale=std)
+    def __init__(self, low, high, mean=0.0, std=1.0):
+        self._mean, self._std = mean, std
+        self._low, self._high = low, high
 
     def init(self, shape):
-        return self._tn.rvs(size=shape)
+        data = np.random.normal(loc=self._mean, scale=self._std, size=shape)
+        while True:
+            mask = (data > self._low) & (data < self._high)
+            if mask.all():
+                break
+            data[~mask] = np.random.normal(loc=self._mean, scale=self._std, size=(~mask).sum())
+        return data
 
 
 class Uniform(Initializer):
