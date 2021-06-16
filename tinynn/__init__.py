@@ -10,3 +10,4 @@ from tinynn.utils import metric
 from tinynn.utils import seeder
 from tinynn.utils import data_iterator
 from tinynn.utils import math
+from tinynn.utils import downloader
