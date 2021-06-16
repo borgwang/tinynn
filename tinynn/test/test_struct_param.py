@@ -4,7 +4,7 @@ import numpy as np
 
 from tinynn.core.layer import Dense
 from tinynn.core.net import Net
-from tinynn.core.net import StructuredParam
+from tinynn.utils.structured_param import StructuredParam
 
 
 def test_struct_param():
