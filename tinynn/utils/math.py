@@ -25,4 +25,3 @@ def sigmoid(x):
     a = np.exp(x[~pos_mask])
     ret[~pos_mask] = a / (1. + a)
     return ret
-

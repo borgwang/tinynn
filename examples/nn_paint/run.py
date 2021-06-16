@@ -81,4 +81,3 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", default=32, type=int)
     parser.add_argument("--num_ep", default=100, type=int)
     main(parser.parse_args())
-

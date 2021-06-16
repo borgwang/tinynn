@@ -91,7 +91,7 @@ def main(args):
 
 def evaluate(model, test_x, test_y):
     model.set_phase("TEST")
-    test_pred_score = tn.math.sigmoid2(model.forward(test_x))
+    test_pred_score = tn.math.sigmoid(model.forward(test_x))
     test_pred = (test_pred_score >= 0.5).astype(int)
     print(tn.metric.precision(test_pred, test_y))
     print(tn.metric.auc(test_pred_score, test_y))
@@ -115,5 +115,3 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=-1, type=int)
     args = parser.parse_args()
     main(args)
-
-

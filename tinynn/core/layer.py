@@ -105,6 +105,8 @@ class Conv2D(Layer):
         self.padding_mode = padding
         self.padding = None
 
+        self.cache = None
+
     def forward(self, inputs):
         """
         Accelerate convolution via im2col trick.
@@ -143,7 +145,7 @@ class Conv2D(Layer):
         # plus the bias for every filter
         Z += self.params["b"]
         # save results for backward function
-        self.X_shape, self.col, self.W = X.shape, col, W
+        self.cache = {"X_shape": X.shape, "col": col, "W": W}
         return Z
 
     def backward(self, grad):
@@ -157,19 +159,19 @@ class Conv2D(Layer):
         # read size parameters
         k_h, k_w, in_c, out_c = self.kernel_shape
         s_h, s_w = self.stride
-        batch_sz, in_h, in_w, in_c = self.X_shape
+        batch_sz, in_h, in_w, in_c = self.cache["X_shape"]
         pad_h, pad_w = self.padding[1:3]
 
         # grads w.r.t parameters
         flat_grad = grad.reshape((-1, out_c))
-        d_W = self.col.T @ flat_grad
+        d_W = self.cache["col"].T @ flat_grad
         self.grads["w"] = d_W.reshape(self.kernel_shape)
         self.grads["b"] = np.sum(flat_grad, axis=0)
 
         # grads w.r.t inputs
-        d_X = grad @ self.W.T
+        d_X = grad @ self.cache["W"].T
         # cast gradients back to original shape as d_in
-        d_in = np.zeros(shape=self.X_shape)
+        d_in = np.zeros(shape=self.cache["X_shape"])
         for i, r in enumerate(range(0, in_h - k_h + 1, s_h)):
             for j, c in enumerate(range(0, in_w - k_w + 1, s_w)):
                 patch = d_X[:, i, j, :]
@@ -263,6 +265,8 @@ class MaxPool2D(Layer):
         self.padding_mode = padding
         self.padding = None
 
+        self.cache = None
+
     def forward(self, inputs):
         s_h, s_w = self.stride
         k_h, k_w = self.kernel_shape
@@ -295,14 +299,12 @@ class MaxPool2D(Layer):
                 _max_pool = np.take_along_axis(pool, _argmax, axis=1).squeeze()
                 max_pool[:, r, c, :] = _max_pool
 
-        self.X_shape = X.shape
-        self.out_shape = (out_h, out_w)
-        self.argmax = argmax
+        self.cache = {"X_shape": X.shape, "out_shape": (out_h, out_w), "argmax": argmax}
         return max_pool
 
     def backward(self, grad):
-        batch_sz, in_h, in_w, in_c = self.X_shape
-        out_h, out_w = self.out_shape
+        batch_sz, in_h, in_w, in_c = self.cache["X_shape"]
+        out_h, out_w = self.cache["out_shape"]
         s_h, s_w = self.stride
         k_h, k_w = self.kernel_shape
         k_sz = k_h * k_w
@@ -313,7 +315,7 @@ class MaxPool2D(Layer):
             r_start = r * s_h
             for c in range(out_w):
                 c_start = c * s_w
-                _argmax = self.argmax[:, r, c, :]
+                _argmax = self.cache["argmax"][:, r, c, :]
                 mask = np.eye(k_sz)[_argmax].transpose((0, 2, 1))
                 _grad = grad[:, r, c, :][:, np.newaxis, :]
                 patch = np.repeat(_grad, k_sz, axis=1) * mask
@@ -321,8 +323,7 @@ class MaxPool2D(Layer):
                 d_in[:, r_start:r_start+k_h, c_start:c_start+k_w, :] += patch
 
         # cut off gradients of padding
-        d_in = d_in[:, pad_h[0]:in_h-pad_h[1], pad_w[0]:in_w-pad_w[1], :]
-        return d_in
+        return d_in[:, pad_h[0]:in_h-pad_h[1], pad_w[0]:in_w-pad_w[1], :]
 
 
 class RNN(Layer):
@@ -340,6 +341,8 @@ class RNN(Layer):
 
         self.initializer = {"W": w_init, "V": w_init, "U": w_init,
                             "b": b_init, "c": b_init}
+
+        self.cache = None
 
     def forward(self, inputs):
         """
@@ -369,34 +372,34 @@ class RNN(Layer):
             out[:, t] = h[:, t] @ self.params["V"].T + self.params["c"]
 
         # cache for backward pass
-        self.h, self.a, self.X = h, a, inputs
+        self.cache = {"h": h, "a": a, "X": inputs}
         return out[:, -1]
 
     def backward(self, grad):
-        n_ts = self.X.shape[1]
+        n_ts = self.cache["X"].shape[1]
         for p in self.param_names:
             self.grads[p] = np.zeros_like(self.params[p])
 
         if self.bptt_trunc is None:
             self.bptt_trunc = n_ts  # non-truncated
 
-        d_in = np.empty_like(self.X)
+        d_in = np.empty_like(self.cache["X"])
         for t in reversed(range(n_ts)):
             # grads w.r.t param V and c
             self.grads["c"] += grad.sum(axis=0)
-            self.grads["V"] += grad.T @ self.h[:, t]
+            self.grads["V"] += grad.T @ self.cache["h"][:, t]
             # grads w.r.t h
             d_h = grad @ self.params["V"]
-            d_a = d_h * self.activation.derivative(self.a[:, t])
+            d_a = d_h * self.activation.derivative(self.cache["a"][:, t])
             # grads w.r.t input X
             d_in[:, t] = d_a @ self.params["U"]
             # grads w.r.t params U, W and b
             for i in range(min(self.bptt_trunc, t+1)):
-                self.grads["U"] += d_a.T @ self.X[:, t - i]
-                self.grads["W"] += d_a.T @ self.h[:, t - i - 1]
+                self.grads["U"] += d_a.T @ self.cache["X"][:, t - i]
+                self.grads["W"] += d_a.T @ self.cache["h"][:, t - i - 1]
                 self.grads["b"] += d_a.sum(axis=0)
                 d_h = d_a @ self.params["W"]
-                d_a = d_h * self.activation.derivative(self.a[:, t - i - 1])
+                d_a = d_h * self.activation.derivative(self.cache["a"][:, t - i - 1])
         return d_in
 
     def _init_params(self):
@@ -423,8 +426,10 @@ class BatchNormalization(Layer):
         self.initializer = {"gamma": gamma_init, "beta": beta_init}
         self.reduce = None
 
+        self.cache = None
+
     def forward(self, inputs):
-        self.reduce = (0) if inputs.ndim == 2 else (0, 1, 2)
+        self.reduce = (0,) if inputs.ndim == 2 else (0, 1, 2)
         if not self.is_init:
             for p in self.param_names:
                 self.shapes[p] = inputs.shape[-1]
@@ -446,24 +451,26 @@ class BatchNormalization(Layer):
             var = self.ut_params["r_var"]
 
         # standardize
-        self.X_center = inputs - mean
-        self.std = (var + self.epsilon) ** 0.5
-        self.X_norm = self.X_center / self.std
-        return self.params["gamma"] * self.X_norm + self.params["beta"]
+        X_center = inputs - mean
+        std = (var + self.epsilon) ** 0.5
+        X_norm = X_center / std
+        self.cache = {"X_norm": X_norm, "std": std, "X_center": X_center}
+        return self.params["gamma"] * X_norm + self.params["beta"]
 
     def backward(self, grad):
         # grads w.r.t params
-        self.grads["gamma"] = (self.X_norm * grad).sum(self.reduce)
+        self.grads["gamma"] = (self.cache["X_norm"] * grad).sum(self.reduce)
         self.grads["beta"] = grad.sum(self.reduce)
 
         # N = grad.shape[0]
         N = np.prod([grad.shape[d] for d in self.reduce])
-        std_inv = 1.0 / self.std
+        std_inv = 1.0 / self.cache["std"]
         # grads w.r.t inputs
         # ref: http://cthorey.github.io./backpropagation/
         d_in = (1.0 / N) * self.params["gamma"] * std_inv * (
             N * grad - np.sum(grad, axis=self.reduce, keepdims=True) -
-            self.X_center * std_inv ** 2 * np.sum(grad * self.X_center, axis=self.reduce, keepdims=True))
+            self.cache["X_center"] * std_inv ** 2 *
+            np.sum(grad * self.cache["X_center"], axis=self.reduce, keepdims=True))
         return d_in
 
     def _init_params(self):
@@ -600,15 +607,21 @@ class GELU(Activation):
     """Gaussian Error Linear Units
     ref: https://arxiv.org/pdf/1606.08415.pdf"""
 
-    def _sigmoid(self, x):
+    def __init__(self):
+        super().__init__()
+        self._alpha = 0.1702
+        self._cache = None
+
+    @staticmethod
+    def _sigmoid(x):
         return 1.0 / (1.0 + np.exp(-x))
 
     def func(self, x):
-        self.cache = self._sigmoid(1.702 * x)
-        return x * self.cache
+        self._cache = self._sigmoid(self._alpha * x)
+        return x * self._cache
 
     def derivative(self, x):
-        return self.cache + x * 1.702 * self.cache * (1.0 - self.cache)
+        return self._cache + x * self._alpha * self._cache * (1.0 - self._cache)
 
 
 class ELU(Activation):
@@ -666,4 +679,3 @@ def get_padding_2d(in_shape, k_shape, mode):
     h_pad = get_padding_1d(in_shape[0], k_shape[0])
     w_pad = get_padding_1d(in_shape[1], k_shape[1])
     return (0, 0), h_pad, w_pad, (0, 0)
-

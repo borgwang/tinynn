@@ -26,4 +26,3 @@ def add_base_path(cur_main_path):
 
 parent_file = inspect.getfile(sys._getframe(1))
 add_base_path(os.path.dirname(parent_file))
-

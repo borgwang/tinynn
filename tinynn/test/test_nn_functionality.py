@@ -78,11 +78,11 @@ def test_parameters_change(fake_dataset):
 
 def test_backprop_dense(fc_model, fake_dataset):
     # train on a single data point
-    X, y = fake_dataset
+    x, y = fake_dataset
 
     previous_loss = np.inf
     for step in range(50):
-        pred = fc_model.forward(X)
+        pred = fc_model.forward(x)
         loss, grads = fc_model.backward(pred, y)
         fc_model.apply_grads(grads)
         # loss should decrease monotonically
@@ -92,14 +92,13 @@ def test_backprop_dense(fc_model, fake_dataset):
 
 def test_backprop_cnn(cnn_model, img_dataset):
     # train on a single data point
-    X, y = img_dataset
+    x, y = img_dataset
 
     previous_loss = np.inf
     for step in range(50):
-        pred = cnn_model.forward(X)
+        pred = cnn_model.forward(x)
         loss, grads = cnn_model.backward(pred, y)
         cnn_model.apply_grads(grads)
         # loss should decrease monotonically
         assert loss < previous_loss
         previous_loss = loss
-

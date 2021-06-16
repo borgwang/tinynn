@@ -39,4 +39,3 @@ student_net = tn.net.Net([
     tn.layer.ReLU(),
     tn.layer.Flatten(),
     tn.layer.Dense(10)])
-

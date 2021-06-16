@@ -144,4 +144,3 @@ class HeNormal(Initializer):
         fan_in, _ = get_fans(shape)
         std = self._gain * np.sqrt(2.0 / fan_in)
         return np.random.normal(loc=0.0, scale=std, size=shape)
-

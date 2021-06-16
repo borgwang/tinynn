@@ -32,8 +32,8 @@ def mnist(data_dir, one_hot=False):
     print("Preparing MNIST dataset ...")
     try:
         download_url(url, save_path, checksum)
-    except Exception as e:
-        print("Error downloading dataset: %s" % str(e))
+    except Exception as exception:
+        print("Error downloading dataset: %s" % str(exception))
         sys.exit(1)
 
     # load the dataset
@@ -57,10 +57,10 @@ def fashion_mnist(data_dir, one_hot=False):
     target: categorical from 0 to 9
     """
     def read_idx(filename):
-        with gzip.open(filename, "rb") as f:
-            zero, data_type, dims = struct.unpack(">HBB", f.read(4))
-            shape = tuple(struct.unpack(">I", f.read(4))[0] for d in range(dims))
-            return np.fromstring(f.read(), dtype=np.uint8).reshape(shape)
+        with gzip.open(filename, "rb") as fileobj:
+            _, _, dims = struct.unpack(">HBB", fileobj.read(4))
+            shape = tuple(struct.unpack(">I", fileobj.read(4))[0] for d in range(dims))
+            return np.fromstring(fileobj.read(), dtype=np.uint8).reshape(shape)
 
     urls = ["http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-images-idx3-ubyte.gz",
             "http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-labels-idx1-ubyte.gz",
@@ -76,14 +76,11 @@ def fashion_mnist(data_dir, one_hot=False):
     for url, checksum, save_path in zip(urls, checksums, save_paths):
         try:
             download_url(url, save_path, checksum)
-        except Exception as e:
-            print("Error downloading dataset: %s" % str(e))
+        except Exception as exception:
+            print("Error downloading dataset: %s" % str(exception))
             sys.exit(1)
 
-    dataset = []
-    for path in save_paths:
-        dataset.append(read_idx(path))
-    train_x, train_y, test_x, test_y = dataset
+    train_x, train_y, test_x, test_y = (read_idx(path) for path in save_paths)
     # normalize
     train_x = train_x.astype(float) / 255.0
     test_x = test_x.astype(float) / 255.0
@@ -105,14 +102,14 @@ def cifar10(data_dir, one_hot=False):
     print("Preparing CIFAR-10 dataset...")
     try:
         download_url(url, save_path, checksum)
-    except Exception as e:
-        print("Error downloading dataset: %s" % str(e))
+    except Exception as exception:
+        print("Error downloading dataset: %s" % str(exception))
         sys.exit(1)
 
     # load the dataset
     dataset = {}
-    with open(save_path, "rb") as f:
-        tar = tarfile.open(fileobj=f)
+    with open(save_path, "rb") as fileobj:
+        tar = tarfile.open(fileobj=fileobj)
         for item in tar:
             obj = tar.extractfile(item)
             if not obj or item.size < 100:
@@ -132,8 +129,8 @@ def cifar10(data_dir, one_hot=False):
     means, stds = (0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)
     train_x = train_x / 255.0
     train_x = train_x.reshape((-1, 1024, 3))
-    for c in range(3):
-        train_x[:, :, c] = (train_x[:, :, c] - means[c]) / stds[c]
+    for channel in range(3):
+        train_x[:, :, channel] = (train_x[:, :, channel] - means[channel]) / stds[channel]
     train_x = train_x.reshape(-1, 3072)
 
     train_y = np.asarray(train_y)
@@ -142,8 +139,8 @@ def cifar10(data_dir, one_hot=False):
     test_x = dataset["test_batch"][b"data"]
     test_x = test_x / 255.0
     test_x = test_x.reshape((-1, 1024, 3))
-    for c in range(3):
-        test_x[:, :, c] = (test_x[:, :, c] - means[c]) / stds[c]
+    for channel in range(3):
+        test_x[:, :, channel] = (test_x[:, :, channel] - means[channel]) / stds[channel]
     test_x = test_x.reshape(-1, 3072)
     test_y = np.asarray(dataset["test_batch"][b"labels"])
     test_set = (test_x, test_y)
@@ -162,8 +159,8 @@ def cifar100(data_dir, one_hot=False):
     print("Preparing CIFAR-100 dataset...")
     try:
         download_url(url, save_path, checksum)
-    except Exception as e:
-        print("Error downloading dataset: %s" % str(e))
+    except Exception as exception:
+        print("Error downloading dataset: %s" % str(exception))
         sys.exit(1)
 
     # load the dataset
@@ -177,17 +174,12 @@ def cifar100(data_dir, one_hot=False):
             cont = pickle.load(obj, encoding="bytes")
             dataset[item.name.split("/")[-1]] = cont
 
-    train_x = dataset["train"][b"data"]
-    train_x = train_x / 255.0
+    train_x = dataset["train"][b"data"] / 255.
     train_y = np.asarray(dataset["train"][b"fine_labels"])
-    train_set = (train_x, train_y)
 
-    test_x = dataset["test"][b"data"]
-    test_x = test_x / 255.0
+    test_x = dataset["test"][b"data"] / 255.
     test_y = np.asarray(dataset["test"][b"fine_labels"])
-    test_set = (test_x, test_y)
 
     if one_hot:
-        train_set = (train_set[0], get_one_hot(train_set[1], 10))
-        test_set = (test_set[0], get_one_hot(test_set[1], 10))
-    return train_set, test_set
+        train_y, test_y = get_one_hot(train_y, 10), get_one_hot(test_y, 10)
+    return (train_x, train_y), (test_x, test_y)

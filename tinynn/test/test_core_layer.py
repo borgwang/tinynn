@@ -87,4 +87,3 @@ def test_reshape():
     layer = Reshape(*target_shape)
     output = layer.forward(input_)
     assert output.shape[1:] == target_shape
-

@@ -30,4 +30,3 @@ class BatchIterator(BaseIterator):
             batch_inputs = inputs[indices[start: end]]
             batch_targets = targets[indices[start: end]]
             yield Batch(inputs=batch_inputs, targets=batch_targets)
-

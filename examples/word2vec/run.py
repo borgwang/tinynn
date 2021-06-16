@@ -138,4 +138,3 @@ if __name__ == "__main__":
     parser.add_argument("--window_size", default=2, type=int)
     parser.add_argument("--sample_rate", default=0.1, type=float)
     main(parser.parse_args())
-

@@ -17,23 +17,19 @@ class Loss:
 class MSE(Loss):
 
     def loss(self, predicted, actual):
-        m = predicted.shape[0]
-        return 0.5 * np.sum((predicted - actual) ** 2) / m
+        return 0.5 * np.sum((predicted - actual) ** 2) / predicted.shape[0]
 
     def grad(self, predicted, actual):
-        m = predicted.shape[0]
-        return (predicted - actual) / m
+        return (predicted - actual) / predicted.shape[0]
 
 
 class MAE(Loss):
 
     def loss(self, predicted, actual):
-        m = predicted.shape[0]
-        return np.sum(np.abs(predicted - actual)) / m
+        return np.sum(np.abs(predicted - actual)) / predicted.shape[0]
 
     def grad(self, predicted, actual):
-        m = predicted.shape[0]
-        return np.sign(predicted - actual) / m
+        return np.sign(predicted - actual) / predicted.shape[0]
 
 
 class Huber(Loss):
@@ -48,17 +44,16 @@ class Huber(Loss):
         mse = 0.5 * (predicted - actual) ** 2
         mae = self._delta * l1_dist - 0.5 * self._delta ** 2
 
-        m = predicted.shape[0]
-        return np.sum(mse * mse_mask + mae * mae_mask) / m
+        return np.sum(mse * mse_mask + mae * mae_mask) / predicted.shape[0]
 
     def grad(self, predicted, actual):
         err = predicted - actual
         mse_mask = np.abs(err) < self._delta  # MSE part
         mae_mask = ~mse_mask  # MAE part
-        m = predicted.shape[0]
-        mse_grad = err / m
-        mae_grad = np.sign(err) / m
-        return (mae_grad * mae_mask + mse_grad * mse_mask) / m
+        batch_size = predicted.shape[0]
+        mse_grad = err / batch_size
+        mae_grad = np.sign(err) / batch_size
+        return (mae_grad * mae_mask + mse_grad * mse_mask) / batch_size
 
 
 class SoftmaxCrossEntropy(Loss):
@@ -74,16 +69,13 @@ class SoftmaxCrossEntropy(Loss):
         self._T = T
 
     def loss(self, logits, labels):
-        m = logits.shape[0]
         nll = -(log_softmax(logits, t=self._T, axis=1) * labels).sum(axis=1)
-
         if self._weight is not None:
             nll *= self._weight[labels]
-        return np.sum(nll) / m
+        return np.sum(nll) / logits.shape[0]
 
     def grad(self, logits, labels):
-        m = logits.shape[0]
-        return (softmax(logits, t=self._T) - labels) / m
+        return (softmax(logits, t=self._T) - labels) / logits.shape[0]
 
 
 class SigmoidCrossEntropy(Loss):
@@ -101,12 +93,9 @@ class SigmoidCrossEntropy(Loss):
         self._weight = weight
 
     def loss(self, logits, labels):
-        m = logits.shape[0]
         cost = -labels * logits + np.log(1 + np.exp(-logits)) + logits
-        return np.sum(cost) / m
+        return np.sum(cost) / logits.shape[0]
 
     def grad(self, logits, labels):
-        m = logits.shape[0]
         grad = -labels + 1.0 / (1 + np.exp(-logits))
-        return grad / m
-
+        return grad / logits.shape[0]

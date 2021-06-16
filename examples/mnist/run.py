@@ -21,10 +21,13 @@ def main(args):
         net = tn.net.Net([
             tn.layer.Dense(200),
             tn.layer.ReLU(),
+            tn.layer.BatchNormalization(),
             tn.layer.Dense(100),
             tn.layer.ReLU(),
+            tn.layer.BatchNormalization(),
             tn.layer.Dense(70),
             tn.layer.ReLU(),
+            tn.layer.BatchNormalization(),
             tn.layer.Dense(30),
             tn.layer.ReLU(),
             tn.layer.Dense(10)
@@ -115,4 +118,3 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=-1, type=int)
     args = parser.parse_args()
     main(args)
-

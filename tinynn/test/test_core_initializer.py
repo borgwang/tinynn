@@ -64,4 +64,3 @@ def test_he_normal_init():
     val = HeNormal().init(TEST_SHAPE)
     std = np.sqrt(2.0 / get_fans(TEST_SHAPE)[0])
     assert std - TOR <= val.std() <= std + TOR
-

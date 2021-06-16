@@ -14,11 +14,9 @@ class Optimizer:
         grad_values = grads.values
         step_values = self._compute_step(grad_values)
         grads.values = step_values
-
         # apply weight_decay if specified
         if self.weight_decay:
             grads -= self.lr * self.weight_decay * params
-
         # take a step
         params += grads
 
@@ -162,12 +160,12 @@ class Adagrad(Optimizer):
     """
     def __init__(self, lr, weight_decay=0.0, epsilon=1e-8):
         super().__init__(lr, weight_decay)
-        self._G = 0
+        self._g = 0
         self._eps = epsilon
 
     def _compute_step(self, grad):
-        self._G += grad ** 2
-        adjust_lr = self.lr / (self._G + self._eps) ** 0.5
+        self._g += grad ** 2
+        adjust_lr = self.lr / (self._g + self._eps) ** 0.5
         step = -adjust_lr * grad
         return step
 
@@ -180,13 +178,13 @@ class Adadelta(Optimizer):
         super().__init__(lr, weight_decay)
         self._eps = epsilon
         self._decay = decay
-        self._Eg = 0  # running average of square gradient
+        self._eg = 0  # running average of square gradient
         self._delta = 0  # running average of delta
 
     def _compute_step(self, grad):
-        self._Eg += (1 - self._decay) * (grad ** 2 - self._Eg)
+        self._eg += (1 - self._decay) * (grad ** 2 - self._eg)
         std = (self._delta + self._eps) ** 0.5
-        delta = grad * (std / (self._Eg + self._eps) ** 0.5)
+        delta = grad * (std / (self._eg + self._eps) ** 0.5)
         step = - self.lr * delta
         self._delta += (1 - self._decay) * (delta ** 2 - self._delta)
         return step
@@ -198,14 +196,14 @@ class BaseScheduler:
     step() method during training.
     """
     def __init__(self, optimizer):
-        self._optim = optimizer
+        self._optimizer = optimizer
         self._initial_lr = self.curr_lr
 
         self._t = 0
 
     def step(self):
         self._t += 1
-        self._optim.lr = self._compute_lr()
+        self._optimizer.lr = self._compute_lr()
         return self.curr_lr
 
     def _compute_lr(self):
@@ -213,7 +211,7 @@ class BaseScheduler:
 
     @property
     def curr_lr(self):
-        return self._optim.lr
+        return self._optimizer.lr
 
 
 class StepLR(BaseScheduler):
@@ -270,15 +268,13 @@ class ExponentialLR(BaseScheduler):
 
     def _compute_lr(self):
         if self._t <= self._decay_steps:
-            return self._initial_lr * \
-                self._decay_rate ** (self._t / self._decay_steps)
-        else:
-            return self.curr_lr
+            return self._initial_lr * self._decay_rate ** (self._t / self._decay_steps)
+        return self.curr_lr
 
 
 class LinearLR(BaseScheduler):
     """
-    Linear decay learning rate when the number of the epoche is in
+    Linear decay learning rate when the number of the epoch is in
     [start_step, start_step + decay_steps]
     """
     def __init__(self,
@@ -323,6 +319,4 @@ class CyclicalLR(BaseScheduler):
     def _compute_lr(self):
         if self._t % self._cyclical_steps < self._cyclical_steps // 2:
             return self.curr_lr + self._abs_lr_delta
-        else:
-            return self.curr_lr - self._abs_lr_delta
-
+        return self.curr_lr - self._abs_lr_delta

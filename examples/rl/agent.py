@@ -93,4 +93,3 @@ class DQN:
         loss, grads = self.model.backward(preds, targets)
 
         self.model.apply_grads(grads)
-

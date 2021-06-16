@@ -90,6 +90,9 @@ ENV/
 # mypy cache
 .mypy_cache/
 
+# vscode
+.vscode
+
 # Customize
 devops.sh
 examples/mnist/data/*

@@ -17,9 +17,9 @@ class StructuredParam:
     @values.setter
     def values(self, values):
         i = 0
-        for d in self.param_list:
-            for name in d.keys():
-                d[name] = values[i]
+        for param in self.param_list:
+            for name in param.keys():
+                param[name] = values[i]
                 i += 1
 
     @property
@@ -29,18 +29,18 @@ class StructuredParam:
     @ut_values.setter
     def ut_values(self, values):
         i = 0
-        for d in self.ut_param_list:
-            for name in d.keys():
-                d[name] = values[i]
+        for param in self.ut_param_list:
+            for name in param.keys():
+                param[name] = values[i]
                 i += 1
 
     @property
     def shape(self):
         shape = list()
-        for d in self.param_list:
+        for param in self.param_list:
             l_shape = dict()
-            for k, v in d.items():
-                l_shape[k] = v.shape
+            for key, val in param.items():
+                l_shape[key] = val.shape
             shape.append(l_shape)
         shape = tuple(shape)
         return shape
@@ -179,4 +179,3 @@ class StructuredParam:
         obj = copy.deepcopy(self)
         obj.values = self._ensure_values(other) | self.values
         return obj
-

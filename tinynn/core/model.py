@@ -13,9 +13,9 @@ class Model:
     def forward(self, inputs):
         return self.net.forward(inputs)
 
-    def backward(self, preds, targets):
-        loss = self.loss.loss(preds, targets)
-        grad_from_loss = self.loss.grad(preds, targets)
+    def backward(self, predictions, targets):
+        loss = self.loss.loss(predictions, targets)
+        grad_from_loss = self.loss.grad(predictions, targets)
         struct_grad = self.net.backward(grad_from_loss)
         return loss, struct_grad
 
@@ -40,4 +40,3 @@ class Model:
 
     def set_phase(self, phase):
         self.net.set_phase(phase)
-

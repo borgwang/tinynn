@@ -12,8 +12,8 @@ def show_progress(blk_num, blk_sz, tot_sz):
 
 
 def md5_checksum(file_path):
-    with open(file_path, "rb") as f:
-        checksum = hashlib.md5(f.read()).hexdigest()
+    with open(file_path, "rb") as fileobj:
+        checksum = hashlib.md5(fileobj.read()).hexdigest()
     return checksum
 
 
@@ -28,8 +28,7 @@ def download_url(url, file_path, checksum):
         if md5_checksum(file_path) == checksum:
             print("{} already exists.".format(file_path))
             return
-        else:
-            print("Wrong checksum!")
+        print("Wrong checksum!")
 
     try:
         print("Downloading {} to {}".format(url, file_path))
@@ -38,4 +37,3 @@ def download_url(url, file_path, checksum):
         raise RuntimeError("Error downloading resource!")
     except KeyboardInterrupt:
         print("Interrupted")
-

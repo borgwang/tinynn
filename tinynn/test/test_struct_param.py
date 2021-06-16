@@ -27,4 +27,3 @@ def test_struct_param():
 
     power = params ** 2
     assert (power.values[-1] == params.values[-1] * params.values[-1]).all()
-

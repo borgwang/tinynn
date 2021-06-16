@@ -36,9 +36,9 @@ class Net:
 
     @property
     def params(self):
-        trainable = [l.params for l in self.layers]
-        untrainable = [l.ut_params for l in self.layers]
-        return StructuredParam(trainable, untrainable)
+        trainable = [layer.params for layer in self.layers]
+        non_trainable = [layer.ut_params for layer in self.layers]
+        return StructuredParam(trainable, non_trainable)
 
     @params.setter
     def params(self, params):
@@ -56,4 +56,3 @@ class Net:
     def init_params(self, input_shape):
         # manually init params by letting data forward through the network
         self.forward(np.ones((1, *input_shape)))
-
