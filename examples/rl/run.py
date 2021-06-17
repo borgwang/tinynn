@@ -1,4 +1,4 @@
-"""Vanilla Deep Q Network (https://www.nature.com/articles/nature14236?wm=book_wap_0005) with tinynn."""
+"""Implement vanilla Deep Q Network with tinynn."""
 
 import argparse
 

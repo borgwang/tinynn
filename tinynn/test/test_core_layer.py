@@ -2,7 +2,9 @@
 
 import runtime_path  # isort:skip
 
+import numpy as np
 import pytest
+
 from tinynn.core.layer import *
 from tinynn.core.net import Net
 from tinynn.utils.seeder import random_seed

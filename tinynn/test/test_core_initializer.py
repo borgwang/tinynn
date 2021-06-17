@@ -2,6 +2,8 @@
 
 import runtime_path  # isort:skip
 
+import numpy as np
+
 from tinynn.core.initializer import *
 from tinynn.utils.seeder import random_seed
 

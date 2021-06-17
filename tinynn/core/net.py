@@ -14,7 +14,7 @@ class Net:
         self._is_training = True
 
     def __repr__(self):
-        return "\n".join([str(l) for l in self.layers])
+        return "\n".join([str(layer) for layer in self.layers])
 
     def forward(self, inputs):
         for layer in self.layers:

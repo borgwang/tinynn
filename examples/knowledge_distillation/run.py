@@ -64,7 +64,7 @@ def train_single_model(model, dataset, args, name="teacher"):
             res = tn.metric.accuracy(np.argmax(pred, 1), np.argmax(batch.targets, 1))
             hit += res["hit_num"]
             total += res["total_num"]
-        print("accuracy: %.4f" % (1.0 * hit / total) )
+        print("accuracy: %.4f" % (1.0 * hit / total))
         model.is_training = True
 
     # save model
@@ -116,7 +116,7 @@ def train_distill_model(dataset, args):
             res = tn.metric.accuracy(np.argmax(pred, 1), np.argmax(batch.targets, 1))
             hit += res["hit_num"]
             total += res["total_num"]
-        print("accuracy: %.4f" % (1.0 * hit / total) )
+        print("accuracy: %.4f" % (1.0 * hit / total))
         student.is_trianing = True
 
     # save the distilled model

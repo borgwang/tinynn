@@ -9,6 +9,7 @@ from tinynn.utils.seeder import random_seed
 
 random_seed(0)
 
+
 def test_softmax():
     x = np.array([1., 2., 3., 4])
     a = np.exp(x - np.max(x))

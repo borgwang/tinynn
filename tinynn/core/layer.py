@@ -12,19 +12,27 @@ class Layer:
 
     def __init__(self):
         self.params = {p: None for p in self.param_names}
-        self.nt_params = {p: None for p in self.ut_param_names}
+        self.nt_params = {p: None for p in self.nt_param_names}  # non-trainable parameters
 
         self.grads = {}
         self.shapes = {}
 
         self._is_training = True  # used in BatchNorm/Dropout layers
-        self.is_init = False
+        self._is_init = False
 
     def forward(self, inputs):
         raise NotImplementedError
 
     def backward(self, grad):
         raise NotImplementedError
+
+    @property
+    def is_init(self):
+        return self._is_init
+
+    @is_init.setter
+    def is_init(self, is_init):
+        self._is_init = is_init
 
     @property
     def is_training(self):
@@ -47,8 +55,13 @@ class Layer:
         return ()
 
     @property
-    def ut_param_names(self):
+    def nt_param_names(self):
         return ()
+
+    def _init_params(self):
+        for name in self.param_names:
+            self.params[name] = self.initializers[name](self.shapes[name])
+        self.is_init = True
 
 
 class Dense(Layer):
@@ -79,11 +92,6 @@ class Dense(Layer):
         self.grads["w"] = self.inputs.T @ grad
         self.grads["b"] = np.sum(grad, axis=0)
         return grad @ self.params["w"].T
-
-    def _init_params(self):
-        for name in self.param_names:
-            self.params[name] = self.initializers[name](self.shapes[name])
-        self.is_init = True
 
     @property
     def param_names(self):
@@ -201,11 +209,6 @@ class Conv2D(Layer):
 
     def _grads_postprocess(self, grads):
         return grads
-
-    def _init_params(self):
-        for p in self.param_names:
-            self.params[p] = self.initializers[p](self.shapes[p])
-        self.is_init = True
 
     @property
     def param_names(self):
@@ -408,11 +411,6 @@ class RNN(Layer):
                 d_a = d_h * self.activation.derivative(self.ctx["a"][:, t - i - 1])
         return d_in
 
-    def _init_params(self):
-        for p in self.param_names:
-            self.params[p] = self.initializer[p](self.shapes[p])
-        self.is_init = True
-
     @property
     def param_names(self):
         return "W", "U", "V", "b", "c"
@@ -479,17 +477,12 @@ class BatchNormalization(Layer):
             np.sum(grad * self.ctx["X_center"], axis=self.reduce, keepdims=True))
         return d_in
 
-    def _init_params(self):
-        for p in self.param_names:
-            self.params[p] = self.initializer[p](self.shapes[p])
-        self.is_init = True
-
     @property
     def param_names(self):
         return "gamma", "beta"
 
     @property
-    def ut_param_names(self):
+    def nt_param_names(self):
         return "r_mean", "r_var"
 
 
