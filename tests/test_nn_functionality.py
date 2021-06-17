@@ -1,7 +1,3 @@
-"""Test the functionality of tinynn. Inspired by https://github.com/Thenerdstation/mltest"""
-
-import runtime_path  # isort:skip
-
 import numpy as np
 
 import pytest

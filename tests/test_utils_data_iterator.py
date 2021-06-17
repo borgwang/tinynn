@@ -1,7 +1,3 @@
-"""test unit for utils/data_iterator.py"""
-
-import runtime_path  # isort:skip
-
 import numpy as np
 
 from tinynn.utils.data_iterator import BatchIterator

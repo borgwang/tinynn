@@ -1,7 +1,3 @@
-"""test unit for core/initializer.py"""
-
-import runtime_path  # isort:skip
-
 import numpy as np
 
 from tinynn.core.initializer import *

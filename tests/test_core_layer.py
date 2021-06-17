@@ -1,7 +1,3 @@
-"""test unit for core/layer.py"""
-
-import runtime_path  # isort:skip
-
 import numpy as np
 import pytest
 

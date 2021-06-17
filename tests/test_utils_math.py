@@ -1,7 +1,3 @@
-"""test unit for utils/math.py"""
-
-import runtime_path  # isort:skip
-
 import numpy as np
 
 from tinynn.utils.math import *
