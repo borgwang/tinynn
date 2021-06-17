@@ -1,5 +1,6 @@
 ## tinynn
 
+[![test](https://github.com/borgwang/tinynn/actions/workflows/workflow.yaml/badge.svg?branch=master)](https://github.com/borgwang/tinynn/actions/workflows/workflow.yaml)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/borgwang/tinynn.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/borgwang/tinynn/context:python)
 
 tinynn is a lightweight deep learning framework written in Python3 (for learning purposes).
