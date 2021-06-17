@@ -21,13 +21,10 @@ def main():
         net = tn.net.Net([
             tn.layer.Dense(200),
             tn.layer.ReLU(),
-            tn.layer.BatchNormalization(),
             tn.layer.Dense(100),
             tn.layer.ReLU(),
-            tn.layer.BatchNormalization(),
             tn.layer.Dense(70),
             tn.layer.ReLU(),
-            tn.layer.BatchNormalization(),
             tn.layer.Dense(30),
             tn.layer.ReLU(),
             tn.layer.Dense(10)
@@ -92,12 +89,12 @@ def main():
 
 
 def evaluate(model, test_x, test_y):
-    model.set_phase("TEST")
+    model.is_training = False
     test_pred = model.forward(test_x)
     test_pred_idx = np.argmax(test_pred, axis=1)
     test_y_idx = np.argmax(test_y, axis=1)
     res = tn.metric.accuracy(test_pred_idx, test_y_idx)
-    model.set_phase("TRAIN")
+    model.is_training = True
     print(res)
 
 

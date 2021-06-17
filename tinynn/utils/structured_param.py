@@ -6,9 +6,9 @@ import numpy as np
 class StructuredParam:
     """A helper class represents network parameters or gradients."""
 
-    def __init__(self, param_list, ut_param_list=None):
+    def __init__(self, param_list, nt_param_list=None):
         self.param_list = param_list
-        self.ut_param_list = ut_param_list
+        self.nt_param_list = nt_param_list
 
     @property
     def values(self):
@@ -23,13 +23,13 @@ class StructuredParam:
                 i += 1
 
     @property
-    def ut_values(self):
-        return np.array([v for p in self.ut_param_list for v in p.values()])
+    def nt_values(self):
+        return np.array([v for p in self.nt_param_list for v in p.values()])
 
-    @ut_values.setter
-    def ut_values(self, values):
+    @nt_values.setter
+    def nt_values(self, values):
         i = 0
-        for param in self.ut_param_list:
+        for param in self.nt_param_list:
             for name in param.keys():
                 param[name] = values[i]
                 i += 1

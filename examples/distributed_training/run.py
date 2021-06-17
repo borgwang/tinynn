@@ -149,7 +149,6 @@ def main():
 
 
 def evaluate(test_set, model):
-    model.set_phase("TEST")
     test_x, test_y = test_set
     test_pred = model.forward(test_x)
 

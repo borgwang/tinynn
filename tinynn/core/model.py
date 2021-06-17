@@ -35,8 +35,10 @@ class Model:
         for layer in self.net.layers:
             layer.is_init = True
 
-    def get_phase(self):
-        return self.net.get_phase()
+    @property
+    def is_training(self):
+        return self.net.is_training
 
-    def set_phase(self, phase):
-        self.net.set_phase(phase)
+    @is_training.setter
+    def is_training(self, is_training):
+        self.net.is_training = is_training

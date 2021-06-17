@@ -8,15 +8,16 @@ from tinynn.utils.math import sigmoid
 
 
 class Layer:
+    """Base class for layers. """
 
     def __init__(self):
         self.params = {p: None for p in self.param_names}
-        self.ut_params = {p: None for p in self.ut_param_names}
+        self.nt_params = {p: None for p in self.ut_param_names}
 
         self.grads = {}
         self.shapes = {}
 
-        self.is_training = True
+        self._is_training = True  # used in BatchNorm/Dropout layers
         self.is_init = False
 
     def forward(self, inputs):
@@ -25,8 +26,13 @@ class Layer:
     def backward(self, grad):
         raise NotImplementedError
 
-    def set_phase(self, phase):
-        self.is_training = True if phase == "TRAIN" else False
+    @property
+    def is_training(self):
+        return self._is_training
+
+    @is_training.setter
+    def is_training(self, is_train):
+        self._is_training = is_train
 
     @property
     def name(self):
@@ -34,7 +40,7 @@ class Layer:
 
     def __repr__(self):
         shape = None if not self.shapes else self.shapes
-        return "layer: %s \t shape: %s" % (self.name, shape)
+        return f"layer: {self.name}\tshape: {shape}"
 
     @property
     def param_names(self):
@@ -46,7 +52,11 @@ class Layer:
 
 
 class Dense(Layer):
-
+    """Implement a dense layer which operates `outputs = dot(intputs, weight) + bias`
+    :param num_out: A positive integer, number of output neurons
+    :param w_init: Weight initializer
+    :param b_init: Bias initializer
+    """
     def __init__(self,
                  num_out,
                  w_init=XavierUniform(),
@@ -71,8 +81,8 @@ class Dense(Layer):
         return grad @ self.params["w"].T
 
     def _init_params(self):
-        for p in self.param_names:
-            self.params[p] = self.initializers[p](self.shapes[p])
+        for name in self.param_names:
+            self.params[name] = self.initializers[name](self.shapes[name])
         self.is_init = True
 
     @property
@@ -81,14 +91,13 @@ class Dense(Layer):
 
 
 class Conv2D(Layer):
-    """
-    Implement 2D convolution layer
+    """Implement 2D convolution layer
     :param kernel: A list/tuple of int that has length 4 (height, width,
         in_channels, out_channels)
     :param stride: A list/tuple of int that has length 2 (height, width)
     :param padding: String ["SAME", "VALID"]
-    :param w_init: weight initializer
-    :param b_init: bias initializer
+    :param w_init: Weight initializer
+    :param b_init: Bias initializer
     """
     def __init__(self,
                  kernel,
@@ -106,11 +115,10 @@ class Conv2D(Layer):
         self.padding_mode = padding
         self.padding = None
 
-        self.cache = None
+        self.ctx = None
 
     def forward(self, inputs):
-        """
-        Accelerate convolution via im2col trick.
+        """Accelerate convolution via im2col trick.
         An example (assuming only one channel and one filter):
          input = | 43  16  78 |         kernel = | 4  6 |
           (X)    | 34  76  95 |                  | 7  9 |
@@ -125,7 +133,7 @@ class Conv2D(Layer):
         if not self.is_init:
             self._init_params()
 
-        k_h, k_w, in_c, out_c = self.kernel_shape
+        k_h, k_w, _, out_c = self.kernel_shape
         s_h, s_w = self.stride
         X = self._inputs_preprocess(inputs)
 
@@ -146,12 +154,11 @@ class Conv2D(Layer):
         # plus the bias for every filter
         Z += self.params["b"]
         # save results for backward function
-        self.cache = {"X_shape": X.shape, "col": col, "W": W}
+        self.ctx = {"X_shape": X.shape, "col": col, "W": W}
         return Z
 
     def backward(self, grad):
-        """
-        Compute gradients w.r.t layer parameters and backward gradients.
+        """Compute gradients w.r.t layer parameters and backward gradients.
         :param grad: gradients from previous layer
             with shape (batch_sz, out_h, out_w, out_c)
         :return d_in: gradients to next layers
@@ -160,19 +167,19 @@ class Conv2D(Layer):
         # read size parameters
         k_h, k_w, in_c, out_c = self.kernel_shape
         s_h, s_w = self.stride
-        batch_sz, in_h, in_w, in_c = self.cache["X_shape"]
+        batch_sz, in_h, in_w, in_c = self.ctx["X_shape"]
         pad_h, pad_w = self.padding[1:3]
 
         # grads w.r.t parameters
         flat_grad = grad.reshape((-1, out_c))
-        d_W = self.cache["col"].T @ flat_grad
+        d_W = self.ctx["col"].T @ flat_grad
         self.grads["w"] = d_W.reshape(self.kernel_shape)
         self.grads["b"] = np.sum(flat_grad, axis=0)
 
         # grads w.r.t inputs
-        d_X = grad @ self.cache["W"].T
+        d_X = grad @ self.ctx["W"].T
         # cast gradients back to original shape as d_in
-        d_in = np.zeros(shape=self.cache["X_shape"])
+        d_in = np.zeros(shape=self.ctx["X_shape"])
         for i, r in enumerate(range(0, in_h - k_h + 1, s_h)):
             for j, c in enumerate(range(0, in_w - k_w + 1, s_w)):
                 patch = d_X[:, i, j, :]
@@ -222,7 +229,7 @@ class ConvTranspose2D(Conv2D):
         # insert zeros to inputs
         inputs = self._insert_zeros(
             inputs, *self.origin_stride, self.padding_mode)
-        batch_sz, in_h, in_w, in_c = inputs.shape
+        _, in_h, in_w, _ = inputs.shape
         # padding calculation
         if self.padding is None:
             if self.padding_mode == "SAME":
@@ -253,8 +260,7 @@ class ConvTranspose2D(Conv2D):
 class MaxPool2D(Layer):
 
     def __init__(self, pool_size, stride, padding="VALID"):
-        """
-        Implement 2D max-pooling layer
+        """Implement 2D max-pooling layer
         :param pool_size: A list/tuple of 2 integers (pool_height, pool_width)
         :param stride: A list/tuple of 2 integers (stride_height, stride_width)
         :param padding: A string ("SAME", "VALID")
@@ -266,7 +272,7 @@ class MaxPool2D(Layer):
         self.padding_mode = padding
         self.padding = None
 
-        self.cache = None
+        self.ctx = None
 
     def forward(self, inputs):
         s_h, s_w = self.stride
@@ -300,12 +306,12 @@ class MaxPool2D(Layer):
                 _max_pool = np.take_along_axis(pool, _argmax, axis=1).squeeze()
                 max_pool[:, r, c, :] = _max_pool
 
-        self.cache = {"X_shape": X.shape, "out_shape": (out_h, out_w), "argmax": argmax}
+        self.ctx = {"X_shape": X.shape, "out_shape": (out_h, out_w), "argmax": argmax}
         return max_pool
 
     def backward(self, grad):
-        batch_sz, in_h, in_w, in_c = self.cache["X_shape"]
-        out_h, out_w = self.cache["out_shape"]
+        batch_sz, in_h, in_w, in_c = self.ctx["X_shape"]
+        out_h, out_w = self.ctx["out_shape"]
         s_h, s_w = self.stride
         k_h, k_w = self.kernel_shape
         k_sz = k_h * k_w
@@ -316,7 +322,7 @@ class MaxPool2D(Layer):
             r_start = r * s_h
             for c in range(out_w):
                 c_start = c * s_w
-                _argmax = self.cache["argmax"][:, r, c, :]
+                _argmax = self.ctx["argmax"][:, r, c, :]
                 mask = np.eye(k_sz)[_argmax].transpose((0, 2, 1))
                 _grad = grad[:, r, c, :][:, np.newaxis, :]
                 patch = np.repeat(_grad, k_sz, axis=1) * mask
@@ -343,11 +349,10 @@ class RNN(Layer):
         self.initializer = {"W": w_init, "V": w_init, "U": w_init,
                             "b": b_init, "c": b_init}
 
-        self.cache = None
+        self.ctx = None
 
     def forward(self, inputs):
-        """
-        Vanilla recurrent neural net forward pass
+        """Vanilla recurrent neural net forward pass
         a_{t} = U @ x_{t} + W @ s_{t-1} + b
         h_{t} = activation_func(a_{t})
         o_{t} = V @ h_{t} + c
@@ -373,34 +378,34 @@ class RNN(Layer):
             out[:, t] = h[:, t] @ self.params["V"].T + self.params["c"]
 
         # cache for backward pass
-        self.cache = {"h": h, "a": a, "X": inputs}
+        self.ctx = {"h": h, "a": a, "X": inputs}
         return out[:, -1]
 
     def backward(self, grad):
-        n_ts = self.cache["X"].shape[1]
+        n_ts = self.ctx["X"].shape[1]
         for p in self.param_names:
             self.grads[p] = np.zeros_like(self.params[p])
 
         if self.bptt_trunc is None:
             self.bptt_trunc = n_ts  # non-truncated
 
-        d_in = np.empty_like(self.cache["X"])
+        d_in = np.empty_like(self.ctx["X"])
         for t in reversed(range(n_ts)):
             # grads w.r.t param V and c
             self.grads["c"] += grad.sum(axis=0)
-            self.grads["V"] += grad.T @ self.cache["h"][:, t]
+            self.grads["V"] += grad.T @ self.ctx["h"][:, t]
             # grads w.r.t h
             d_h = grad @ self.params["V"]
-            d_a = d_h * self.activation.derivative(self.cache["a"][:, t])
+            d_a = d_h * self.activation.derivative(self.ctx["a"][:, t])
             # grads w.r.t input X
             d_in[:, t] = d_a @ self.params["U"]
             # grads w.r.t params U, W and b
             for i in range(min(self.bptt_trunc, t+1)):
-                self.grads["U"] += d_a.T @ self.cache["X"][:, t - i]
-                self.grads["W"] += d_a.T @ self.cache["h"][:, t - i - 1]
+                self.grads["U"] += d_a.T @ self.ctx["X"][:, t - i]
+                self.grads["W"] += d_a.T @ self.ctx["h"][:, t - i - 1]
                 self.grads["b"] += d_a.sum(axis=0)
                 d_h = d_a @ self.params["W"]
-                d_a = d_h * self.activation.derivative(self.cache["a"][:, t - i - 1])
+                d_a = d_h * self.activation.derivative(self.ctx["a"][:, t - i - 1])
         return d_in
 
     def _init_params(self):
@@ -427,7 +432,7 @@ class BatchNormalization(Layer):
         self.initializer = {"gamma": gamma_init, "beta": beta_init}
         self.reduce = None
 
-        self.cache = None
+        self.ctx = None
 
     def forward(self, inputs):
         self.reduce = (0,) if inputs.ndim == 2 else (0, 1, 2)
@@ -436,42 +441,42 @@ class BatchNormalization(Layer):
                 self.shapes[p] = inputs.shape[-1]
             self._init_params()
 
-        if self.ut_params["r_mean"] is None:
-            self.ut_params["r_mean"] = inputs.mean(self.reduce, keepdims=True)
-            self.ut_params["r_var"] = inputs.var(self.reduce, keepdims=True)
+        if self.nt_params["r_mean"] is None:
+            self.nt_params["r_mean"] = inputs.mean(self.reduce, keepdims=True)
+            self.nt_params["r_var"] = inputs.var(self.reduce, keepdims=True)
 
         if self.is_training:
             mean = inputs.mean(self.reduce, keepdims=True)
             var = inputs.var(self.reduce, keepdims=True)
-            self.ut_params["r_mean"] = (self.m * self.ut_params["r_mean"] +
+            self.nt_params["r_mean"] = (self.m * self.nt_params["r_mean"] +
                                         (1.0 - self.m) * mean)
-            self.ut_params["r_var"] = (self.m * self.ut_params["r_var"] +
+            self.nt_params["r_var"] = (self.m * self.nt_params["r_var"] +
                                        (1.0 - self.m) * var)
         else:
-            mean = self.ut_params["r_mean"]
-            var = self.ut_params["r_var"]
+            mean = self.nt_params["r_mean"]
+            var = self.nt_params["r_var"]
 
         # standardize
         X_center = inputs - mean
         std = (var + self.epsilon) ** 0.5
         X_norm = X_center / std
-        self.cache = {"X_norm": X_norm, "std": std, "X_center": X_center}
+        self.ctx = {"X_norm": X_norm, "std": std, "X_center": X_center}
         return self.params["gamma"] * X_norm + self.params["beta"]
 
     def backward(self, grad):
         # grads w.r.t params
-        self.grads["gamma"] = (self.cache["X_norm"] * grad).sum(self.reduce)
+        self.grads["gamma"] = (self.ctx["X_norm"] * grad).sum(self.reduce)
         self.grads["beta"] = grad.sum(self.reduce)
 
         # N = grad.shape[0]
         N = np.prod([grad.shape[d] for d in self.reduce])
-        std_inv = 1.0 / self.cache["std"]
+        std_inv = 1.0 / self.ctx["std"]
         # grads w.r.t inputs
         # ref: http://cthorey.github.io./backpropagation/
         d_in = (1.0 / N) * self.params["gamma"] * std_inv * (
             N * grad - np.sum(grad, axis=self.reduce, keepdims=True) -
-            self.cache["X_center"] * std_inv ** 2 *
-            np.sum(grad * self.cache["X_center"], axis=self.reduce, keepdims=True))
+            self.ctx["X_center"] * std_inv ** 2 *
+            np.sum(grad * self.ctx["X_center"], axis=self.reduce, keepdims=True))
         return d_in
 
     def _init_params(self):
@@ -518,8 +523,7 @@ class Dropout(Layer):
 
     def forward(self, inputs):
         if self.is_training:
-            multiplier = np.random.binomial(
-                1, self._keep_prob, size=inputs.shape)
+            multiplier = np.random.binomial(1, self._keep_prob, size=inputs.shape)
             self._multiplier = multiplier / self._keep_prob
             outputs = inputs * self._multiplier
         else:
@@ -605,8 +609,10 @@ class LeakyReLU(Activation):
 
 
 class GELU(Activation):
-    """Gaussian Error Linear Units
-    ref: https://arxiv.org/pdf/1606.08415.pdf"""
+    """
+    Gaussian Error Linear Units
+    ref: https://arxiv.org/pdf/1606.08415.pdf
+    """
 
     def __init__(self):
         super().__init__()

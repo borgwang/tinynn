@@ -30,10 +30,3 @@ class AutoEncoder(Model):
     def apply_grads(self, grads):
         for net, grad, opt in zip(self.net, grads, self.optimizer):
             opt.step(grad, net.params)
-
-    def get_phase(self):
-        return self.en_net.get_phase(), self.de_net.get_phase()
-
-    def set_phase(self, phase):
-        self.en_net.set_phase(phase)
-        self.de_net.set_phase(phase)

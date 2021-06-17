@@ -90,12 +90,12 @@ def main():
 
 
 def evaluate(model, test_x, test_y):
-    model.set_phase("TEST")
+    model.is_training = False
     test_pred_score = tn.math.sigmoid(model.forward(test_x))
     test_pred = (test_pred_score >= 0.5).astype(int)
     print(tn.metric.precision(test_pred, test_y))
     print(tn.metric.auc(test_pred_score, test_y))
-    model.set_phase("TRAIN")
+    model.is_training = True
 
 
 if __name__ == "__main__":

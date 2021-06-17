@@ -11,7 +11,7 @@ class Net:
 
     def __init__(self, layers):
         self.layers = layers
-        self._phase = "TRAIN"
+        self._is_training = True
 
     def __repr__(self):
         return "\n".join([str(l) for l in self.layers])
@@ -37,21 +37,23 @@ class Net:
     @property
     def params(self):
         trainable = [layer.params for layer in self.layers]
-        non_trainable = [layer.ut_params for layer in self.layers]
+        non_trainable = [layer.nt_params for layer in self.layers]
         return StructuredParam(trainable, non_trainable)
 
     @params.setter
     def params(self, params):
         self.params.values = params.values
-        self.params.ut_values = params.ut_values
+        self.params.nt_values = params.nt_values
 
-    def get_phase(self):
-        return self._phase
+    @property
+    def is_training(self):
+        return self._is_training
 
-    def set_phase(self, phase):
+    @is_training.setter
+    def is_training(self, is_training):
         for layer in self.layers:
-            layer.set_phase(phase)
-        self._phase = phase
+            layer.is_training = is_training
+        self._is_training = is_training
 
     def init_params(self, input_shape):
         # manually init params by letting data forward through the network

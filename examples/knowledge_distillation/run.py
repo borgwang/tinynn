@@ -55,8 +55,9 @@ def train_single_model(model, dataset, args, name="teacher"):
             log.update({"batch": i, "loss": loss})
             print(log)
         print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
+
         # evaluate
-        model.set_phase("TEST")
+        model.is_training = False
         hit, total = 0, 0
         for i, batch in enumerate(iterator(test_x, test_y)):
             pred = model.forward(batch.inputs)
@@ -64,7 +65,7 @@ def train_single_model(model, dataset, args, name="teacher"):
             hit += res["hit_num"]
             total += res["total_num"]
         print("accuracy: %.4f" % (1.0 * hit / total) )
-        model.set_phase("TRAIN")
+        model.is_training = True
 
     # save model
     if not os.path.isdir(args.model_dir):
@@ -86,7 +87,7 @@ def train_distill_model(dataset, args):
         print("No teacher model founded. Training a new one...")
         train_single_model(teacher, dataset, args, name="teacher")
     teacher.load(teacher_model_path)
-    teacher.set_phase("TEST")
+    teacher.is_training = False
 
     print("training distill model")
     # define a student model
@@ -108,7 +109,7 @@ def train_distill_model(dataset, args):
             student.apply_grads(grads)
         print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
         # evaluate
-        student.set_phase("TEST")
+        student.is_trianing = False
         hit, total = 0, 0
         for i, batch in enumerate(iterator(test_x, test_y)):
             pred = student.forward(batch.inputs)
@@ -116,7 +117,7 @@ def train_distill_model(dataset, args):
             hit += res["hit_num"]
             total += res["total_num"]
         print("accuracy: %.4f" % (1.0 * hit / total) )
-        student.set_phase("TRAIN")
+        student.is_trianing = True
 
     # save the distilled model
     if not os.path.isdir(args.model_dir):
