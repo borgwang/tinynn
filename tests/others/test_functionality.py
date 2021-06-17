@@ -1,6 +1,6 @@
 import numpy as np
-
 import pytest
+
 from tinynn.core.layer import Conv2D
 from tinynn.core.layer import Dense
 from tinynn.core.layer import Flatten

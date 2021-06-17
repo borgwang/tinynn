@@ -10,10 +10,8 @@ class Optimizer:
         self.weight_decay = weight_decay
 
     def step(self, grads, params):
-        # compute step according to derived class method
-        grad_values = grads.values
-        step_values = self._compute_step(grad_values)
-        grads.values = step_values
+        # compute gradient step
+        grads.values = self._compute_step(grads.values)
         # apply weight_decay if specified
         if self.weight_decay:
             grads -= self.lr * self.weight_decay * params
@@ -97,8 +95,7 @@ class RAdam(Optimizer):
         _rho = self.rho - 2 * self._b2 ** self._t / (1 - self._b2 ** self._t)
         if _rho > 4:
             _v = self._v / (1 - self._b2 ** self._t)
-            _r = (((_rho - 4) * (_rho - 2) * self.rho) /
-                  ((self.rho - 4) * (self.rho - 2) * _rho))
+            _r = ((_rho - 4) * (_rho - 2) * self.rho) / ((self.rho - 4) * (self.rho - 2) * _rho)
             step = -self.lr * _m * (_r ** 0.5) / (_v ** 0.5 + self._eps)
         else:
             step = -self.lr * _m
@@ -106,8 +103,7 @@ class RAdam(Optimizer):
 
 
 class RMSProp(Optimizer):
-    """
-    RMSProp maintain a moving (discounted) average of the square of gradients.
+    """RMSProp maintain a moving (discounted) average of the square of gradients.
     Then divide gradients by the root of this average.
 
     mean_square = decay * mean_square{t-1} + (1-decay) * grad_t**2
@@ -129,17 +125,15 @@ class RMSProp(Optimizer):
 
     def _compute_step(self, grad):
         self._ms += (1 - self._decay) * (grad ** 2 - self._ms)
-        self._mom = self._momentum * self._mom + \
-            self.lr * grad / (self._ms + self._eps) ** 0.5
+        self._mom = self._momentum * self._mom + self.lr * grad / (self._ms + self._eps) ** 0.5
 
         step = -self._mom
         return step
 
 
 class Momentum(Optimizer):
-    """
-     accumulation = momentum * accumulation + gradient
-     variable -= learning_rate * accumulation
+    """accumulation = momentum * accumulation + gradient
+       variable -= learning_rate * accumulation
     """
     def __init__(self, lr, momentum=0.9, weight_decay=0.0):
         super().__init__(lr, weight_decay)
@@ -153,8 +147,7 @@ class Momentum(Optimizer):
 
 
 class Adagrad(Optimizer):
-    """
-    AdaGrad optimizer (http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf)
+    """AdaGrad optimizer (http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf)
     accumulation = - (learning_rate / sqrt(G + epsilon)) * gradient
     where G is the element-wise sum of square gradient
     """
@@ -171,9 +164,7 @@ class Adagrad(Optimizer):
 
 
 class Adadelta(Optimizer):
-    """
-    Adadelta algorithm (https://arxiv.org/abs/1212.5701)
-    """
+    """Adadelta algorithm (https://arxiv.org/abs/1212.5701)"""
     def __init__(self, lr=1.0, weight_decay=0.0, decay=0.9, epsilon=1e-8):
         super().__init__(lr, weight_decay)
         self._eps = epsilon
@@ -191,9 +182,8 @@ class Adadelta(Optimizer):
 
 
 class BaseScheduler:
-    """
-    BaseScheduler model receive a optimizer and Adjust the lr by calling
-    step() method during training.
+    """BaseScheduler model receive a optimizer and Adjust the lr
+       by calling step() method during training.
     """
     def __init__(self, optimizer):
         self._optimizer = optimizer
@@ -215,9 +205,7 @@ class BaseScheduler:
 
 
 class StepLR(BaseScheduler):
-    """
-    LR decayed by gamma every "step_size" epochs.
-    """
+    """LR decayed by gamma every "step_size" epochs."""
     def __init__(self,
                  optimizer,
                  step_size,
@@ -233,16 +221,15 @@ class StepLR(BaseScheduler):
 
 
 class MultiStepLR(BaseScheduler):
-    """
-    LR decayed by gamma when the number of epoch reaches one of the milestones.
+    """LR decayed by gamma when the number of steps reaches one of the milestones.
     Argument "milestones" must be a int list and be increasing.
     """
     def __init__(self, optimizer, milestones, gamma=0.1):
         super().__init__(optimizer)
         milestones = [int(m) for m in milestones]
-        assert all(x < y for x, y in zip(milestones[:-1], milestones[1:])) and \
-            all(isinstance(x, int) for x in milestones), \
-            "milestones must be a list of int and be increasing!"
+        assert len(milestones), "milestones requires at-least one element!"
+        assert all(x < y for x, y in zip(milestones[:-1], milestones[1:])), \
+               "milestones must be a list of int and be increasing!"
 
         self._milestones = milestones
         self._gamma = gamma
@@ -253,15 +240,13 @@ class MultiStepLR(BaseScheduler):
 
 
 class ExponentialLR(BaseScheduler):
-    """
-    ExponentialLR is computed by:
-
+    """ExponentialLR is computed by:
     lr_decayed = lr * decay_rate ^ (current_steps / decay_steps)
     """
     def __init__(self,
                  optimizer,
                  decay_steps,
-                 decay_rate=(1 / np.e)):
+                 decay_rate=(1. / np.e)):
         super().__init__(optimizer)
         self._decay_steps = decay_steps
         self._decay_rate = decay_rate
@@ -273,8 +258,7 @@ class ExponentialLR(BaseScheduler):
 
 
 class LinearLR(BaseScheduler):
-    """
-    Linear decay learning rate when the number of the epoch is in
+    """Linear decay learning rate when the number of the epoch is in
     [start_step, start_step + decay_steps]
     """
     def __init__(self,
@@ -299,15 +283,14 @@ class LinearLR(BaseScheduler):
 
 
 class CyclicalLR(BaseScheduler):
-    """
-    Cyclical increase and decrease learning rate within a reasonable range.
+    """Cyclical increase and decrease learning rate within a reasonable range.
     See https://arxiv.org/pdf/1506.01186.pdf for details.
     """
     def __init__(self,
                  optimizer,
                  cyclical_steps,
-                 max_lr=1e-2,
-                 min_lr=1e-3):
+                 min_lr=1e-3,
+                 max_lr=1e-2):
         super().__init__(optimizer)
         assert cyclical_steps > 2
         assert max_lr >= min_lr
@@ -316,7 +299,19 @@ class CyclicalLR(BaseScheduler):
         self._max_lr = max_lr
         self._abs_lr_delta = 2 * (max_lr - min_lr) / cyclical_steps
 
+        self._is_cycling = False
+        self._cycling_start_t = None
+
     def _compute_lr(self):
-        if self._t % self._cyclical_steps < self._cyclical_steps // 2:
+        if self.curr_lr > self._max_lr:
+            return self.curr_lr - self._abs_lr_delta
+        if self.curr_lr < self._min_lr:
+            return self.curr_lr + self._abs_lr_delta
+
+        if not self._is_cycling:
+            self._is_cycling = True
+            self._cycling_start_t = self._t
+
+        if (self._t - self._cycling_start_t) % self._cyclical_steps < self._cyclical_steps // 2:
             return self.curr_lr + self._abs_lr_delta
         return self.curr_lr - self._abs_lr_delta
