@@ -1,7 +1,8 @@
 ## tinynn
 
-[![test](https://github.com/borgwang/tinynn/actions/workflows/workflow.yaml/badge.svg?branch=master)](https://github.com/borgwang/tinynn/actions/workflows/workflow.yaml)
+[![CI](https://github.com/borgwang/tinynn/actions/workflows/workflow.yml/badge.svg)](https://github.com/borgwang/tinynn/actions/workflows/workflow.yml)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/borgwang/tinynn.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/borgwang/tinynn/context:python)
+[![codecov](https://codecov.io/gh/borgwang/tinynn/branch/master/graph/badge.svg?token=XyLajHqYr9)](https://codecov.io/gh/borgwang/tinynn)
 
 tinynn is a lightweight deep learning framework written in Python3 (for learning purposes).
 
