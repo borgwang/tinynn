@@ -52,9 +52,9 @@ def main():
         os.makedirs(args.output_dir)
 
     # prepare and read dataset
-    train_set, _, test_set = tn.dataset.mnist(args.data_dir)
-    train_x, train_y = train_set
-    test_x, test_y = test_set
+    mnist = tn.dataset.MNIST(args.data_dir)
+    train_x, train_y = mnist.train_set
+    test_x, test_y = mnist.test_set
 
     # specify the encoder and decoder net structure
     encoder_net = tn.net.Net([

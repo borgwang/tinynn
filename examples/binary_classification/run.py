@@ -12,9 +12,9 @@ def main():
     if args.seed >= 0:
         tn.seeder.random_seed(args.seed)
 
-    train_set, _, test_set = tn.dataset.mnist(args.data_dir, one_hot=True)
-    train_x, train_y = train_set
-    test_x, test_y = test_set
+    mnist = tn.dataset.MNIST(args.data_dir, one_hot=True)
+    train_x, train_y = mnist.train_set
+    test_x, test_y = mnist.test_set
     # convert to binary label (odd_num: 1, even_num: 0)
     train_y = (np.argmax(train_y, axis=1) % 2).reshape((-1, 1))
     test_y = (np.argmax(test_y, axis=1) % 2).reshape((-1, 1))

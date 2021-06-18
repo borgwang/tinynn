@@ -78,7 +78,7 @@ def main():
         tn.seeder.random_seed(args.seed)
 
     # data preparation
-    train_set, valid_set, test_set = tn.dataset.mnist(args.data_dir, one_hot=True)
+    mnist = tn.dataset.MNIST(args.data_dir, one_hot=True)
 
     # init ray
     ray.init()
@@ -88,15 +88,15 @@ def main():
 
     # init parameter server and workers
     ps = ParamServer.remote(model=copy.deepcopy(model),
-                            test_set=test_set)
+                            test_set=mnist.test_set)
     workers = []
     for rank in range(1, args.num_workers + 1):
         worker = Worker.remote(model=copy.deepcopy(model),
-                               train_set=train_set)
+                               train_set=mnist.train_set)
         workers.append(worker)
 
     start_time = time.time()
-    iter_each_epoch = len(train_set[0]) // args.batch_size + 1
+    iter_each_epoch = len(mnist.train_set[0]) // args.batch_size + 1
     iterations = args.num_ep * iter_each_epoch
     if args.mode == "async":
         print("Run asynchronous training.")

@@ -19,9 +19,9 @@ def get_noise(size):
 
 def train(args):
     # prepare dataset
-    train_, valid, test = tn.dataset.mnist(args.data_dir)
-    X = np.concatenate([train_[0], valid[0], test[0]])
-    y = np.concatenate([train_[1], valid[1], test[1]])
+    mnist = tn.dataset.MNIST(args.data_dir)
+    X = np.concatenate([mnist.train_set[0], mnist.valid_set[0], mnist.test_set[0]])
+    y = np.concatenate([mnist.train_set[1], mnist.valid_set[1], mnist.test_set[1]])
 
     if args.model_type == "cnn":
         X = X.reshape((-1, 28, 28, 1))

@@ -31,9 +31,9 @@ class DistillationLoss(tn.loss.Loss):
 
 
 def prepare_dataset(data_dir):
-    train_set, _, test_set = tn.dataset.fashion_mnist(data_dir, one_hot=True)
-    train_x, train_y = train_set
-    test_x, test_y = test_set
+    fashion = tn.dataset.FashionMNIST(data_dir, one_hot=True)
+    train_x, train_y = fashion.train_set
+    test_x, test_y = fashion.test_set
     train_x = train_x.reshape((-1, 28, 28, 1))
     test_x = test_x.reshape((-1, 28, 28, 1))
     return train_x, train_y, test_x, test_y
