@@ -115,7 +115,7 @@ def main():
 
             # evaluate
             model.net.params = ray.get(ps.get_params.remote())
-            acc = evaluate(test_set, model)
+            acc = evaluate(mnist.test_set, model)
             print("[%.2fs] accuracy after %d iterations: \n %s" %
                   (time.time() - start_time, i + 1, acc))
     elif args.mode == "sync":
@@ -141,7 +141,7 @@ def main():
 
             # evaluate
             model.net.params = ray.get(ps.get_params.remote())
-            acc = evaluate(test_set, model)
+            acc = evaluate(mnist.test_set, model)
             print("[%.2fs] accuracy after %d iterations: \n %s" %
                   (time.time() - start_time, i + 1, acc))
     else:
