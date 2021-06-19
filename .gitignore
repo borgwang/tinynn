@@ -109,4 +109,5 @@ examples/binary_classification/data/*
 examples/binary_classification/models/*
 examples/word2vec/data/*
 examples/word2vec/models/*
+tests/data/*
 
