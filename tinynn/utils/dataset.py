@@ -21,7 +21,7 @@ class Dataset:
         self._save_paths = [os.path.join(data_dir, url.split("/")[-1]) for url in self._urls]
 
         self._download()
-        self._parse(**kwargs)
+        self._parse(**kwargs)  # lgtm [py/init-calls-subclass]
 
     def _download(self):
         for url, checksum, save_path in zip(self._urls, self._checksums, self._save_paths):
