@@ -1,6 +1,6 @@
 import numpy as np
 
-from tinynn.utils.math import *
+from tinynn.utils.math import log_softmax, sigmoid, softmax
 from tinynn.utils.seeder import random_seed
 
 random_seed(0)

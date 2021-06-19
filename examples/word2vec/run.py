@@ -44,7 +44,8 @@ def prepare_dataset(args):
         for center_pos in range(len(indices)):
             for offset in range(-args.window_size, args.window_size + 1):
                 context_pos = center_pos + offset
-                if context_pos < 0 or context_pos >= len(indices) or context_pos == center_pos:
+                if (context_pos < 0 or context_pos >= len(indices) or 
+                        context_pos == center_pos):
                     continue
                 idx_pairs.append((indices[center_pos], indices[context_pos]))
     idx_pairs = np.asarray(idx_pairs)

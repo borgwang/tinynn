@@ -41,10 +41,10 @@ class DQN:
             if random.random() <= self.epsilon:  # random action
                 return random.randint(0, self.action_dim - 1)
             return np.argmax(output_q)  # greedy action
-        elif policy == "greedy":
+        if policy == "greedy":
             return np.argmax(output_q)
-        elif policy == "random":
-            return random.randint(0, self.action_dim - 1)
+
+        return random.randint(0, self.action_dim - 1)
 
     def train(self, state, action, reward, next_state, done):
         onehot_action = np.zeros(self.action_dim)

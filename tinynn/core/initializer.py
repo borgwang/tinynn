@@ -40,7 +40,8 @@ class TruncatedNormal(Initializer):
             mask = (data > self._low) & (data < self._high)
             if mask.all():
                 break
-            data[~mask] = np.random.normal(loc=self._mean, scale=self._std, size=(~mask).sum())
+            data[~mask] = np.random.normal(loc=self._mean, scale=self._std,
+                                           size=(~mask).sum())
         return data
 
 

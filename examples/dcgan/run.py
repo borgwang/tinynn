@@ -7,10 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tinynn as tn
 
-from nets import D_cnn
-from nets import D_mlp
-from nets import G_cnn
-from nets import G_mlp
+from nets import D_cnn, D_mlp, G_cnn, G_mlp
 
 
 def get_noise(size):
@@ -20,8 +17,8 @@ def get_noise(size):
 def train(args):
     # prepare dataset
     mnist = tn.dataset.MNIST(args.data_dir)
-    X = np.concatenate([mnist.train_set[0], mnist.valid_set[0], mnist.test_set[0]])
-    y = np.concatenate([mnist.train_set[1], mnist.valid_set[1], mnist.test_set[1]])
+    X = np.vstack([mnist.train_set[0], mnist.valid_set[0], mnist.test_set[0]])
+    y = np.vstack([mnist.train_set[1], mnist.valid_set[1], mnist.test_set[1]])
 
     if args.model_type == "cnn":
         X = X.reshape((-1, 28, 28, 1))

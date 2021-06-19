@@ -48,13 +48,13 @@ class Worker:
         self.model = model
         self.train_set = train_set
 
-        self.iterator = tn.data_iterator.BatchIterator(batch_size=args.batch_size)
+        self.iter = tn.data_iterator.BatchIterator(batch_size=args.batch_size)
         self.batch_gen = None
 
     def get_next_batch(self):
         # reset batch generator if needed
         if self.batch_gen is None:
-            self.batch_gen = self.iterator(*self.train_set)
+            self.batch_gen = self.iter(*self.train_set)
 
         try:
             batch = next(self.batch_gen)

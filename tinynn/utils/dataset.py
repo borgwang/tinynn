@@ -18,13 +18,15 @@ class Dataset:
         self._valid_set = None
         self._test_set = None
 
-        self._save_paths = [os.path.join(data_dir, url.split("/")[-1]) for url in self._urls]
+        self._save_paths = [os.path.join(data_dir, url.split("/")[-1])
+                            for url in self._urls]
 
         self._download()
         self._parse(**kwargs)  # lgtm [py/init-calls-subclass]
 
     def _download(self):
-        for url, checksum, save_path in zip(self._urls, self._checksums, self._save_paths):
+        for url, checksum, save_path in zip(
+                self._urls, self._checksums, self._save_paths):
             download_url(url, save_path, checksum)
 
     def _parse(self, **kwargs):
@@ -58,15 +60,14 @@ class MNIST(Dataset):
     def _parse(self, **kwargs):
         save_path = self._save_paths[0]
         with gzip.open(save_path, "rb") as f:
-            self._train_set, self._valid_set, self._test_set = pickle.load(f, encoding="latin1")
+            train, valid, test = pickle.load(f, encoding="latin1")
 
         if kwargs["one_hot"]:
-            self._train_set = (self._train_set[0],
-                               self.get_one_hot(self._train_set[1], self._n_classes))
-            self._valid_set = (self._valid_set[0],
-                               self.get_one_hot(self._valid_set[1], self._n_classes))
-            self._test_set = (self._test_set[0],
-                              self.get_one_hot(self._test_set[1], self._n_classes))
+            train = (train[0], self.get_one_hot(train[1], self._n_classes))
+            valid = (valid[0], self.get_one_hot(valid[1], self._n_classes))
+            test = (test[0], self.get_one_hot(test[1], self._n_classes))
+
+        self._train_set, self._valid_set, self._test_set = train, valid, test
 
 
 class FashionMNIST(Dataset):
@@ -88,11 +89,13 @@ class FashionMNIST(Dataset):
     def read_idx(filename):
         with gzip.open(filename, "rb") as fileobj:
             _, _, dims = struct.unpack(">HBB", fileobj.read(4))
-            shape = tuple(struct.unpack(">I", fileobj.read(4))[0] for d in range(dims))
+            shape = tuple(struct.unpack(">I", fileobj.read(4))[0]
+                          for d in range(dims))
             return np.frombuffer(fileobj.read(), dtype=np.uint8).reshape(shape)
 
     def _parse(self, **kwargs):
-        train_x, train_y, test_x, test_y = (self.read_idx(path) for path in self._save_paths)
+        train_x, train_y, test_x, test_y = (self.read_idx(path)
+                                            for path in self._save_paths)
         # normalize
         train_x = train_x.astype(float) / 255.0
         test_x = test_x.astype(float) / 255.0
@@ -112,8 +115,8 @@ class Cifar(Dataset):
     def _cifar_normalize(data):
         means, stds = (0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)
         data = data.reshape((len(data), -1, 3))
-        for channel in range(3):
-            data[:, :, channel] = (data[:, :, channel] - means[channel]) / stds[channel]
+        for ch in range(3):
+            data[:, :, ch] = (data[:, :, ch] - means[ch]) / stds[ch]
         data = data.reshape((len(data), -1))
         return data
 

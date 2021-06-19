@@ -1,8 +1,8 @@
-import numpy as np
-import pytest
 import tempfile
 
-from tinynn.utils.dataset import *
+import numpy as np
+
+from tinynn.utils.dataset import MNIST, FashionMNIST, Cifar10, Cifar100
 
 
 def test_mnist():
@@ -13,8 +13,8 @@ def test_mnist():
     assert ds.valid_set[0].shape == (10000, 784)
     assert ds.test_set[0].shape == (10000, 784)
 
-    assert ((0 <= ds.train_set[0]) & (ds.train_set[0] <= 1)).all()
-    assert ((0 <= ds.train_set[1]) & (ds.train_set[1] <= 9)).all()
+    assert ((ds.train_set[0] >= 0) & (ds.train_set[0] <= 1)).all()
+    assert ((ds.train_set[1] >= 0) & (ds.train_set[1] <= 9)).all()
 
 
 def test_fashion_mnist():
@@ -24,8 +24,8 @@ def test_fashion_mnist():
     assert ds.train_set[0].shape == (60000, 784)
     assert ds.test_set[0].shape == (10000, 784)
 
-    assert ((0 <= ds.train_set[0]) & (ds.train_set[0] <= 1)).all()
-    assert ((0 <= ds.train_set[1]) & (ds.train_set[1] <= 9)).all()
+    assert ((ds.train_set[0] >= 0) & (ds.train_set[0] <= 1)).all()
+    assert ((ds.train_set[1] >= 0) & (ds.train_set[1] <= 9)).all()
 
 
 def test_cifar10():
@@ -34,8 +34,8 @@ def test_cifar10():
 
     assert ds.train_set[0].shape == (50000, 3072)
     assert ds.test_set[0].shape == (10000, 3072)
-    assert ((-3. <= ds.train_set[0]) & (ds.train_set[0] <= 3.)).all()
-    assert ((0 <= ds.train_set[1]) & (ds.train_set[1] <= 9)).all()
+    assert ((ds.train_set[0] >= -3.) & (ds.train_set[0] <= 3.)).all()
+    assert ((ds.train_set[1] >= 0) & (ds.train_set[1] <= 9)).all()
     assert np.abs(ds.train_set[0].mean()) < 1e-3
 
 
@@ -45,5 +45,5 @@ def test_cifar100():
 
     assert ds.train_set[0].shape == (50000, 3072)
     assert ds.test_set[0].shape == (10000, 3072)
-    assert ((0. <= ds.train_set[0]) & (ds.train_set[0] <= 1.)).all()
-    assert ((0 <= ds.train_set[1]) & (ds.train_set[1] <= 99)).all()
+    assert ((ds.train_set[0] >= 0.) & (ds.train_set[0] <= 1.)).all()
+    assert ((ds.train_set[1] >= 0) & (ds.train_set[1] <= 99)).all()

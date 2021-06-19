@@ -42,7 +42,8 @@ def main(args):
         tn.layer.Sigmoid()
     ])
 
-    model = tn.model.Model(net=net, loss=tn.loss.MSE(), optimizer=tn.optimizer.Adam())
+    model = tn.model.Model(net=net, loss=tn.loss.MSE(),
+                           optimizer=tn.optimizer.Adam())
     iterator = tn.data_iterator.BatchIterator(batch_size=args.batch_size)
     for epoch in range(args.num_ep):
         for batch in iterator(train_x, train_y):

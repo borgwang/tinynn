@@ -12,7 +12,7 @@ class Layer:
 
     def __init__(self):
         self.params = {p: None for p in self.param_names}
-        self.nt_params = {p: None for p in self.nt_param_names}  # non-trainable parameters
+        self.nt_params = {p: None for p in self.nt_param_names}
         self.initializers = None
 
         self.grads = {}
@@ -80,17 +80,17 @@ class Dense(Layer):
         self.initializers = {"w": w_init, "b": b_init}
         self.shapes = {"w": [None, num_out], "b": [num_out]}
 
-        self.inputs = None
+        self.ctx = None
 
     def forward(self, inputs):
         if not self.is_init:
             self.shapes["w"][0] = inputs.shape[1]
             self._init_params()
-        self.inputs = inputs
+        self.ctx = {"inputs": inputs}
         return inputs @ self.params["w"] + self.params["b"]
 
     def backward(self, grad):
-        self.grads["w"] = self.inputs.T @ grad
+        self.grads["w"] = self.ctx["inputs"].T @ grad
         self.grads["b"] = np.sum(grad, axis=0)
         return grad @ self.params["w"].T
 
@@ -310,7 +310,8 @@ class MaxPool2D(Layer):
                 _max_pool = np.take_along_axis(pool, _argmax, axis=1).squeeze()
                 max_pool[:, r, c, :] = _max_pool
 
-        self.ctx = {"X_shape": X.shape, "out_shape": (out_h, out_w), "argmax": argmax}
+        self.ctx = {"X_shape": X.shape, "out_shape": (out_h, out_w),
+                    "argmax": argmax}
         return max_pool
 
     def backward(self, grad):
@@ -351,7 +352,7 @@ class RNN(Layer):
         self.bptt_trunc = bptt_trunc
 
         self.initializers = {"W": w_init, "V": w_init, "U": w_init,
-                            "b": b_init, "c": b_init}
+                             "b": b_init, "c": b_init}
 
         self.ctx = None
 
@@ -408,7 +409,8 @@ class RNN(Layer):
                 self.grads["W"] += d_a.T @ self.ctx["h"][:, t - i - 1]
                 self.grads["b"] += d_a.sum(axis=0)
                 d_h = d_a @ self.params["W"]
-                d_a = d_h * self.activation.derivative(self.ctx["a"][:, t - i - 1])
+                d_a = d_h * self.activation.derivative(
+                    self.ctx["a"][:, t - i - 1])
         return d_in
 
     @property
@@ -475,7 +477,7 @@ class BatchNormalization(Layer):
         d_in = (1.0 / N) * self.params["gamma"] * std_inv * (
             N * grad - np.sum(grad, axis=self.reduce, keepdims=True) -
             self.ctx["X_center"] * std_inv ** 2 *
-            np.sum(grad * self.ctx["X_center"], axis=self.reduce, keepdims=True))
+            (grad * self.ctx["X_center"]).sum(axis=self.reduce, keepdims=True))
         return d_in
 
     @property
@@ -517,7 +519,7 @@ class Dropout(Layer):
 
     def forward(self, inputs):
         if self.is_training:
-            multiplier = np.random.binomial(1, self._keep_prob, size=inputs.shape)
+            multiplier = np.random.binomial(1, self._keep_prob, inputs.shape)
             self._multiplier = multiplier / self._keep_prob
             outputs = inputs * self._multiplier
         else:

@@ -1,52 +1,52 @@
 import numpy as np
 import pytest
 
-from tinynn.core.loss import *
-from tinynn.utils.math import sigmoid
-from tinynn.utils.math import softmax
+from tinynn.core.loss import Huber, MAE, MSE, \
+    SigmoidCrossEntropy, SoftmaxCrossEntropy
+from tinynn.utils.math import sigmoid, softmax
 from tinynn.utils.seeder import random_seed
 
 random_seed(0)
 
 
-@pytest.fixture
-def fake_regression():
+@pytest.fixture(name="mock_regression")
+def fixture_mock_regression():
     preds = np.array([[1., 2.], [3., 6.]])
-    targets = np.array([[2., 1.], [6., 3.]])
-    return preds, targets
+    trues = np.array([[2., 1.], [6., 3.]])
+    return preds, trues
 
 
-def test_mse(fake_regression):
-    preds, targets = fake_regression
+def test_mse(mock_regression):
+    preds, trues = mock_regression
     loss = MSE()
-    assert loss.loss(preds, targets) == 5.
-    assert (loss.grad(preds, targets) == np.array([[-0.5, 0.5], [-1.5, 1.5]])).all()
+    assert loss.loss(preds, trues) == 5.
+    assert (loss.grad(preds, trues) == np.array([[-.5, .5], [-1.5, 1.5]])).all()
 
 
-def test_mae(fake_regression):
-    preds, targets = fake_regression
+def test_mae(mock_regression):
+    preds, trues = mock_regression
     loss = MAE()
-    assert loss.loss(preds, targets) == 4.
-    assert (loss.grad(preds, targets) == np.array([[-0.5, 0.5], [-0.5, 0.5]])).all()
+    assert loss.loss(preds, trues) == 4.
+    assert (loss.grad(preds, trues) == np.array([[-.5, .5], [-.5, .5]])).all()
 
 
-def test_huber(fake_regression):
-    preds, targets = fake_regression
+def test_huber(mock_regression):
+    preds, trues = mock_regression
     delta = 2
     loss = Huber(delta=delta)
-    assert loss.loss(preds, targets) == (0.5 * 2 + (3 - 0.5 * delta) * delta * 2) / 2
-    assert (loss.grad(preds, targets) == np.array([[-0.5, 0.5], [-1., 1.]])).all()
+    assert loss.loss(preds, trues) == (1 + (3 - .5 * delta) * delta * 2) / 2.
+    assert (loss.grad(preds, trues) == np.array([[-.5, .5], [-1., 1.]])).all()
 
 
-@pytest.fixture
-def fake_binary_classification():
+@pytest.fixture(name="mock_binary_classification")
+def fixture_mock_binary_classification():
     logits = np.array([[1.], [2.], [-1.]])
     labels = np.array([[0], [1], [0]])
     return logits, labels
 
 
-@pytest.fixture
-def fake_classification():
+@pytest.fixture(name="mock_classification")
+def fixture_mock_classification():
     logits = np.array([[1, 2, 3],
                        [2, 1, 3],
                        [3, 1, 2],])
@@ -56,13 +56,14 @@ def fake_classification():
     return logits, labels
 
 
-def test_sigmoid_cross_entropy(fake_binary_classification):
-    logits, labels = fake_binary_classification
+def test_sigmoid_cross_entropy(mock_binary_classification):
+    logits, labels = mock_binary_classification
     weights = [1, 2]
     loss = SigmoidCrossEntropy(weights=weights)
     p1, p2, p3 = sigmoid(1), sigmoid(2), sigmoid(-1)
     w1, w2 = weights
-    expect_loss = -(w1 * np.log(1 - p1) + w2 * np.log(p2) + w1 * np.log(1 - p3)) / 3.
+    expect_loss = -(w1 * np.log(1 - p1) + w2 * np.log(p2) + w1 * np.log(1 - p3))
+    expect_loss /= 3.
     assert np.abs(loss.loss(logits, labels) - expect_loss) < 1e-5
 
     expect_grads = np.array([[p1], [p2 - 1], [p3]]) / 3.
@@ -77,8 +78,8 @@ def test_sigmoid_cross_entropy(fake_binary_classification):
     assert np.allclose(loss.grad(logits, labels), expect_grads)
 
 
-def test_softmax_cross_entropy(fake_classification):
-    logits, labels = fake_classification
+def test_softmax_cross_entropy(mock_classification):
+    logits, labels = mock_classification
     weights = [0.1, 0.1, 0.8]
     loss = SoftmaxCrossEntropy(weights=weights)
     expect_loss = 0.

@@ -1,9 +1,6 @@
 import tempfile
 
-import numpy as np
-import pytest
-
-from tinynn.utils.downloader import *
+from tinynn.utils.downloader import md5_checksum
 
 
 def test_md5_checksum():
@@ -14,9 +11,7 @@ def test_md5_checksum():
         ("message digest", "f96b697d7cb7938d525a2f31aaf161d0"),
         ("abcdefghijklmnopqrstuvwxyz", "c3fcd3d76192e4007dfb496cca67e13b"),
         ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-         "d174ab98d277d9f5a5611c2c9f419d9f"),
-        ("12345678901234567890123456789012345678901234567890123456789012345678901234567890",
-         "57edf4a22be3c955ac49da2e2107b67a")
+         "d174ab98d277d9f5a5611c2c9f419d9f")
     ]
     for content, md5_expect in md5_test_vectors:
         with tempfile.NamedTemporaryFile() as temp:

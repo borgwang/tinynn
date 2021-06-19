@@ -35,7 +35,8 @@ def test_structured_param():
     assert isinstance(bigger, StructuredParam)
     assert (params.values[1] / 10 == smaller.values[1]).all()
 
-    assert (bigger > smaller).values[1].all() and (smaller < bigger).values[1].all()
+    assert (bigger > smaller).values[1].all()
+    assert (smaller < bigger).values[1].all()
     assert ((10 / params).values[1] == (10 / params.values[1])).all()
 
     power = params ** 2

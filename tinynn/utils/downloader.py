@@ -18,13 +18,11 @@ def md5_checksum(file_path):
 
 
 def download_url(url, file_path, checksum):
-    # create directory if needed
     file_dir = os.path.dirname(file_path)
     if not os.path.exists(file_dir):
         os.makedirs(file_dir)
 
     if os.path.exists(file_path):
-        # check md5
         if md5_checksum(file_path) == checksum:
             print("{} already exists.".format(file_path))
             return

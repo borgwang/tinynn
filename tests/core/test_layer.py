@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
 
-from tinynn.core.layer import *
+from tinynn.core.layer import BatchNormalization, Conv2D, ConvTranspose2D, \
+        Dense, Dropout, LeakyReLU, MaxPool2D, ReLU, Reshape, RNN, Sigmoid, \
+        Softplus, Tanh, im2col
 from tinynn.core.net import Net
 from tinynn.utils.seeder import random_seed
 
@@ -104,11 +106,10 @@ def test_rnn():
 def test_batch_normalization():
     input_ = np.array([[1., 2., 3., 4., 5.],
                        [5., 4., 3., 2., 1.]])
-    batch_size, input_dim = input_.shape
     mom, epsilon = 0.9, 1e-5
     layer = BatchNormalization(momentum=mom, epsilon=epsilon)
     for i in range(3):
-        forward_out = layer.forward(input_)
+        layer.forward(input_)
         mean = input_.mean(0, keepdims=True)
         var = input_.var(0, keepdims=True)
         if i == 0:
@@ -117,11 +118,13 @@ def test_batch_normalization():
         else:
             r_mean = mom * r_mean + (1 - mom) * mean
             r_var = mom * r_var + (1 - mom) * var
-        assert np.allclose(layer.ctx["X_norm"], (input_ - mean) / (var + epsilon) ** 0.5)
+        assert np.allclose(layer.ctx["X_norm"],
+                           (input_ - mean) / (var + epsilon) ** 0.5)
 
     layer.is_training = False
     layer.forward(input_)
-    assert np.allclose(layer.ctx["X_norm"], (input_ - r_mean) / (r_var + epsilon) ** 0.5)
+    assert np.allclose(layer.ctx["X_norm"],
+                       (input_ - r_mean) / (r_var + epsilon) ** 0.5)
 
 
 def test_dropout():
@@ -132,8 +135,10 @@ def test_dropout():
     forward_out = layer.forward(input_)
     assert forward_out.shape == input_.shape
     keep_rate = 1. - (forward_out == 0.).sum() / (batch_size * input_dim)
-    assert np.abs(keep_rate - keep_prob) < 1e-1  # varify keep_prob
-    assert np.abs(forward_out.mean() - input_.mean()) < 1e-1  # constent expectations
+    # varify keep_prob
+    assert np.abs(keep_rate - keep_prob) < 1e-1
+    # constent expectations
+    assert np.abs(forward_out.mean() - input_.mean()) < 1e-1
 
     backward_out = layer.backward(input_)
     assert (backward_out == forward_out).all()

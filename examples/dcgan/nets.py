@@ -26,9 +26,11 @@ def G_cnn():
     return tn.net.Net([
         tn.layer.Dense(7 * 7 * 16),
         tn.layer.Reshape(7, 7, 16),
-        tn.layer.ConvTranspose2D(kernel=[5, 5, 16, 6], stride=[2, 2], padding="SAME"),
+        tn.layer.ConvTranspose2D(kernel=[5, 5, 16, 6], stride=[2, 2],
+                                 padding="SAME"),
         tn.layer.LeakyReLU(),
-        tn.layer.ConvTranspose2D(kernel=[5, 5, 6, 1], stride=[2, 2], padding="SAME"),
+        tn.layer.ConvTranspose2D(kernel=[5, 5, 6, 1], stride=[2, 2],
+                                 padding="SAME"),
         tn.layer.Sigmoid()])
 
 

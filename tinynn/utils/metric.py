@@ -18,7 +18,8 @@ def _roc_curve(preds, targets, partition, pos_class, neg_class):
 
 def auc_roc_curve(preds, targets, partition=300, pos_class=1, neg_class=0):
     """Area unser the ROC curve (for binary classification only)"""
-    fprs, tprs, thresholds = _roc_curve(preds, targets, partition, pos_class, neg_class)
+    fprs, tprs, thresholds = _roc_curve(preds, targets, partition,
+                                        pos_class, neg_class)
     auc_ = 0.0
     for i in range(len(thresholds) - 1):
         auc_ += tprs[i] * (fprs[i + 1] - fprs[i])
@@ -50,7 +51,8 @@ def log_loss(preds, targets):
     assert len(preds) == len(targets)
     preds = np.asarray(preds)
     targets = np.asarray(targets)
-    log_loss_ = np.mean(-(targets * np.log(preds) + (1 - targets) * np.log(1 - preds)))
+    log_loss_ = np.mean(-targets * np.log(preds) -
+                        (1 - targets) * np.log(1 - preds))
     return {"log_loss": log_loss_}
 
 
@@ -60,7 +62,8 @@ def precision(preds, targets, pos_class=1, neg_class=0):
     true_pos = np.sum((preds == pos_class) & (targets == pos_class))
     false_pos = np.sum((preds == pos_class) & (targets == neg_class))
     precision_ = 1. * true_pos / (true_pos + false_pos)
-    return {"precision": precision_, "true_positive": true_pos, "false_positive": false_pos}
+    return {"precision": precision_, "true_positive": true_pos,
+            "false_positive": false_pos}
 
 
 def recall(preds, targets, pos_class=1, neg_class=0):
@@ -69,7 +72,8 @@ def recall(preds, targets, pos_class=1, neg_class=0):
     true_pos = np.sum((preds == pos_class) & (targets == pos_class))
     false_neg = np.sum((preds == neg_class) & (targets == pos_class))
     recall_ = 1. * true_pos / (true_pos + false_neg)
-    return {"recall": recall_, "true_positive": true_pos, "false_negative": false_neg}
+    return {"recall": recall_, "true_positive": true_pos,
+            "false_negative": false_neg}
 
 
 def f1_score(preds, targets, pos_class=1, neg_class=0):

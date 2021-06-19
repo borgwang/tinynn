@@ -1,6 +1,8 @@
 import numpy as np
 
-from tinynn.utils.metric import *
+from tinynn.utils.metric import accuracy, auc, auc_roc_curve, \
+        explained_variation, f1_score, log_loss, mean_absolute_error, \
+        mean_square_error, precision, r_square, recall
 
 
 def test_classification_metrics():

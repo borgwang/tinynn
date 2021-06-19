@@ -1,6 +1,7 @@
 import numpy as np
 
-from tinynn.core.initializer import *
+from tinynn.core.initializer import Constant, HeNormal, HeUniform, Normal, \
+        TruncatedNormal, Uniform, XavierNormal, XavierUniform, get_fans
 from tinynn.utils.seeder import random_seed
 
 random_seed(0)

@@ -58,11 +58,6 @@ class Huber(Loss):
 class SoftmaxCrossEntropy(Loss):
 
     def __init__(self, T=1.0, weights=None):
-        """
-        L = weights[class] * (-log(exp(x[class]) / sum(exp(x))))
-        :paras T: temperature
-        :param weights: A 1D tensor [n_classes] assigning weight to each corresponding sample.
-        """
         self._weights = np.asarray(weights) if weights is not None else weights
         self._T = T
 
@@ -80,8 +75,7 @@ class SoftmaxCrossEntropy(Loss):
 
 
 class SigmoidCrossEntropy(Loss):
-    """
-    let logits = a, label = y, weights[neg] = w1, weights[pos] = w2
+    """let logits = a, label = y, weights[neg] = w1, weights[pos] = w2
     L = - w2 * y * log(1 / (1 + exp(-a)) - w1 * (1-y) * log(exp(-a) / (1 + exp(-a))
       = w1 * a * (1 - y) - (w2 * y - w1 * (y - 1)) * log(sigmoid(a))
     if w1 == w2 == 1:
@@ -96,12 +90,14 @@ class SigmoidCrossEntropy(Loss):
         self._weights = np.asarray(weights)
 
     def loss(self, logits, labels):
-        cost = self._weights[0] * logits * (1 - labels) - \
-               (self._weights[1] * labels - self._weights[0] * (labels - 1)) * \
+        neg_weight, pos_weight = self._weights
+        cost = neg_weight * logits * (1 - labels) - \
+               (pos_weight * labels - neg_weight * (labels - 1)) * \
                np.log(sigmoid(logits))
         return np.sum(cost) / labels.shape[0]
 
     def grad(self, logits, labels):
-        grads = self._weights[0] * sigmoid(logits) - self._weights[1] * labels + \
-                (self._weights[1] - self._weights[0]) * labels * sigmoid(logits)
+        neg_weight, pos_weight = self._weights
+        grads = neg_weight * sigmoid(logits) - pos_weight * labels + \
+                (pos_weight - neg_weight) * labels * sigmoid(logits)
         return grads / labels.shape[0]
