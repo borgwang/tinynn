@@ -350,7 +350,7 @@ class RNN(Layer):
         self.activation = activation
         self.bptt_trunc = bptt_trunc
 
-        self.initializer = {"W": w_init, "V": w_init, "U": w_init,
+        self.initializers = {"W": w_init, "V": w_init, "U": w_init,
                             "b": b_init, "c": b_init}
 
         self.ctx = None
@@ -381,7 +381,6 @@ class RNN(Layer):
             h[:, t] = self.activation.forward(a[:, t])
             out[:, t] = h[:, t] @ self.params["V"].T + self.params["c"]
 
-        # cache for backward pass
         self.ctx = {"h": h, "a": a, "X": inputs}
         return out[:, -1]
 
@@ -428,13 +427,14 @@ class BatchNormalization(Layer):
         self.m = momentum
         self.epsilon = epsilon
 
-        self.initializer = {"gamma": gamma_init, "beta": beta_init}
+        self.initializers = {"gamma": gamma_init, "beta": beta_init}
         self.reduce = None
 
         self.ctx = None
 
     def forward(self, inputs):
-        self.reduce = (0,) if inputs.ndim == 2 else (0, 1, 2)
+        # self.reduce = (0,) if inputs.ndim == 2 else (0, 1, 2)
+        self.reduce = (0,)
         if not self.is_init:
             for p in self.param_names:
                 self.shapes[p] = inputs.shape[-1]
