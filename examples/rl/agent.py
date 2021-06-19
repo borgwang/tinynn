@@ -40,8 +40,7 @@ class DQN:
         if policy == "egreedy":
             if random.random() <= self.epsilon:  # random action
                 return random.randint(0, self.action_dim - 1)
-            else:   # greedy action
-                return np.argmax(output_q)
+            return np.argmax(output_q)  # greedy action
         elif policy == "greedy":
             return np.argmax(output_q)
         elif policy == "random":
@@ -90,6 +89,6 @@ class DQN:
         targets = np.reshape(target_Q_batch, (-1, 1))
         targets = np.tile(targets, (1, 2))
         targets = np.multiply(targets, a_batch)
-        loss, grads = self.model.backward(preds, targets)
+        _, grads = self.model.backward(preds, targets)
 
         self.model.apply_grads(grads)

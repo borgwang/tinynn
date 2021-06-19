@@ -35,11 +35,11 @@ def main(args):
     for ep in range(args.max_ep):
         state = env.reset()
         ep_rewards = 0
-        for step in range(env.spec.timestep_limit):
+        for _ in range(env.spec.timestep_limit):
             # sample action
             action = agent.sample_action(state, policy="egreedy")
             # apply action
-            next_state, reward, done, debug = env.step(action)
+            next_state, reward, done, _ = env.step(action)
             train_steps += 1
             ep_rewards += reward
             # modified reward to speed up learning
@@ -65,9 +65,9 @@ def main(args):
         # Evaluate during training
         if ep % args.log_every == args.log_every-1:
             total_reward = 0
-            for i in range(args.test_ep):
+            for _ in range(args.test_ep):
                 state = env.reset()
-                for j in range(env.spec.timestep_limit):
+                for _ in range(env.spec.timestep_limit):
                     if args.render:
                         env.render()
                     action = agent.sample_action(state, policy="greedy")

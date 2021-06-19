@@ -5,6 +5,7 @@ from tinynn.core.optimizer import *
 from tinynn.utils.seeder import random_seed
 from tinynn.utils.structured_param import StructuredParam
 
+random_seed(0)
 lr = 0.1
 
 

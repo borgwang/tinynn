@@ -134,7 +134,7 @@ class StructuredParam:
         obj = copy.deepcopy(self)
         other = self._ensure_values(other)
 
-        if isinstance(other, float) or isinstance(other, int):
+        if isinstance(other, (float, int)):
             obj.values = [v < other for v in self.values]
         else:
             obj.values = [v < other[i] for i, v in enumerate(self.values)]
@@ -144,7 +144,7 @@ class StructuredParam:
         obj = copy.deepcopy(self)
         other = self._ensure_values(other)
 
-        if isinstance(other, float) or isinstance(other, int):
+        if isinstance(other, (float, int)):
             obj.values = [v > other for v in self.values]
         else:
             obj.values = [v > other[i] for i, v in enumerate(self.values)]
@@ -154,7 +154,7 @@ class StructuredParam:
         obj = copy.deepcopy(self)
         other = self._ensure_values(other)
 
-        if isinstance(other, float) or isinstance(other, int):
+        if isinstance(other, (float, int)):
             obj.values = [v <= other for v in self.values]
         else:
             obj.values = [v <= other[i] for i, v in enumerate(self.values)]
@@ -164,7 +164,7 @@ class StructuredParam:
         obj = copy.deepcopy(self)
         other = self._ensure_values(other)
 
-        if isinstance(other, float) or isinstance(other, int):
+        if isinstance(other, (float, int)):
             obj.values = [v >= other for v in self.values]
         else:
             obj.values = [v >= other[i] for i, v in enumerate(self.values)]

@@ -39,7 +39,7 @@ def prepare_dataset(data_dir):
     return train_x, train_y, test_x, test_y
 
 
-def train_single_model(model, dataset, args, name="teacher"):
+def train_single_model(model, dataset, name="teacher"):
     print("training %s model" % name)
     train_x, train_y, test_x, test_y = dataset
 
@@ -75,7 +75,7 @@ def train_single_model(model, dataset, args, name="teacher"):
     print("model saved in %s" % model_path)
 
 
-def train_distill_model(dataset, args):
+def train_distill_model(dataset):
     # load dataset
     train_x, train_y, test_x, test_y = dataset
     # load or train a teacher model
@@ -85,7 +85,7 @@ def train_distill_model(dataset, args):
     teacher_model_path = os.path.join(args.model_dir, "teacher.model")
     if not os.path.isfile(teacher_model_path):
         print("No teacher model founded. Training a new one...")
-        train_single_model(teacher, dataset, args, name="teacher")
+        train_single_model(teacher, dataset, name="teacher")
     teacher.load(teacher_model_path)
     teacher.is_training = False
 
@@ -137,15 +137,15 @@ def main():
         model = tn.model.Model(net=teacher_net,
                                loss=tn.loss.SoftmaxCrossEntropy(),
                                optimizer=tn.optimizer.Adam(lr=args.lr))
-        train_single_model(model, dataset, args, name="teacher")
+        train_single_model(model, dataset, name="teacher")
 
     if args.train_student:
         model = tn.model.Model(net=student_net,
                                loss=tn.loss.SoftmaxCrossEntropy(),
                                optimizer=tn.optimizer.Adam(lr=args.lr))
-        train_single_model(model, dataset, args, name="student")
+        train_single_model(model, dataset, name="student")
 
-    train_distill_model(dataset, args)
+    train_distill_model(dataset)
 
 
 if __name__ == "__main__":

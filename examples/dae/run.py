@@ -4,11 +4,13 @@ Example code for a denoising autoencoder (DAE).
 
 import argparse
 import os
+import sys
 
 import numpy as np
 import tinynn as tn
-from autoencoder import AutoEncoder
 from matplotlib import pyplot as plt
+
+from autoencoder import AutoEncoder
 
 
 def save_batch_as_images(path, batch, titles=None):
@@ -103,7 +105,7 @@ def main():
                 batch = np.concatenate((batch, genn))
         output_path = os.path.join(args.output_dir, "genn-latent.png")
         save_batch_as_images(output_path, batch)
-        quit()
+        sys.exit()
 
     # train the auto-encoder
     iterator = tn.data_iterator.BatchIterator(batch_size=args.batch_size)

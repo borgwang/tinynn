@@ -4,6 +4,9 @@ from tinynn.core.layer import Dense
 from tinynn.core.net import Net
 from tinynn.core.initializer import Uniform
 from tinynn.utils.structured_param import StructuredParam
+from tinynn.utils.seeder import random_seed
+
+random_seed(0)
 
 
 def test_structured_param():

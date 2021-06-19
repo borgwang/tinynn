@@ -13,6 +13,7 @@ class Layer:
     def __init__(self):
         self.params = {p: None for p in self.param_names}
         self.nt_params = {p: None for p in self.nt_param_names}  # non-trainable parameters
+        self.initializers = None
 
         self.grads = {}
         self.shapes = {}

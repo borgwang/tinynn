@@ -90,7 +90,7 @@ def main():
     ps = ParamServer.remote(model=copy.deepcopy(model),
                             test_set=mnist.test_set)
     workers = []
-    for rank in range(1, args.num_workers + 1):
+    for _ in range(1, args.num_workers + 1):
         worker = Worker.remote(model=copy.deepcopy(model),
                                train_set=mnist.train_set)
         workers.append(worker)

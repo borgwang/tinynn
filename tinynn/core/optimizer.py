@@ -227,7 +227,7 @@ class MultiStepLR(BaseScheduler):
     def __init__(self, optimizer, milestones, gamma=0.1):
         super().__init__(optimizer)
         milestones = [int(m) for m in milestones]
-        assert len(milestones), "milestones requires at-least one element!"
+        assert len(milestones) > 0, "milestones requires at-least one element!"
         assert all(x < y for x, y in zip(milestones[:-1], milestones[1:])), \
                "milestones must be a list of int and be increasing!"
 

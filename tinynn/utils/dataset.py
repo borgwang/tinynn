@@ -27,7 +27,7 @@ class Dataset:
         for url, checksum, save_path in zip(self._urls, self._checksums, self._save_paths):
             download_url(url, save_path, checksum)
 
-    def _parse(self):
+    def _parse(self, **kwargs):
         raise NotImplementedError
 
     @property
@@ -116,6 +116,9 @@ class Cifar(Dataset):
             data[:, :, channel] = (data[:, :, channel] - means[channel]) / stds[channel]
         data = data.reshape((len(data), -1))
         return data
+
+    def _parse(self, **kwargs):
+        raise NotImplementedError
 
     def _parse_tarfile(self):
         dataset = {}

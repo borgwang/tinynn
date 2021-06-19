@@ -47,7 +47,7 @@ def main(args):
     for epoch in range(args.num_ep):
         for batch in iterator(train_x, train_y):
             preds = model.forward(batch.inputs)
-            loss, grads = model.backward(preds, batch.targets)
+            _, grads = model.backward(preds, batch.targets)
             model.apply_grads(grads)
 
         # evaluate

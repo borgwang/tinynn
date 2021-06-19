@@ -32,9 +32,10 @@ def prepare_dataset(args):
             vocab.add(word)
         lines.append(words)
 
-    word2idx = {word: idx for idx, word in enumerate(vocab)}
-    idx2word = {idx: word for idx, word in enumerate(vocab)}
+    vocab = list(vocab)
     vocab_size = len(vocab)
+    word2idx = dict(zip(vocab, range(vocab_size)))
+    idx2word = dict(zip(range(vocab_size), vocab))
     print(f"vocab size: {vocab_size}")
 
     idx_pairs = []
