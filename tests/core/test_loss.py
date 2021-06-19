@@ -4,6 +4,9 @@ import pytest
 from tinynn.core.loss import *
 from tinynn.utils.math import sigmoid
 from tinynn.utils.math import softmax
+from tinynn.utils.seeder import random_seed
+
+random_seed(0)
 
 
 @pytest.fixture
@@ -60,7 +63,7 @@ def test_sigmoid_cross_entropy(fake_binary_classification):
     p1, p2, p3 = sigmoid(1), sigmoid(2), sigmoid(-1)
     w1, w2 = weights
     expect_loss = -(w1 * np.log(1 - p1) + w2 * np.log(p2) + w1 * np.log(1 - p3)) / 3.
-    assert loss.loss(logits, labels) == expect_loss
+    assert np.abs(loss.loss(logits, labels) - expect_loss) < 1e-5
 
     expect_grads = np.array([[p1], [p2 - 1], [p3]]) / 3.
     expect_grads = []
