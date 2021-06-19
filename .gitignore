@@ -94,7 +94,6 @@ ENV/
 .vscode
 
 # Customize
-devops.sh
 examples/mnist/data/*
 examples/mnist/models/*
 examples/distributed_training/data/*

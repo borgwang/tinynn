@@ -10,15 +10,19 @@ class Optimizer:
         self.weight_decay = weight_decay
 
     def step(self, grads, params):
-        # compute gradient step
-        grads.values = self._compute_step(grads.values)
+        # compute the gradient step
+        grads = self.compute_step(grads)
         # apply weight_decay if specified
         if self.weight_decay:
             grads -= self.lr * self.weight_decay * params
         # take a step
         params += grads
 
-    def _compute_step(self, grad):
+    def compute_step(self, grads):
+        grads.values = self._compute_step(grads.values)
+        return grads
+
+    def _compute_step(self, grads):
         raise NotImplementedError
 
 
@@ -27,8 +31,8 @@ class SGD(Optimizer):
     def __init__(self, lr=0.01, weight_decay=0.0):
         super().__init__(lr, weight_decay)
 
-    def _compute_step(self, grad):
-        return -self.lr * grad
+    def _compute_step(self, grads):
+        return -self.lr * grads
 
 
 class Adam(Optimizer):
@@ -48,11 +52,11 @@ class Adam(Optimizer):
         self._m = 0
         self._v = 0
 
-    def _compute_step(self, grad):
+    def _compute_step(self, grads):
         self._t += 1
 
-        self._m += (1.0 - self._b1) * (grad - self._m)
-        self._v += (1.0 - self._b2) * (grad ** 2 - self._v)
+        self._m += (1.0 - self._b1) * (grads - self._m)
+        self._v += (1.0 - self._b2) * (grads ** 2 - self._v)
 
         # bias correction
         _m = self._m / (1 - self._b1 ** self._t)
@@ -63,9 +67,7 @@ class Adam(Optimizer):
 
 
 class RAdam(Optimizer):
-    """Rectified Adam
-    ref: https://arxiv.org/pdf/1908.03265v1.pdf
-    """
+    """Rectified Adam. Ref: https://arxiv.org/pdf/1908.03265v1.pdf """
     def __init__(self,
                  lr=0.001,
                  beta1=0.9,
@@ -83,11 +85,11 @@ class RAdam(Optimizer):
 
         self.rho = 2 / (1 - self._b2) - 1
 
-    def _compute_step(self, grad):
+    def _compute_step(self, grads):
         self._t += 1
 
-        self._m += (1.0 - self._b1) * (grad - self._m)
-        self._v += (1.0 - self._b2) * (grad ** 2 - self._v)
+        self._m += (1.0 - self._b1) * (grads - self._m)
+        self._v += (1.0 - self._b2) * (grads ** 2 - self._v)
 
         # bias correction
         _m = self._m / (1 - self._b1 ** self._t)
@@ -116,17 +118,16 @@ class RMSProp(Optimizer):
                  epsilon=1e-8,
                  weight_decay=0.0):
         super().__init__(lr, weight_decay)
-        self._decay = decay
+        self._rho = decay
         self._momentum = momentum
         self._eps = epsilon
 
-        self._ms = 0
+        self._rms = 0
         self._mom = 0
 
-    def _compute_step(self, grad):
-        self._ms += (1 - self._decay) * (grad ** 2 - self._ms)
-        self._mom = self._momentum * self._mom + self.lr * grad / (self._ms + self._eps) ** 0.5
-
+    def _compute_step(self, grads):
+        self._rms += (1 - self._rho) * (grads ** 2 - self._rms)
+        self._mom = self._momentum * self._mom + self.lr * grads / (self._rms + self._eps) ** 0.5
         step = -self._mom
         return step
 
@@ -140,8 +141,8 @@ class Momentum(Optimizer):
         self._momentum = momentum
         self._acc = 0
 
-    def _compute_step(self, grad):
-        self._acc = self._momentum * self._acc + grad
+    def _compute_step(self, grads):
+        self._acc = self._momentum * self._acc + grads
         step = -self.lr * self._acc
         return step
 
@@ -151,33 +152,33 @@ class Adagrad(Optimizer):
     accumulation = - (learning_rate / sqrt(G + epsilon)) * gradient
     where G is the element-wise sum of square gradient
     """
-    def __init__(self, lr, weight_decay=0.0, epsilon=1e-8):
+    def __init__(self, lr, epsilon=1e-8, weight_decay=0.0):
         super().__init__(lr, weight_decay)
         self._g = 0
         self._eps = epsilon
 
-    def _compute_step(self, grad):
-        self._g += grad ** 2
+    def _compute_step(self, grads):
+        self._g += grads ** 2
         adjust_lr = self.lr / (self._g + self._eps) ** 0.5
-        step = -adjust_lr * grad
+        step = -adjust_lr * grads
         return step
 
 
 class Adadelta(Optimizer):
     """Adadelta algorithm (https://arxiv.org/abs/1212.5701)"""
-    def __init__(self, lr=1.0, weight_decay=0.0, decay=0.9, epsilon=1e-8):
+    def __init__(self, lr=1.0, decay=0.9, epsilon=1e-8, weight_decay=0.0,):
         super().__init__(lr, weight_decay)
         self._eps = epsilon
-        self._decay = decay
-        self._eg = 0  # running average of square gradient
+        self._rho = decay
+        self._rms = 0  # running average of square gradient
         self._delta = 0  # running average of delta
 
-    def _compute_step(self, grad):
-        self._eg += (1 - self._decay) * (grad ** 2 - self._eg)
+    def _compute_step(self, grads):
+        self._rms += (1 - self._rho) * (grads ** 2 - self._rms)
         std = (self._delta + self._eps) ** 0.5
-        delta = grad * (std / (self._eg + self._eps) ** 0.5)
+        delta = grads * (std / (self._rms + self._eps) ** 0.5)
         step = - self.lr * delta
-        self._delta += (1 - self._decay) * (delta ** 2 - self._delta)
+        self._delta += (1 - self._rho) * (delta ** 2 - self._delta)
         return step
 
 

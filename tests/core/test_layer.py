@@ -85,3 +85,67 @@ def test_reshape():
     layer = Reshape(*target_shape)
     output = layer.forward(input_)
     assert output.shape[1:] == target_shape
+
+
+def test_rnn():
+    batch_size = 1
+    n_steps, input_dim = 10, 20
+    input_ = np.random.randn(batch_size, n_steps, input_dim)
+    layer = RNN(num_hidden=10, activation=Tanh())
+    forward_out = layer.forward(input_)
+    assert forward_out.shape == (batch_size, input_dim)
+
+    fake_grads = np.random.randn(batch_size, input_dim)
+    backward_out = layer.backward(fake_grads)
+    # should has the same shape as input_
+    assert backward_out.shape == (batch_size, n_steps, input_dim)
+
+
+def test_batch_normalization():
+    input_ = np.array([[1., 2., 3., 4., 5.],
+                       [5., 4., 3., 2., 1.]])
+    batch_size, input_dim = input_.shape
+    mom, epsilon = 0.9, 1e-5
+    layer = BatchNormalization(momentum=mom, epsilon=epsilon)
+    for i in range(3):
+        forward_out = layer.forward(input_)
+        mean = input_.mean(0, keepdims=True)
+        var = input_.var(0, keepdims=True)
+        if i == 0:
+            r_mean = mean
+            r_var = var
+        else:
+            r_mean = mom * r_mean + (1 - mom) * mean
+            r_var = mom * r_var + (1 - mom) * var
+        assert np.allclose(layer.ctx["X_norm"], (input_ - mean) / (var + epsilon) ** 0.5)
+
+    layer.is_training = False
+    layer.forward(input_)
+    assert np.allclose(layer.ctx["X_norm"], (input_ - r_mean) / (r_var + epsilon) ** 0.5)
+
+
+def test_dropout():
+    batch_size, input_dim = 100, 1000
+    input_ = np.ones((batch_size, input_dim))
+    keep_prob = 0.5
+    layer = Dropout(keep_prob=keep_prob)
+    forward_out = layer.forward(input_)
+    assert forward_out.shape == input_.shape
+    keep_rate = 1. - (forward_out == 0.).sum() / (batch_size * input_dim)
+    assert np.abs(keep_rate - keep_prob) < 1e-1  # varify keep_prob
+    assert np.abs(forward_out.mean() - input_.mean()) < 1e-1  # constent expectations
+
+    backward_out = layer.backward(input_)
+    assert (backward_out == forward_out).all()
+
+    layer.is_training = False
+    forward_out = layer.forward(input_)
+    assert (forward_out == input_).all()
+
+
+def test_im2col():
+    batch_size = 10
+    input_ = np.random.randn(batch_size, 3, 3, 1)
+    k_h, k_w, s_h, s_w = 2, 2, 1, 1
+    output = im2col(input_, k_h, k_w, s_h, s_w)
+    assert output.shape == (10 * 4, 4)
