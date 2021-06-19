@@ -73,6 +73,35 @@ def test_adam(grads):
         assert np.allclose(optim._v.astype(float), v_t.astype(float))
 
 
+def test_radam(grads):
+
+    def _radam_update(b1, b2, epsilon, m, v, lr, t, grad):
+        t += 1
+        rho = 2 / (1 - b2) - 1
+        m_t = b1 * m + (1 - b1) * grad
+        v_t = b2 * v + (1 - b2) * grad * grad
+        m_t_ = m_t / (1 - b1 ** t)
+        _rho_t = rho - 2 * b2 ** t / (1 - b2 ** t)
+        if _rho_t > 4:
+            v_t_ = v_t / (1 - b2 ** t)
+            r_t = (((_rho_t - 4) * (_rho_t - 2) * rho) / \
+                    ((rho - 4) * (rho - 2) * _rho_t)) ** 0.5
+            step = -lr * m_t_ * r_t / (v_t_ ** 0.5 + epsilon)
+        else:
+            step = -lr * m_t_
+        return step, m_t, v_t
+
+    beta1, beta2, epsilon = 0.9, 0.99, 1e-8
+    optim = RAdam(LR, beta1=beta1, beta2=beta2, epsilon=epsilon)
+    for _ in range(3):
+        step, m_t, v_t = _radam_update(beta1, beta2, epsilon, optim._m,
+                                       optim._v, LR, optim._t, grads.values)
+        actual_step = optim._compute_step(grads.values)
+        assert np.allclose(step.astype(float), actual_step.astype(float))
+        assert np.allclose(optim._m.astype(float), m_t.astype(float))
+        assert np.allclose(optim._v.astype(float), v_t.astype(float))
+
+
 def test_rmsprop(grads):
 
     def _rmsprop_update(lr, rho, momentum, epsilon, rms, mom, grad):
