@@ -34,6 +34,8 @@ class Layer:
     @is_init.setter
     def is_init(self, is_init):
         self._is_init = is_init
+        for name in self.param_names:
+            self.shapes[name] = self.params[name].shape
 
     @property
     def is_training(self):
