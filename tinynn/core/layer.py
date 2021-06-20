@@ -68,7 +68,7 @@ class Layer:
 
 
 class Dense(Layer):
-    """Implement a dense layer which operates `outputs = dot(intputs, weight) + bias`
+    """A dense layer operates `outputs = dot(intputs, weight) + bias`
     :param num_out: A positive integer, number of output neurons
     :param w_init: Weight initializer
     :param b_init: Bias initializer
@@ -265,7 +265,10 @@ class ConvTranspose2D(Conv2D):
 
 class MaxPool2D(Layer):
 
-    def __init__(self, pool_size, stride, padding="VALID"):
+    def __init__(self,
+                 pool_size=(2, 2),
+                 stride=None,
+                 padding="VALID"):
         """Implement 2D max-pooling layer
         :param pool_size: A list/tuple of 2 integers (pool_height, pool_width)
         :param stride: A list/tuple of 2 integers (stride_height, stride_width)
@@ -273,7 +276,7 @@ class MaxPool2D(Layer):
         """
         super().__init__()
         self.kernel_shape = pool_size
-        self.stride = stride
+        self.stride = stride if stride is not None else pool_size
 
         self.padding_mode = padding
         self.padding = None

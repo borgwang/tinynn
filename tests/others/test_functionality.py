@@ -1,10 +1,7 @@
 import numpy as np
 import pytest
 
-from tinynn.core.layer import Conv2D
-from tinynn.core.layer import Dense
-from tinynn.core.layer import Flatten
-from tinynn.core.layer import MaxPool2D
+from tinynn.core.layer import Conv2D, Dense, Flatten, MaxPool2D
 from tinynn.core.loss import MSE
 from tinynn.core.model import Model
 from tinynn.core.net import Net
@@ -14,30 +11,30 @@ from tinynn.utils.seeder import random_seed
 random_seed(0)
 
 
-@pytest.fixture
-def fake_dataset():
+@pytest.fixture(name="mock_dataset")
+def fixture_mock_dataset():
     X = np.random.normal(size=(100, 5))
     y = np.random.uniform(size=(100, 1))
     return X, y
 
 
-@pytest.fixture
-def img_dataset():
+@pytest.fixture(name="mock_img_dataset")
+def fixture_mock_img_dataset():
     X = np.random.normal(size=(100, 8, 8, 1))
     y = np.random.uniform(size=(100, 1))
     return X, y
 
 
-@pytest.fixture
-def fc_model():
+@pytest.fixture(name="fc_model")
+def fixture_fc_model():
     net = Net([Dense(10), Dense(1)])
     loss = MSE()
     opt = SGD()
     return Model(net, loss, opt)
 
 
-@pytest.fixture
-def cnn_model():
+@pytest.fixture(name="cnn_model")
+def fixture_cnn_model():
     net = Net([
         Conv2D(kernel=[3, 3, 1, 2]),
         MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
@@ -49,11 +46,9 @@ def cnn_model():
     return Model(net, loss=MSE(), optimizer=SGD())
 
 
-def test_parameters_change(fake_dataset):
+def test_parameters_change(mock_dataset):
     # make sure the parameters does change after apply gradients
-
-    # fake dataset
-    X, y = fake_dataset
+    X, y = mock_dataset
     # simple model
     net = Net([Dense(10), Dense(1)])
     loss = MSE()
@@ -72,12 +67,12 @@ def test_parameters_change(fake_dataset):
         assert np.all(p1 != p2)
 
 
-def test_backprop_dense(fc_model, fake_dataset):
+def test_backprop_dense(fc_model, mock_dataset):
     # train on a single data point
-    x, y = fake_dataset
+    x, y = mock_dataset
 
     previous_loss = np.inf
-    for step in range(50):
+    for _ in range(50):
         pred = fc_model.forward(x)
         loss, grads = fc_model.backward(pred, y)
         fc_model.apply_grads(grads)
@@ -86,12 +81,12 @@ def test_backprop_dense(fc_model, fake_dataset):
         previous_loss = loss
 
 
-def test_backprop_cnn(cnn_model, img_dataset):
+def test_backprop_cnn(cnn_model, mock_img_dataset):
     # train on a single data point
-    x, y = img_dataset
+    x, y = mock_img_dataset
 
     previous_loss = np.inf
-    for step in range(50):
+    for _ in range(50):
         pred = cnn_model.forward(x)
         loss, grads = cnn_model.backward(pred, y)
         cnn_model.apply_grads(grads)
