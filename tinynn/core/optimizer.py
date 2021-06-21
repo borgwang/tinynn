@@ -83,7 +83,7 @@ class RAdam(Optimizer):
         self._m = 0
         self._v = 0
 
-        self.rho = 2 / (1 - self._b2) - 1
+        self.rho = 2.0 / (1 - self._b2) - 1.0
 
     def _compute_step(self, grads):
         self._t += 1
@@ -95,7 +95,7 @@ class RAdam(Optimizer):
         _m = self._m / (1 - self._b1 ** self._t)
 
         _rho = self.rho - 2 * self._b2 ** self._t / (1 - self._b2 ** self._t)
-        if _rho > 4:
+        if _rho > 4.0:
             _v = self._v / (1 - self._b2 ** self._t)
             _r = (((_rho - 4) * (_rho - 2) * self.rho) / \
                     ((self.rho - 4) * (self.rho - 2) * _rho)) ** 0.5

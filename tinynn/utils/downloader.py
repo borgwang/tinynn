@@ -7,8 +7,8 @@ from urllib.request import urlretrieve
 
 
 def show_progress(blk_num, blk_sz, tot_sz):
-    percentage = 100. * blk_num * blk_sz / tot_sz
-    print("Progress: %.1f %%" % percentage, end="\r", flush=True)
+    percentage = 100.0 * blk_num * blk_sz / tot_sz
+    print(f"Progress: {percentage:.1f} %", end="\r", flush=True)
 
 
 def md5_checksum(file_path):
@@ -24,12 +24,12 @@ def download_url(url, file_path, checksum):
 
     if os.path.exists(file_path):
         if md5_checksum(file_path) == checksum:
-            print("{} already exists.".format(file_path))
+            print(f"{file_path} already exists.")
             return
         print("Wrong checksum!")
 
     try:
-        print("Downloading {} to {}".format(url, file_path))
+        print(f"Downloading {url} to {file_path}")
         urlretrieve(url, file_path, show_progress)
     except URLError:
         raise RuntimeError("Error downloading resource!")

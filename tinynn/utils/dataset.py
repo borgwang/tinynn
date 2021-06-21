@@ -154,7 +154,7 @@ class Cifar10(Cifar):
             train_y.extend(cont[b"labels"])
         train_x = np.concatenate(train_x, axis=0)
 
-        train_x = train_x / 255.
+        train_x = train_x / 255.0
         train_y = np.asarray(train_y)
         test_x = dataset["test_batch"][b"data"] / 255.
         test_y = np.asarray(dataset["test_batch"][b"labels"])
@@ -181,10 +181,10 @@ class Cifar100(Cifar):
 
     def _parse(self, **kwargs):
         dataset = self._parse_tarfile()
-        train_x = dataset["train"][b"data"] / 255.
+        train_x = dataset["train"][b"data"] / 255.0
         train_y = np.asarray(dataset["train"][b"fine_labels"])
 
-        test_x = dataset["test"][b"data"] / 255.
+        test_x = dataset["test"][b"data"] / 255.0
         test_y = np.asarray(dataset["test"][b"fine_labels"])
 
         if kwargs["normalize"]:

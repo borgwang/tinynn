@@ -1,25 +1,20 @@
 import numpy as np
 import pytest
+import tinynn as tn
 
-from tinynn.core.layer import BatchNormalization, Conv2D, ConvTranspose2D, \
-        Dense, Dropout, LeakyReLU, MaxPool2D, ReLU, Reshape, RNN, Sigmoid, \
-        Softplus, Tanh, im2col
-from tinynn.core.net import Net
-from tinynn.utils.seeder import random_seed
-
-random_seed(0)
+tn.seeder.random_seed(31)
 
 
 @pytest.mark.parametrize("activation_layer, expect_range",
-                         [(Sigmoid(), (0, 1)),
-                          (Tanh(), (-1, 1)),
-                          (ReLU(), (0, np.inf)),
-                          (LeakyReLU(), (-np.inf, np.inf)),
-                          (Softplus(), (0, np.inf))])
+                         [(tn.layer.Sigmoid(), (0, 1)),
+                          (tn.layer.Tanh(), (-1, 1)),
+                          (tn.layer.ReLU(), (0, np.inf)),
+                          (tn.layer.LeakyReLU(), (-np.inf, np.inf)),
+                          (tn.layer.Softplus(), (0, np.inf))])
 def test_activation(activation_layer, expect_range):
     """Test expected output range of activation layers"""
     input_ = np.random.normal(size=(100, 5))
-    net = Net([Dense(1), activation_layer])
+    net = tn.net.Net([tn.layer.Dense(1), activation_layer])
     output = net.forward(input_)
     lower_bound, upper_bound = expect_range
     assert np.all((output >= lower_bound) & (output <= upper_bound))
@@ -30,14 +25,14 @@ def test_conv_transpose_2d():
     input_ = np.random.randn(batch_size, 7, 7, 1)
 
     # test forward and backward correctness
-    layer = ConvTranspose2D(
+    layer = tn.layer.ConvTranspose2D(
         kernel=[4, 4, 1, 2], stride=[3, 3], padding="VALID")
     output = layer.forward(input_)
     assert output.shape == (batch_size, 22, 22, 2)
     input_grads = layer.backward(output)
     assert input_grads.shape == input_.shape
 
-    layer = ConvTranspose2D(
+    layer = tn.layer.ConvTranspose2D(
         kernel=[4, 4, 1, 2], stride=[3, 3], padding="SAME")
     output = layer.forward(input_)
     assert output.shape == (batch_size, 21, 21, 2)
@@ -50,14 +45,14 @@ def test_conv_2d():
     input_ = np.random.randn(batch_size, 16, 16, 1)
 
     # test forward and backward correctness
-    layer = Conv2D(
+    layer = tn.layer.Conv2D(
         kernel=[4, 4, 1, 2], stride=[3, 3], padding="VALID")
     output = layer.forward(input_)
     assert output.shape == (batch_size, 5, 5, 2)
     input_grads = layer.backward(output)
     assert input_grads.shape == input_.shape
 
-    layer = Conv2D(
+    layer = tn.layer.Conv2D(
         kernel=[4, 4, 1, 2], stride=[3, 3], padding="SAME")
     output = layer.forward(input_)
     assert output.shape == (batch_size, 6, 6, 2)
@@ -70,11 +65,11 @@ def test_max_pool_2d():
     channel = 2
     input_ = np.random.randn(batch_size, 4, 4, channel)
 
-    layer = MaxPool2D(pool_size=[2, 2], stride=[2, 2])
+    layer = tn.layer.MaxPool2D(pool_size=[2, 2], stride=[2, 2])
     output = layer.forward(input_)
     assert output.shape == (batch_size, 2, 2, channel)
 
-    layer = MaxPool2D(pool_size=[4, 4], stride=[2, 2])
+    layer = tn.layer.MaxPool2D(pool_size=[4, 4], stride=[2, 2])
     output = layer.forward(input_)
     answer = np.max(np.reshape(input_, (batch_size, -1, 2)), axis=1)
     assert (output.ravel() == answer.ravel()).all()
@@ -84,7 +79,7 @@ def test_reshape():
     batch_size = 1
     input_ = np.random.randn(batch_size, 2, 3, 4, 5)
     target_shape = (5, 4, 3, 2)
-    layer = Reshape(*target_shape)
+    layer = tn.layer.Reshape(*target_shape)
     output = layer.forward(input_)
     assert output.shape[1:] == target_shape
 
@@ -93,7 +88,7 @@ def test_rnn():
     batch_size = 1
     n_steps, input_dim = 10, 20
     input_ = np.random.randn(batch_size, n_steps, input_dim)
-    layer = RNN(num_hidden=10, activation=Tanh())
+    layer = tn.layer.RNN(num_hidden=10, activation=tn.layer.Tanh())
     forward_out = layer.forward(input_)
     assert forward_out.shape == (batch_size, input_dim)
 
@@ -104,10 +99,10 @@ def test_rnn():
 
 
 def test_batch_normalization():
-    input_ = np.array([[1., 2., 3., 4., 5.],
-                       [5., 4., 3., 2., 1.]])
+    input_ = np.array([[1.0, 2.0, 3.0, 4.0, 5.0],
+                       [5.0, 4.0, 3.0, 2.0, 1.0]])
     mom, epsilon = 0.9, 1e-5
-    layer = BatchNormalization(momentum=mom, epsilon=epsilon)
+    layer = tn.layer.BatchNormalization(momentum=mom, epsilon=epsilon)
     for i in range(3):
         layer.forward(input_)
         mean = input_.mean(0, keepdims=True)
@@ -131,7 +126,7 @@ def test_dropout():
     batch_size, input_dim = 100, 1000
     input_ = np.ones((batch_size, input_dim))
     keep_prob = 0.5
-    layer = Dropout(keep_prob=keep_prob)
+    layer = tn.layer.Dropout(keep_prob=keep_prob)
     forward_out = layer.forward(input_)
     assert forward_out.shape == input_.shape
     keep_rate = 1. - (forward_out == 0.).sum() / (batch_size * input_dim)
@@ -152,5 +147,5 @@ def test_im2col():
     batch_size = 10
     input_ = np.random.randn(batch_size, 3, 3, 1)
     k_h, k_w, s_h, s_w = 2, 2, 1, 1
-    output = im2col(input_, k_h, k_w, s_h, s_w)
+    output = tn.layer.im2col(input_, k_h, k_w, s_h, s_w)
     assert output.shape == (10 * 4, 4)

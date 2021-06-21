@@ -69,12 +69,12 @@ def train(args):
             running_d_err = 0.9 * running_d_err + 0.1 * d_err
             running_g_err = 0.9 * running_g_err + 0.1 * g_err
             if i % 100 == 0:
-                print("epoch-%d iter-%d d_err: %.4f g_err: %.4f" %
-                      (epoch+1, i+1, running_d_err, running_g_err))
+                print(f"epoch: {epoch + 1}/{args.num_ep} iter-{i + 1}"
+                    f"d_err: {running_d_err:.4f} g_err: {running_g_err:.4f}")
 
         # sampling
-        print("epoch: %d/%d d_err: %.4f g_err: %.4f" %
-              (epoch+1, args.num_ep, running_d_err, running_g_err))
+        print(f"epoch: {epoch + 1}/{args.num_ep}"
+              f"d_err: {running_d_err:.4f} g_err: {running_g_err:.4f}")
         samples = G.forward(fix_noise)
         img_name = "ep%d.png" % (epoch + 1)
         if not os.path.exists(args.output_dir):
@@ -85,13 +85,13 @@ def train(args):
         # save generator
         model_path = os.path.join(args.output_dir, args.model_name)
         G.save(model_path)
-        print("Saving generator ", model_path)
+        print(f"Saving generator {model_path}")
 
 
 def evaluate(args):
     G = tn.model.Model(net=G_mlp(), loss=None, optimizer=None)
     model_path = os.path.join(args.output_dir, args.model_name)
-    print("Loading model from ", model_path)
+    print(f"Loading model from {model_path}")
     G.load(model_path)
     noise = get_noise(size=(128, args.nz))
     samples = G.forward(noise)
@@ -108,7 +108,7 @@ def save_batch_as_images(path, batch, titles=None):
     batch_copy.resize(m, 28, 28)
     fig, ax = plt.subplots(int(m / 16), 16, figsize=(28, 28))
     cnt = 0
-    for i in range(int(m/16)):
+    for i in range(int(m / 16)):
         for j in range(16):
             ax[i][j].set_xticks([])
             ax[i][j].set_yticks([])
@@ -117,7 +117,7 @@ def save_batch_as_images(path, batch, titles=None):
             if titles is not None:
                 ax[i][j].set_title(titles[cnt], fontsize=20)
             cnt += 1
-    print("Saving", path)
+    print(f"Saving {path}")
     plt.savefig(path)
     plt.close(fig)
 

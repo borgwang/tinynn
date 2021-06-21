@@ -76,8 +76,8 @@ def main(args):
                     if done:
                         break
             current_mean_rewards = total_reward / args.test_ep
-            print("Episode: %d Average Reward: %.2f" %
-                  (ep + 1, current_mean_rewards))
+            print(f"Episode: {ep + 1} "
+                  f"running reward: {current_mean_rewards:.2f}")
 
     # plot training rewards
     plt.plot(steps_history, rewards_history)

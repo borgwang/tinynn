@@ -1,13 +1,12 @@
 import numpy as np
-
-from tinynn.utils.data_iterator import BatchIterator
+import tinynn as tn
 
 
 def test_batch_iterator():
     batch_size = 10
     n_data = 10 * batch_size  # 10 batches
 
-    iterator = BatchIterator(batch_size=batch_size)
+    iterator = tn.data_iterator.BatchIterator(batch_size=batch_size)
     x_dim, y_dim = 10, 5
     fake_x = np.random.randint(0, 100, size=(n_data, x_dim))
     fake_y = np.random.randint(0, 100, size=(n_data, y_dim))

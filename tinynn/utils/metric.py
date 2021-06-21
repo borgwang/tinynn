@@ -23,7 +23,8 @@ def auc_roc_curve(preds, targets, partition=300, pos_class=1, neg_class=0):
     auc_ = 0.0
     for i in range(len(thresholds) - 1):
         auc_ += tprs[i] * (fprs[i + 1] - fprs[i])
-    return {"auc": auc_, "fprs": fprs, "tprs": tprs, "thresholds": thresholds}
+    info = {"fprs": fprs, "tprs": tprs, "thresholds": thresholds}
+    return auc_, info
 
 
 def auc(preds, targets, pos_class=1, neg_class=0):
@@ -35,16 +36,16 @@ def auc(preds, targets, pos_class=1, neg_class=0):
     for i, target in enumerate(sorted_targets):
         if target == pos_class:
             cnt += np.sum(sorted_targets[:i] == neg_class)
-    auc_ = 1. * cnt / (num_pos * num_neg)
-    return {"auc": auc_}
+    auc_ = 1.0 * cnt / (num_pos * num_neg)
+    return auc_, {}
 
 
 def accuracy(preds, targets):
     total_num = len(preds)
     hit_num = int(np.sum(preds == targets))
-    return {"total_num": total_num,
-            "hit_num": hit_num,
-            "accuracy": 1.0 * hit_num / total_num}
+    accuracy = 1.0 * hit_num / total_num
+    info = {"hit_num": hit_num, "total_num": total_num}
+    return accuracy, info
 
 
 def log_loss(preds, targets):
@@ -53,7 +54,7 @@ def log_loss(preds, targets):
     targets = np.asarray(targets)
     log_loss_ = np.mean(-targets * np.log(preds) -
                         (1 - targets) * np.log(1 - preds))
-    return {"log_loss": log_loss_}
+    return log_loss_, {}
 
 
 def precision(preds, targets, pos_class=1, neg_class=0):
@@ -62,8 +63,8 @@ def precision(preds, targets, pos_class=1, neg_class=0):
     true_pos = np.sum((preds == pos_class) & (targets == pos_class))
     false_pos = np.sum((preds == pos_class) & (targets == neg_class))
     precision_ = 1. * true_pos / (true_pos + false_pos)
-    return {"precision": precision_, "true_positive": true_pos,
-            "false_positive": false_pos}
+    info = {"true_positive": true_pos, "false_positive": false_pos}
+    return precision_, info
 
 
 def recall(preds, targets, pos_class=1, neg_class=0):
@@ -72,15 +73,16 @@ def recall(preds, targets, pos_class=1, neg_class=0):
     true_pos = np.sum((preds == pos_class) & (targets == pos_class))
     false_neg = np.sum((preds == neg_class) & (targets == pos_class))
     recall_ = 1. * true_pos / (true_pos + false_neg)
-    return {"recall": recall_, "true_positive": true_pos,
-            "false_negative": false_neg}
+    info = {"true_positive": true_pos, "false_negative": false_neg}
+    return recall_, info
 
 
 def f1_score(preds, targets, pos_class=1, neg_class=0):
-    precision_ = precision(preds, targets, pos_class, neg_class)["precision"]
-    recall_ = recall(preds, targets, pos_class, neg_class)["recall"]
-    return {"f1": 2 * (precision_ * recall_) / (precision_ + recall_),
-            "precision": precision_, "recall": recall_}
+    precision_, _ = precision(preds, targets, pos_class, neg_class)
+    recall_, _ = recall(preds, targets, pos_class, neg_class)
+    f1_ = 2 * (precision_ * recall_) / (precision_ + recall_)
+    info = {"precision": precision_, "recall": recall_}
+    return f1_, info
 
 
 def explained_variation(preds, targets):
@@ -103,7 +105,7 @@ def explained_variation(preds, targets):
         target_var = np.var(targets, axis=0)
         non_zero_idx = np.where(target_var != 0)[0]
         ev_ = np.mean(1.0 - diff_var[non_zero_idx] / target_var[non_zero_idx])
-    return {"mean_ev": ev_}
+    return ev_, {}
 
 
 def r_square(preds, targets):
@@ -111,26 +113,26 @@ def r_square(preds, targets):
     ss_residual = np.sum((targets - preds) ** 2, axis=0)
     ss_total = np.sum((targets - np.mean(targets, axis=0)) ** 2, axis=0)
     r_square_ = np.mean(1 - ss_residual / ss_total)
-    return {"r_square": r_square_}
+    return r_square_, {}
 
 
 def mean_square_error(preds, targets):
     assert preds.shape == targets.shape
     if preds.ndim == 1:
-        mse = np.mean(np.square(preds - targets))
+        mse_ = np.mean(np.square(preds - targets))
     elif preds.ndim == 2:
-        mse = np.mean(np.sum(np.square(preds - targets), axis=1))
+        mse_ = np.mean(np.sum(np.square(preds - targets), axis=1))
     else:
         raise ValueError("preds supposes to have 1 or 2 dim.")
-    return {"mse": mse}
+    return mse_, {}
 
 
 def mean_absolute_error(preds, targets):
     assert preds.shape == targets.shape
     if preds.ndim == 1:
-        mae = np.mean(np.abs(preds - targets))
+        mae_ = np.mean(np.abs(preds - targets))
     elif preds.ndim == 2:
-        mae = np.mean(np.sum(np.abs(preds - targets), axis=1))
+        mae_ = np.mean(np.sum(np.abs(preds - targets), axis=1))
     else:
         raise ValueError("preds supposes to have 1 or 2 dim.")
-    return {"mae": mae}
+    return mae_, {}

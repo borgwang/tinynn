@@ -40,7 +40,7 @@ def prepare_dataset(data_dir):
 
 
 def train_single_model(model, dataset, name="teacher"):
-    print("training %s model" % name)
+    print(f"training {name} model")
     train_x, train_y, test_x, test_y = dataset
 
     iterator = tn.data_iterator.BatchIterator(batch_size=args.batch_size)
@@ -51,22 +51,16 @@ def train_single_model(model, dataset, name="teacher"):
             pred = model.forward(batch.inputs)
             loss, grads = model.backward(pred, batch.targets)
             model.apply_grads(grads)
-            log = tn.metric.accuracy(np.argmax(pred, 1),
-                                     np.argmax(batch.targets, 1))
-            log.update({"batch": i, "loss": loss})
-            print(log)
-        print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
+        print(f"Epoch {epoch} time cost: {time.time() - t_start}")
 
         # evaluate
         model.is_training = False
         hit, total = 0, 0
         for i, batch in enumerate(iterator(test_x, test_y)):
             pred = model.forward(batch.inputs)
-            res = tn.metric.accuracy(np.argmax(pred, 1),
-                                     np.argmax(batch.targets, 1))
-            hit += res["hit_num"]
-            total += res["total_num"]
-        print("accuracy: %.4f" % (1.0 * hit / total))
+            accuracy, _ = tn.metric.accuracy(
+                np.argmax(pred, 1), np.argmax(batch.targets, 1))
+        print(f"Accuracy: {accuracy:.4f}")
         model.is_training = True
 
     # save model
@@ -74,7 +68,7 @@ def train_single_model(model, dataset, name="teacher"):
         os.makedirs(args.model_dir)
     model_path = os.path.join(args.model_dir, name + ".model")
     model.save(model_path)
-    print("model saved in %s" % model_path)
+    print(f"Model saved in {model_path}")
 
 
 def train_distill_model(dataset):
@@ -110,17 +104,15 @@ def train_distill_model(dataset):
                 pred, batch.targets, teacher_out_prob)
             grads = student.net.backward(grad_from_loss)
             student.apply_grads(grads)
-        print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
+        print(f"Epoch {epoch} time cost: {time.time() - t_start}")
         # evaluate
         student.is_trianing = False
         hit, total = 0, 0
         for batch in iterator(test_x, test_y):
             pred = student.forward(batch.inputs)
-            res = tn.metric.accuracy(np.argmax(pred, 1),
-                                     np.argmax(batch.targets, 1))
-            hit += res["hit_num"]
-            total += res["total_num"]
-        print("accuracy: %.4f" % (1.0 * hit / total))
+            accuracy, _ = tn.metric.accuracy(
+                np.argmax(pred, 1), np.argmax(batch.targets, 1))
+        print(f"Accuracy: {accuracy:.4f}")
         student.is_trianing = True
 
     # save the distilled model
@@ -128,7 +120,7 @@ def train_distill_model(dataset):
         os.makedirs(args.model_dir)
     model_path = os.path.join(args.model_dir, "distill-%d.model" % args.T)
     student.save(model_path)
-    print("model saved in %s" % model_path)
+    print(f"Model saved in {model_path}")
 
 
 def main():

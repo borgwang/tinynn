@@ -19,7 +19,7 @@ def save_batch_as_images(path, batch, titles=None):
     batch_copy.resize(m, 28, 28)
     fig, ax = plt.subplots(int(m / 16), 16, figsize=(28, 28))
     cnt = 0
-    for i in range(int(m/16)):
+    for i in range(int(m / 16)):
         for j in range(16):
             ax[i][j].set_xticks([])
             ax[i][j].set_yticks([])
@@ -28,7 +28,7 @@ def save_batch_as_images(path, batch, titles=None):
             if titles is not None:
                 ax[i][j].set_title(titles[cnt], fontsize=20)
             cnt += 1
-    print("Saving", path)
+    print(f"Saving {path}")
     plt.savefig(path)
     plt.close(fig)
 
@@ -80,12 +80,12 @@ def main():
     if args.load_model is not None:
         # load pre-trained model
         model.load(os.path.join(args.output_dir, args.load_model))
-        print("Loaded model fom %s" % args.load_model)
+        print(f"Loaded model from {args.load_model}")
 
         # transition from test[from_idx] to test[to_idx] in n steps
         idx_arr, n = [2, 4, 32, 12, 82], 160
-        print("Transition in numbers", [test_y[i] for i in idx_arr],
-              "in %d steps ..." % n)
+        print(f"Transition in numbers {[test_y[i] for i in idx_arr]}"
+              f"in {n} steps ...")
         stops = [model.en_net.forward(test_x[i]) for i in idx_arr]
         k = int(n / (len(idx_arr) - 1))  # number of code per transition
         # generate all transition codes
@@ -127,7 +127,7 @@ def main():
 
             # apply gradients
             model.apply_grads(grads)
-        print("Epoch: %d Loss: %.3f" % (epoch, loss))
+        print(f"Epoch: {epoch} Loss: {loss:.3f}")
 
         # save all the generated images and original inputs for this batch
         noises_in_path = os.path.join(

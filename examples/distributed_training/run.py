@@ -116,8 +116,8 @@ def main():
             # evaluate
             model.net.params = ray.get(ps.get_params.remote())
             acc = evaluate(mnist.test_set, model)
-            print("[%.2fs] accuracy after %d iterations: \n %s" %
-                  (time.time() - start_time, i + 1, acc))
+            print(f"[{time.time() - start_time}s] "
+                  f"Accuracy after {i + 1} iterations: {acc:.4f}")
     elif args.mode == "sync":
         print("Run synchronous training.")
         # In each iteration, workers request for the global model,
@@ -142,8 +142,8 @@ def main():
             # evaluate
             model.net.params = ray.get(ps.get_params.remote())
             acc = evaluate(mnist.test_set, model)
-            print("[%.2fs] accuracy after %d iterations: \n %s" %
-                  (time.time() - start_time, i + 1, acc))
+            print(f"[{time.time() - start_time}s] "
+                  f"Accuracy after {i + 1} iterations: {acc:.4f}")
     else:
         raise ValueError("Invalid train mode. Suppose to be 'sync' or 'async'.")
 
@@ -154,7 +154,8 @@ def evaluate(test_set, model):
 
     test_pred_idx = np.argmax(test_pred, axis=1)
     test_y_idx = np.argmax(test_y, axis=1)
-    return tn.metric.accuracy(test_pred_idx, test_y_idx)
+    acc, _ = tn.metric.accuracy(test_pred_idx, test_y_idx)
+    return acc
 
 
 if __name__ == "__main__":

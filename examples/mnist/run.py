@@ -75,7 +75,7 @@ def main():
                 loss, grads = model.backward(pred, batch.targets)
                 model.apply_grads(grads)
                 loss_list.append(loss)
-            print("Epoch %d time cost: %.4f" % (epoch, time.time() - t_start))
+            print(f"Epoch {epoch} time cost: {time.time() - t_start}")
             # evaluate
             evaluate(model, test_x, test_y)
 
@@ -85,7 +85,7 @@ def main():
         model_name = "mnist-%s-epoch%d.pkl" % (args.model_type, args.num_ep)
         model_path = os.path.join(args.model_dir, model_name)
         model.save(model_path)
-        print("model saved in %s" % model_path)
+        print(f"Model saved in {model_path}")
 
 
 def evaluate(model, test_x, test_y):
@@ -93,9 +93,9 @@ def evaluate(model, test_x, test_y):
     test_pred = model.forward(test_x)
     test_pred_idx = np.argmax(test_pred, axis=1)
     test_y_idx = np.argmax(test_y, axis=1)
-    res = tn.metric.accuracy(test_pred_idx, test_y_idx)
+    accuracy, info = tn.metric.accuracy(test_pred_idx, test_y_idx)
     model.is_training = True
-    print(res)
+    print(f"accuracy: {accuracy:.4f} info: {info}")
 
 
 if __name__ == "__main__":

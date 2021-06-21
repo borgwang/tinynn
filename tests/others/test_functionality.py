@@ -1,14 +1,8 @@
 import numpy as np
 import pytest
+import tinynn as tn
 
-from tinynn.core.layer import Conv2D, Dense, Flatten, MaxPool2D
-from tinynn.core.loss import MSE
-from tinynn.core.model import Model
-from tinynn.core.net import Net
-from tinynn.core.optimizer import SGD
-from tinynn.utils.seeder import random_seed
-
-random_seed(0)
+tn.seeder.random_seed(31)
 
 
 @pytest.fixture(name="mock_dataset")
@@ -25,41 +19,33 @@ def fixture_mock_img_dataset():
     return X, y
 
 
-@pytest.fixture(name="fc_model")
-def fixture_fc_model():
-    net = Net([Dense(10), Dense(1)])
-    loss = MSE()
-    opt = SGD()
-    return Model(net, loss, opt)
+@pytest.fixture(name="dense_model")
+def fixture_dense_model():
+    net = tn.net.Net([tn.layer.Dense(10), tn.layer.Dense(1)])
+    loss = tn.loss.MSE()
+    opt = tn.optimizer.SGD()
+    return tn.model.Model(net, loss, opt)
 
 
-@pytest.fixture(name="cnn_model")
-def fixture_cnn_model():
-    net = Net([
-        Conv2D(kernel=[3, 3, 1, 2]),
-        MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
-        Conv2D(kernel=[3, 3, 2, 4]),
-        MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
-        Flatten(),
-        Dense(1)
+@pytest.fixture(name="conv_model")
+def fixture_conv_model():
+    net = tn.net.Net([
+        tn.layer.Conv2D(kernel=[3, 3, 1, 2]),
+        tn.layer.MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
+        tn.layer.Conv2D(kernel=[3, 3, 2, 4]),
+        tn.layer.MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
+        tn.layer.Flatten(),
+        tn.layer.Dense(1)
     ])
-    return Model(net, loss=MSE(), optimizer=SGD())
+    loss = tn.loss.MSE()
+    opt = tn.optimizer.SGD()
+    return tn.model.Model(net, loss, opt)
 
 
-def test_parameters_change(mock_dataset):
-    # make sure the parameters does change after apply gradients
-    X, y = mock_dataset
-    # simple model
-    net = Net([Dense(10), Dense(1)])
-    loss = MSE()
-    opt = SGD(lr=1.0)
-    model = Model(net, loss, opt)
-
-    # forward and backward
+def _test_parameter_change(model, X, y):
     pred = model.forward(X)
     loss, grads = model.backward(pred, y)
-
-    # parameters change test
+    # make sure the parameters does change after apply gradients
     params_before = model.net.params.values
     model.apply_grads(grads)
     params_after = model.net.params.values
@@ -67,29 +53,28 @@ def test_parameters_change(mock_dataset):
         assert np.all(p1 != p2)
 
 
-def test_backprop_dense(fc_model, mock_dataset):
-    # train on a single data point
-    x, y = mock_dataset
+def test_parameters_change_dense_model(dense_model, mock_dataset):
+    _test_parameter_change(dense_model, *mock_dataset)
 
+
+def test_parameter_change_conv_model(conv_model, mock_img_dataset):
+    _test_parameter_change(conv_model, *mock_img_dataset)
+
+
+def _test_backprop(model, X, y):
     previous_loss = np.inf
     for _ in range(50):
-        pred = fc_model.forward(x)
-        loss, grads = fc_model.backward(pred, y)
-        fc_model.apply_grads(grads)
+        pred = model.forward(X)
+        loss, grads = model.backward(pred, y)
+        model.apply_grads(grads)
         # loss should decrease monotonically
         assert loss < previous_loss
         previous_loss = loss
 
 
-def test_backprop_cnn(cnn_model, mock_img_dataset):
-    # train on a single data point
-    x, y = mock_img_dataset
+def test_backprop_dense(dense_model, mock_dataset):
+    _test_backprop(dense_model, *mock_dataset)
 
-    previous_loss = np.inf
-    for _ in range(50):
-        pred = cnn_model.forward(x)
-        loss, grads = cnn_model.backward(pred, y)
-        cnn_model.apply_grads(grads)
-        # loss should decrease monotonically
-        assert loss < previous_loss
-        previous_loss = loss
+
+def test_backprop_conv(conv_model, mock_img_dataset):
+    _test_backprop(conv_model, *mock_img_dataset)

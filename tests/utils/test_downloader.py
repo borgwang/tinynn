@@ -1,6 +1,6 @@
 import tempfile
 
-from tinynn.utils.downloader import md5_checksum
+import tinynn as tn
 
 
 def test_md5_checksum():
@@ -17,4 +17,4 @@ def test_md5_checksum():
         with tempfile.NamedTemporaryFile() as temp:
             temp.write(bytes(content, "utf-8"))
             temp.flush()
-            assert md5_checksum(temp.name) == md5_expect
+            assert tn.downloader.md5_checksum(temp.name) == md5_expect

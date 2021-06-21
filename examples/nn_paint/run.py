@@ -53,8 +53,8 @@ def main(args):
 
         # evaluate
         preds = net.forward(train_x)
-        mse = tn.metric.mean_square_error(preds, train_y)
-        print("Epoch %d %s" % (epoch, mse))
+        mse, info = tn.metric.mean_square_error(preds, train_y)
+        print(f"Epoch {epoch} mse: {mse} info: {info}")
 
         # generate painting
         if epoch % 5 == 0:
@@ -67,7 +67,7 @@ def main(args):
                 os.makedirs(args.output_dir)
             out_path = os.path.join(args.output_dir, out_filename)
             Image.fromarray(preds).save(out_path)
-            print("save painting to %s" % out_path)
+            print(f"Save painting to {out_path}")
 
 
 if __name__ == "__main__":

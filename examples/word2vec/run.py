@@ -85,7 +85,7 @@ def main(args):
                 loss, grads = model.backward(pred, batch.targets)
                 model.apply_grads(grads)
                 loss_list.append(loss)
-            print(f"epoch: {epoch + 1} loss: {np.mean(loss_list)}")
+            print(f"Epoch: {epoch + 1} loss: {np.mean(loss_list)}")
 
         # save model
         if not os.path.isdir(args.model_dir):
@@ -93,7 +93,7 @@ def main(args):
         model_name = f"skip-gram-epoch{args.num_ep}.pkl"
         model_path = os.path.join(args.model_dir, model_name)
         model.save(model_path)
-        print("model saved in %s" % model_path)
+        print(f"Model saved in {model_path}")
         visualize(model, idx2word, args)
 
 
@@ -119,7 +119,7 @@ def visualize(model, idx2word, args):
     output_path = os.path.join(args.output_dir, "tsne-sample.jpg")
     plt.savefig(output_path)
     plt.close()
-    print("visualization result: {output_path}")
+    print(f"visualization result: {output_path}")
 
 
 if __name__ == "__main__":

@@ -1,29 +1,24 @@
 import numpy as np
 import pytest
+import tinynn as tn
 
-from tinynn.core.optimizer import Adadelta, Adagrad, Adam, CyclicalLR, \
-        ExponentialLR, LinearLR, Momentum, MultiStepLR, RAdam, RMSProp, SGD, \
-        StepLR
-from tinynn.utils.seeder import random_seed
-from tinynn.utils.structured_param import StructuredParam
-
-random_seed(0)
+tn.seeder.random_seed(31)
 LR = 0.1
 
 
 @pytest.fixture(name="params", scope="function")
 def fixture_params():
-    return StructuredParam([{"w": np.array([1., 2., 4.])}])
+    return tn.structured_param.StructuredParam([{"w": np.array([1., 2., 4.])}])
 
 
 @pytest.fixture(name="grads", scope="function")
 def fixture_grads():
-    return StructuredParam([{"w": np.array([1., 2., 4.])}])
+    return tn.structured_param.StructuredParam([{"w": np.array([1., 2., 4.])}])
 
 
 def test_step_fn(params, grads):
     origin_param_values, origin_grad_values = params.values, grads.values
-    optim = SGD(LR, weight_decay=0.1)
+    optim = tn.optimizer.SGD(LR, weight_decay=0.1)
     optim.step(grads, params)
     expect_grad_values = -LR * (origin_grad_values + 0.1 * origin_param_values)
     assert (grads.values == expect_grad_values).all()
@@ -31,7 +26,7 @@ def test_step_fn(params, grads):
 
 
 def test_sgd(grads):
-    optim = SGD(LR)
+    optim = tn.optimizer.SGD(LR)
     step = optim._compute_step(grads.values)
     assert (step == -LR * grads.values).all()
 
@@ -44,7 +39,7 @@ def test_momentum(grads):
         return step, acc_t
 
     momentum = 0.9
-    optim = Momentum(LR, momentum=momentum)
+    optim = tn.optimizer.Momentum(LR, momentum=momentum)
     for _ in range(3):
         step, acc_t = _momentum_update(LR, momentum, optim._acc, grads.values)
         actual_step = optim._compute_step(grads.values)
@@ -63,7 +58,7 @@ def test_adam(grads):
         return step, m_t, v_t
 
     beta1, beta2, epsilon = 0.9, 0.99, 1e-8
-    optim = Adam(LR, beta1=beta1, beta2=beta2, epsilon=epsilon)
+    optim = tn.optimizer.Adam(LR, beta1=beta1, beta2=beta2, epsilon=epsilon)
     for _ in range(3):
         step, m_t, v_t = _adam_update(beta1, beta2, epsilon, optim._m, optim._v,
                                       LR, optim._t, grads.values)
@@ -92,7 +87,7 @@ def test_radam(grads):
         return step, m_t, v_t
 
     beta1, beta2, epsilon = 0.9, 0.99, 1e-8
-    optim = RAdam(LR, beta1=beta1, beta2=beta2, epsilon=epsilon)
+    optim = tn.optimizer.RAdam(LR, beta1=beta1, beta2=beta2, epsilon=epsilon)
     for _ in range(3):
         step, m_t, v_t = _radam_update(beta1, beta2, epsilon, optim._m,
                                        optim._v, LR, optim._t, grads.values)
@@ -111,7 +106,7 @@ def test_rmsprop(grads):
         return step, rms_t, mom_t
 
     decay, momentum, epsilon = 0.99, 0.9, 1e-8
-    optim = RMSProp(LR, decay, momentum, epsilon)
+    optim = tn.optimizer.RMSProp(LR, decay, momentum, epsilon)
     for _ in range(3):
         step, rms_t, mom_t = _rmsprop_update(
             LR, decay, momentum, epsilon, optim._rms, optim._mom, grads.values)
@@ -129,7 +124,7 @@ def test_adagrad(grads):
         return step, g_t
 
     epsilon = 1e-8
-    optim = Adagrad(LR, epsilon=epsilon)
+    optim = tn.optimizer.Adagrad(LR, epsilon=epsilon)
     for _ in range(3):
         step, g_t = _adagrad_update(LR, optim._g, epsilon, grads.values)
         actual_step = optim._compute_step(grads.values)
@@ -147,7 +142,7 @@ def test_adadelta(grads):
         return step, rms_t, delta_t
 
     decay, epsilon = 0.9, 1e-8
-    optim = Adadelta(LR, decay, epsilon)
+    optim = tn.optimizer.Adadelta(LR, decay, epsilon)
     for _ in range(3):
         step, rms_t, delta_t = _adadelta_update(LR, decay, optim._rms,
                                                 optim._delta, grads.values)
@@ -159,13 +154,13 @@ def test_adadelta(grads):
 
 @pytest.fixture(name="sgd", scope="function")
 def fixture_sgd():
-    return SGD(LR)
+    return tn.optimizer.SGD(LR)
 
 
 def test_scheduler_step_lr(sgd):
     step_size = 10
     gamma = 0.9
-    scheduler = StepLR(sgd, step_size=step_size, gamma=gamma)
+    scheduler = tn.optimizer.StepLR(sgd, step_size=step_size, gamma=gamma)
     for _ in range(step_size * 2):
         scheduler.step()
     assert sgd.lr == LR * (gamma ** 2)
@@ -174,7 +169,8 @@ def test_scheduler_step_lr(sgd):
 def test_scheduler_multi_step_lr(sgd):
     milestones = [5]
     gamma = 0.9
-    scheduler = MultiStepLR(sgd, milestones=milestones, gamma=gamma)
+    scheduler = tn.optimizer.MultiStepLR(
+        sgd, milestones=milestones, gamma=gamma)
     for _ in range(10):
         scheduler.step()
     assert sgd.lr == LR * gamma
@@ -183,17 +179,17 @@ def test_scheduler_multi_step_lr(sgd):
 def test_scheduler_exponential_lr(sgd):
     decay_steps = 1  # decay only in the first step
     decay_rate = 1. / np.e
-    scheduler = ExponentialLR(sgd, decay_steps=decay_steps,
-                              decay_rate=decay_rate)
+    scheduler = tn.optimizer.ExponentialLR(
+        sgd, decay_steps=decay_steps, decay_rate=decay_rate)
     for _ in range(10):
         scheduler.step()
-    assert sgd.lr == LR * decay_rate ** (1. / 1.)
+    assert sgd.lr == LR * decay_rate ** (1.0 / 1.0)
 
 
 def test_scheduler_liner_lr(sgd):
     decay_steps = 10
     final_lr = 0.0  # 0.1 -> 0.0 in 10 steps
-    scheduler = LinearLR(sgd, decay_steps=decay_steps)
+    scheduler = tn.optimizer.LinearLR(sgd, decay_steps=decay_steps)
     for _ in range(10):
         scheduler.step()
     assert np.abs(sgd.lr - final_lr) < 1e-5
@@ -202,7 +198,7 @@ def test_scheduler_liner_lr(sgd):
 def test_schedual_cyclical_lr(sgd):
     min_lr, max_lr = 0.2, 0.3
     cyclical_steps = 20
-    scheduler = CyclicalLR(sgd, cyclical_steps, min_lr, max_lr)
+    scheduler = tn.optimizer.CyclicalLR(sgd, cyclical_steps, min_lr, max_lr)
     # lr step size
     lr_step_size = scheduler._abs_lr_delta
     assert lr_step_size == 2 * (max_lr - min_lr) / cyclical_steps
