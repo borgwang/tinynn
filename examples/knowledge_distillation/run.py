@@ -55,7 +55,6 @@ def train_single_model(model, dataset, name="teacher"):
 
         # evaluate
         model.is_training = False
-        hit, total = 0, 0
         for i, batch in enumerate(iterator(test_x, test_y)):
             pred = model.forward(batch.inputs)
             accuracy, _ = tn.metric.accuracy(
@@ -107,7 +106,6 @@ def train_distill_model(dataset):
         print(f"Epoch {epoch} time cost: {time.time() - t_start}")
         # evaluate
         student.is_trianing = False
-        hit, total = 0, 0
         for batch in iterator(test_x, test_y):
             pred = student.forward(batch.inputs)
             accuracy, _ = tn.metric.accuracy(
