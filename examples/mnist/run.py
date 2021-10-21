@@ -52,7 +52,14 @@ def main():
         train_x = train_x.reshape((-1, 28, 28))
         test_x = test_x.reshape((-1, 28, 28))
         net = tn.net.Net([
-            tn.layer.RNN(num_hidden=50, activation=tn.layer.Tanh()),
+            tn.layer.RNN(num_hidden=30),
+            tn.layer.Dense(10)
+        ])
+    elif args.model_type == "lstm":
+        train_x = train_x.reshape((-1, 28, 28))
+        test_x = test_x.reshape((-1, 28, 28))
+        net = tn.net.Net([
+            tn.layer.LSTM(num_hidden=30),
             tn.layer.Dense(10)
         ])
     else:
@@ -108,7 +115,7 @@ if __name__ == "__main__":
                         default=os.path.join(curr_dir, "models"))
     parser.add_argument("--model_path", type=str, default=None)
     parser.add_argument("--model_type", default="mlp", type=str,
-                        help="[*mlp|cnn|rnn]")
+                        help="[*mlp|cnn|rnn|lstm]")
     parser.add_argument("--num_ep", default=10, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--batch_size", default=128, type=int)

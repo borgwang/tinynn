@@ -102,6 +102,7 @@ examples/dcgan/data/*
 examples/dcgan/samples/*
 examples/dae/data/*
 examples/dae/output/*
+examples/word2vec/outputs/*
 examples/knowledge_distillation/data/*
 examples/knowledge_distillation/models/*
 examples/binary_classification/data/*

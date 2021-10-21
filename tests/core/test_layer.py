@@ -88,7 +88,7 @@ def test_rnn():
     batch_size = 1
     n_steps, input_dim = 10, 20
     input_ = np.random.randn(batch_size, n_steps, input_dim)
-    layer = tn.layer.RNN(num_hidden=10, activation=tn.layer.Tanh())
+    layer = tn.layer.RNN(num_hidden=10)
     forward_out = layer.forward(input_)
     assert forward_out.shape == (batch_size, input_dim)
 

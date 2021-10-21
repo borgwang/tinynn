@@ -46,7 +46,7 @@ class Dataset:
 
     @staticmethod
     def get_one_hot(targets, n_classes):
-        return np.eye(n_classes)[np.array(targets).reshape(-1)]
+        return np.eye(n_classes, dtype=np.float32)[np.array(targets).reshape(-1)]
 
 
 class MNIST(Dataset):

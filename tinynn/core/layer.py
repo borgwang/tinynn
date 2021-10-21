@@ -8,18 +8,24 @@ from tinynn.utils.math import sigmoid
 
 
 class Layer:
-    """Base class for layers. """
+    """Base class for layers."""
 
     def __init__(self):
         self.params = {p: None for p in self.param_names}
         self.nt_params = {p: None for p in self.nt_param_names}
-        self.initializers = None
+        self.initializers = {}
 
         self.grads = {}
         self.shapes = {}
 
         self._is_training = True  # used in BatchNorm/Dropout layers
         self._is_init = False
+
+        self.ctx = {}
+
+    def __repr__(self):
+        shape = None if not self.shapes else self.shapes
+        return f"layer: {self.name}\tshape: {shape}"
 
     def forward(self, inputs):
         raise NotImplementedError
@@ -48,10 +54,6 @@ class Layer:
     @property
     def name(self):
         return self.__class__.__name__
-
-    def __repr__(self):
-        shape = None if not self.shapes else self.shapes
-        return f"layer: {self.name}\tshape: {shape}"
 
     @property
     def param_names(self):
@@ -82,17 +84,15 @@ class Dense(Layer):
         self.initializers = {"w": w_init, "b": b_init}
         self.shapes = {"w": [None, num_out], "b": [num_out]}
 
-        self.ctx = None
-
     def forward(self, inputs):
         if not self.is_init:
             self.shapes["w"][0] = inputs.shape[1]
             self._init_params()
-        self.ctx = {"inputs": inputs}
+        self.ctx = {"X": inputs}
         return inputs @ self.params["w"] + self.params["b"]
 
     def backward(self, grad):
-        self.grads["w"] = self.ctx["inputs"].T @ grad
+        self.grads["w"] = self.ctx["X"].T @ grad
         self.grads["b"] = np.sum(grad, axis=0)
         return grad @ self.params["w"].T
 
@@ -125,8 +125,6 @@ class Conv2D(Layer):
 
         self.padding_mode = padding
         self.padding = None
-
-        self.ctx = None
 
     def forward(self, inputs):
         """Accelerate convolution via im2col trick.
@@ -169,7 +167,7 @@ class Conv2D(Layer):
         return Z
 
     def backward(self, grad):
-        """Compute gradients w.r.t layer parameters and backward gradients.
+        """Compute gradients w.r.t. layer parameters and backward gradients.
         :param grad: gradients from previous layer
             with shape (batch_sz, out_h, out_w, out_c)
         :return d_in: gradients to next layers
@@ -181,13 +179,13 @@ class Conv2D(Layer):
         batch_sz, in_h, in_w, in_c = self.ctx["X_shape"]
         pad_h, pad_w = self.padding[1:3]
 
-        # grads w.r.t parameters
+        # grads w.r.t. parameters
         flat_grad = grad.reshape((-1, out_c))
         d_W = self.ctx["col"].T @ flat_grad
         self.grads["w"] = d_W.reshape(self.kernel_shape)
         self.grads["b"] = np.sum(flat_grad, axis=0)
 
-        # grads w.r.t inputs
+        # grads w.r.t. inputs
         d_X = grad @ self.ctx["W"].T
         # cast gradients back to original shape as d_in
         d_in = np.zeros(shape=self.ctx["X_shape"])
@@ -281,8 +279,6 @@ class MaxPool2D(Layer):
         self.padding_mode = padding
         self.padding = None
 
-        self.ctx = None
-
     def forward(self, inputs):
         s_h, s_w = self.stride
         k_h, k_w = self.kernel_shape
@@ -299,8 +295,8 @@ class MaxPool2D(Layer):
         out_w = (padded_w - k_w) // s_w + 1
 
         # construct output matrix and argmax matrix
-        max_pool = np.empty(shape=(batch_sz, out_h, out_w, in_c))
-        argmax = np.empty(shape=(batch_sz, out_h, out_w, in_c), dtype=int)
+        max_pool = np.empty((batch_sz, out_h, out_w, in_c))
+        argmax = np.empty((batch_sz, out_h, out_w, in_c), dtype=int)
         for r in range(out_h):
             r_start = r * s_h
             for c in range(out_w):
@@ -340,54 +336,43 @@ class MaxPool2D(Layer):
                 d_in[:, r_start:r_start+k_h, c_start:c_start+k_w, :] += patch
 
         # cut off gradients of padding
-        return d_in[:, pad_h[0]:in_h-pad_h[1], pad_w[0]:in_w-pad_w[1], :]
+        return d_in[:, pad_h[0]: in_h-pad_h[1], pad_w[0]: in_w-pad_w[1], :]
 
 
 class RNN(Layer):
 
     def __init__(self,
                  num_hidden,
-                 activation,
-                 bptt_trunc=None,
                  w_init=XavierUniform(),
                  b_init=Zeros()):
         super().__init__()
-        self.num_hidden = num_hidden
-        self.activation = activation
-        self.bptt_trunc = bptt_trunc
+        self.n_h = num_hidden
+        self.initializers = {"W": w_init, "b": b_init,
+                             "W_o": w_init, "b_o": b_init}
 
-        self.initializers = {"W": w_init, "V": w_init, "U": w_init,
-                             "b": b_init, "c": b_init}
-
-        self.ctx = None
+    def empty(self, shape):
+        return np.empty(shape, dtype=np.float32)
 
     def forward(self, inputs):
-        """Vanilla recurrent neural net forward pass
-        a_{t} = U @ x_{t} + W @ s_{t-1} + b
-        h_{t} = activation_func(a_{t})
-        o_{t} = V @ h_{t} + c
-        """
         batch_size, n_ts, input_dim = inputs.shape
         if not self.is_init:
-            self.shapes = {"W": [self.num_hidden, self.num_hidden],
-                           "V": [input_dim, self.num_hidden],
-                           "U": [self.num_hidden, input_dim],
-                           "b": [self.num_hidden],
-                           "c": [input_dim]}
+            self.shapes = {"W": [self.n_h, self.n_h + input_dim],
+                           "b": [self.n_h],
+                           "W_o": [input_dim, self.n_h],
+                           "b_o": [input_dim]}
             self._init_params()
 
-        a = np.empty((batch_size, n_ts, self.num_hidden))
-        h = np.empty((batch_size, n_ts + 1, self.num_hidden))
-        out = np.empty((batch_size, n_ts, input_dim))
+        a = self.empty((batch_size, n_ts, self.n_h))
+        h = self.empty((batch_size, n_ts + 1, self.n_h))
+        out = self.empty((batch_size, n_ts, input_dim))
 
-        h[:, -1] = np.zeros((batch_size, self.num_hidden))
+        h[:, -1] = 0.0
         for t in range(n_ts):
-            a[:, t] = (inputs[:, t] @ self.params["U"].T +
-                       h[:, t-1] @ self.params["W"].T + self.params["b"])
-            h[:, t] = self.activation.forward(a[:, t])
-            out[:, t] = h[:, t] @ self.params["V"].T + self.params["c"]
-
-        self.ctx = {"h": h, "a": a, "X": inputs}
+            z = np.hstack([h[:, t - 1], inputs[:, t]])
+            a[:, t] = z @ self.params["W"].T + self.params["b"]
+            h[:, t] = np.tanh(a[:, t])
+            out[:, t] = h[:, t] @ self.params["W_o"].T + self.params["b_o"]
+        self.ctx = {"h": h, "X": inputs}
         return out[:, -1]
 
     def backward(self, grad):
@@ -395,32 +380,131 @@ class RNN(Layer):
         for p in self.param_names:
             self.grads[p] = np.zeros_like(self.params[p])
 
-        if self.bptt_trunc is None:
-            self.bptt_trunc = n_ts  # non-truncated
+        self.grads["W_o"] = grad.T @ self.ctx["h"][:, -1]
+        self.grads["b_o"] = grad.sum(axis=0)
+        d_h = grad @ self.params["W_o"]
+        d_in = np.empty_like(self.ctx["X"], dtype=np.float32)
 
-        d_in = np.empty_like(self.ctx["X"])
         for t in reversed(range(n_ts)):
-            # grads w.r.t param V and c
-            self.grads["c"] += grad.sum(axis=0)
-            self.grads["V"] += grad.T @ self.ctx["h"][:, t]
-            # grads w.r.t h
-            d_h = grad @ self.params["V"]
-            d_a = d_h * self.activation.derivative(self.ctx["a"][:, t])
-            # grads w.r.t input X
-            d_in[:, t] = d_a @ self.params["U"]
-            # grads w.r.t params U, W and b
-            for i in range(min(self.bptt_trunc, t+1)):
-                self.grads["U"] += d_a.T @ self.ctx["X"][:, t - i]
-                self.grads["W"] += d_a.T @ self.ctx["h"][:, t - i - 1]
-                self.grads["b"] += d_a.sum(axis=0)
-                d_h = d_a @ self.params["W"]
-                d_a = d_h * self.activation.derivative(
-                    self.ctx["a"][:, t - i - 1])
+            d_a = d_h * (1 - self.ctx["h"][:, t] ** 2)
+            d_in[:, t] = d_a @ self.params["W"][:, self.n_h:]
+            self.grads["W"][:, self.n_h:] += d_a.T @ self.ctx["X"][:, t]
+            self.grads["W"][:, :self.n_h] += d_a.T @ self.ctx["h"][:, t - 1]
+            self.grads["b"] += d_a.sum(axis=0)
+            d_h = d_a @ self.params["W"][:, :self.n_h]
         return d_in
 
     @property
     def param_names(self):
-        return "W", "U", "V", "b", "c"
+        return "W", "b", "W_o", "b_o"
+
+
+class LSTM(Layer):
+
+    def __init__(self,
+                 num_hidden,
+                 w_init=XavierUniform(),
+                 b_init=Zeros()):
+        super().__init__()
+        self.n_h = num_hidden
+        self.initializers = {"W_g": w_init, "W_c": w_init, "W_o": w_init,
+                             "b_g": b_init, "b_c": b_init, "b_o": b_init}
+
+    def empty(self, shape):
+        return np.empty(shape, dtype=np.float32)
+
+    def forward(self, inputs):
+        batch_size, n_ts, input_dim = inputs.shape
+        if not self.is_init:
+            self.shapes = {"W_g": [3 * self.n_h, input_dim + self.n_h],
+                           "b_g": [3 * self.n_h],
+                           "W_c": [self.n_h, input_dim + self.n_h],
+                           "b_c": [self.n_h],
+                           "W_o": [input_dim, self.n_h],
+                           "b_o": [input_dim]}
+            self._init_params()
+
+        h = self.empty((batch_size, n_ts + 1, self.n_h))
+        h[:, -1] = 0.0
+        c = self.empty((batch_size, n_ts + 1, self.n_h))
+        c[:, -1] = 0.0
+        out = self.empty((batch_size, n_ts, input_dim))
+        gates = self.empty((batch_size, n_ts, 3 * self.n_h))
+        c_hat = self.empty((batch_size, n_ts + 1, self.n_h))
+
+        for t in range(n_ts):
+            z = np.hstack([h[:, t-1], inputs[:, t]])
+
+            gates[:, t] = sigmoid(z @ self.params["W_g"].T + self.params["b_g"])
+            o_gate, i_gate, f_gate = np.split(gates[:, t], 3, axis=1)
+
+            c_hat[:, t] = np.tanh(z @ self.params["W_c"].T + self.params["b_c"])
+
+            c[:, t] = f_gate * c[:, t - 1] + i_gate * c_hat[:, t]
+            h[:, t] = o_gate * np.tanh(c[:, t])
+            out[:, t] = h[:, t] @ self.params["W_o"].T + self.params["b_o"]
+
+        self.ctx = {"h": h, "c": c, "X": inputs, "gates": gates, "c_hat": c_hat}
+        return out[:, -1]
+
+    def backward(self, grad):
+        for p in self.param_names:
+            self.grads[p] = np.zeros_like(self.params[p])
+
+        batch_size, n_ts, input_dim = self.ctx["X"].shape
+
+        # grads w.r.t. param W_o and b_o
+        self.grads["W_o"] = grad.T @ self.ctx["h"][:, -1]
+        self.grads["b_o"] = grad.sum(axis=0)
+
+        # grads w.r.t. h_t
+        d_c_prev = 0
+        d_h_prev = grad @ self.params["W_o"]
+
+        d_in = np.empty_like(self.ctx["X"], dtype=np.float32)
+        for t in reversed(range(n_ts)):
+            z = np.hstack([self.ctx["h"][:, t-1], self.ctx["X"][:, t]])
+            tanhc = np.tanh(self.ctx["c"][:, t])
+
+            g_o, g_i, g_f = np.split(self.ctx["gates"][:, t], 3, axis=1)
+
+            d_h = d_h_prev
+            d_o = d_h * tanhc
+            d_a_o = d_o *  g_o * (1 - g_o)
+
+            self.grads["W_g"][:self.n_h] += d_a_o.T @ z
+            self.grads["b_g"][:self.n_h] += d_a_o.sum(axis=0)
+
+            d_c = d_h * g_o * (1 - tanhc ** 2)
+            d_c += d_c_prev
+
+            d_c_hat = d_c * g_i
+            d_a_c = d_c_hat * (1 - self.ctx["c_hat"][:, t] ** 2)
+            self.grads["W_c"] += d_a_c.T @ z
+            self.grads["b_c"] += d_a_c.sum(axis=0)
+
+            d_i = d_c * self.ctx["c_hat"][:, t]
+            d_a_i = d_i * g_i * (1 - g_i)
+            self.grads["W_g"][self.n_h: 2 * self.n_h] += d_a_i.T @ z
+            self.grads["b_g"][self.n_h: 2 * self.n_h] += d_a_i.sum(axis=0)
+
+            d_f = d_c * self.ctx["c"][:, t-1]
+            d_a_f = d_f * g_f * (1 - g_f)
+            self.grads["W_g"][-self.n_h:] += d_a_f.T @ z
+            self.grads["b_g"][-self.n_h:] += d_a_f.sum(axis=0)
+
+            d_z = (np.hstack([d_a_o, d_a_i, d_a_f]) @ self.params["W_g"] +
+                   d_a_c @ self.params["W_c"])
+            d_h = d_z[:, :self.n_h]
+            d_in[:, t] = d_z[:, -input_dim:]
+
+            d_h_prev = d_h
+            d_c_prev = g_f * d_c
+        return d_in
+
+    @property
+    def param_names(self):
+        return "W_g", "b_g", "W_c", "b_c", "W_o", "b_o"
 
 
 class BatchNormalization(Layer):
@@ -436,8 +520,6 @@ class BatchNormalization(Layer):
 
         self.initializers = {"gamma": gamma_init, "beta": beta_init}
         self.reduce = None
-
-        self.ctx = None
 
     def forward(self, inputs):
         # self.reduce = (0,) if inputs.ndim == 2 else (0, 1, 2)
@@ -470,14 +552,14 @@ class BatchNormalization(Layer):
         return self.params["gamma"] * X_norm + self.params["beta"]
 
     def backward(self, grad):
-        # grads w.r.t params
+        # grads w.r.t. params
         self.grads["gamma"] = (self.ctx["X_norm"] * grad).sum(self.reduce)
         self.grads["beta"] = grad.sum(self.reduce)
 
         # N = grad.shape[0]
         N = np.prod([grad.shape[d] for d in self.reduce])
         std_inv = 1.0 / self.ctx["std"]
-        # grads w.r.t inputs
+        # grads w.r.t. inputs
         # ref: http://cthorey.github.io./backpropagation/
         d_in = (1.0 / N) * self.params["gamma"] * std_inv * (
             N * grad - np.sum(grad, axis=self.reduce, keepdims=True) -
@@ -543,11 +625,11 @@ class Activation(Layer):
         self.inputs = None
 
     def forward(self, inputs):
-        self.inputs = inputs
+        self.ctx["X"] = inputs
         return self.func(inputs)
 
     def backward(self, grad):
-        return self.derivative(self.inputs) * grad
+        return self.derivative(self.ctx["X"]) * grad
 
     def func(self, x):
         raise NotImplementedError
@@ -610,8 +692,7 @@ class LeakyReLU(Activation):
 
 
 class GELU(Activation):
-    """
-    Gaussian Error Linear Units
+    """Gaussian Error Linear Units
     ref: https://arxiv.org/pdf/1606.08415.pdf
     """
 

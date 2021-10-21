@@ -4,8 +4,8 @@ import string
 
 import matplotlib.pyplot as plt
 import numpy as np
-import tinynn as tn
 import pandas as pd
+import tinynn as tn
 from sklearn.manifold import TSNE
 
 
