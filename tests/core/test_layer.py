@@ -98,6 +98,20 @@ def test_rnn():
     assert backward_out.shape == (batch_size, n_steps, input_dim)
 
 
+def test_lstm():
+    batch_size = 1
+    n_steps, input_dim = 10, 20
+    input_ = np.random.randn(batch_size, n_steps, input_dim)
+    layer = tn.layer.LSTM(num_hidden=10)
+    forward_out = layer.forward(input_)
+    assert forward_out.shape == (batch_size, input_dim)
+
+    fake_grads = np.random.randn(batch_size, input_dim)
+    backward_out = layer.backward(fake_grads)
+    # should has the same shape as input_
+    assert backward_out.shape == (batch_size, n_steps, input_dim)
+
+
 def test_batch_normalization():
     input_ = np.array([[1.0, 2.0, 3.0, 4.0, 5.0],
                        [5.0, 4.0, 3.0, 2.0, 1.0]])

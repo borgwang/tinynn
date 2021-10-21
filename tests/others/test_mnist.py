@@ -32,6 +32,18 @@ def fixture_conv_model():
     return tn.model.Model(net=net, loss=loss, optimizer=optimizer)
 
 
+@pytest.fixture(name="lstm_model")
+def fixture_lstm_model():
+    net = tn.net.Net([
+        tn.layer.LSTM(num_hidden=128),
+        tn.layer.Tanh(),
+        tn.layer.Dense(10)
+    ])
+    loss = tn.loss.SoftmaxCrossEntropy()
+    optimizer = tn.optimizer.Adam(1e-3)
+    return tn.model.Model(net=net, loss=loss, optimizer=optimizer)
+
+
 def mnist_train(model, X, y, steps, batch_size):
     for _ in range(steps):
         indices = np.random.choice(np.arange(len(X)), size=batch_size,
@@ -49,17 +61,21 @@ def mnist_evaluate(model, X, y):
     return accuracy
 
 
-def test_mnist(dense_model, conv_model, tmpdir):
-    tn.seeder.random_seed(31)
+def test_mnist(dense_model, conv_model, lstm_model, tmpdir):
     mnist = tn.dataset.MNIST(tmpdir, one_hot=True)
-    X, y = mnist.train_set
+    (X, y), (test_X, test_y) = mnist.train_set, mnist.test_set
+
+    tn.seeder.random_seed(31)
     mnist_train(dense_model, X, y, steps=1000, batch_size=128)
-    test_X, test_y = mnist.test_set
     acc = mnist_evaluate(dense_model, test_X, test_y)
     assert acc > 0.95
 
-    tn.seeder.random_seed(31)
     X, test_X = X.reshape((-1, 28, 28, 1)), test_X.reshape((-1, 28, 28, 1))
     mnist_train(conv_model, X, y, steps=400, batch_size=128)
     acc = mnist_evaluate(conv_model, test_X, test_y)
+    assert acc > 0.95
+
+    X, test_X = X.reshape((-1, 28, 28)), test_X.reshape((-1, 28, 28))
+    mnist_train(lstm_model, X, y, steps=800, batch_size=128)
+    acc = mnist_evaluate(lstm_model, test_X, test_y)
     assert acc > 0.95

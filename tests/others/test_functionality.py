@@ -7,19 +7,12 @@ tn.seeder.random_seed(31)
 
 @pytest.fixture(name="mock_dataset")
 def fixture_mock_dataset():
-    X = np.random.normal(size=(100, 5))
+    X = np.random.normal(size=(100, 64))
     y = np.random.uniform(size=(100, 1))
     return X, y
 
 
-@pytest.fixture(name="mock_img_dataset")
-def fixture_mock_img_dataset():
-    X = np.random.normal(size=(100, 8, 8, 1))
-    y = np.random.uniform(size=(100, 1))
-    return X, y
-
-
-@pytest.fixture(name="dense_model")
+@pytest.fixture(name="dense")
 def fixture_dense_model():
     net = tn.net.Net([tn.layer.Dense(10), tn.layer.Dense(1)])
     loss = tn.loss.MSE()
@@ -27,7 +20,7 @@ def fixture_dense_model():
     return tn.model.Model(net, loss, opt)
 
 
-@pytest.fixture(name="conv_model")
+@pytest.fixture(name="conv")
 def fixture_conv_model():
     net = tn.net.Net([
         tn.layer.Conv2D(kernel=[3, 3, 1, 2]),
@@ -35,6 +28,18 @@ def fixture_conv_model():
         tn.layer.Conv2D(kernel=[3, 3, 2, 4]),
         tn.layer.MaxPool2D(pool_size=[2, 2], stride=[2, 2]),
         tn.layer.Flatten(),
+        tn.layer.Dense(1)
+    ])
+    loss = tn.loss.MSE()
+    opt = tn.optimizer.SGD()
+    return tn.model.Model(net, loss, opt)
+
+
+@pytest.fixture(name="rnn")
+def fixture_rnn_model():
+    net = tn.net.Net([
+        tn.layer.RNN(num_hidden=10),
+        tn.layer.ReLU(),
         tn.layer.Dense(1)
     ])
     loss = tn.loss.MSE()
@@ -53,12 +58,20 @@ def _test_parameter_change(model, X, y):
         assert np.all(p1 != p2)
 
 
-def test_parameters_change_dense_model(dense_model, mock_dataset):
-    _test_parameter_change(dense_model, *mock_dataset)
+def test_parameters_change_dense_model(dense, mock_dataset):
+    _test_parameter_change(dense, *mock_dataset)
 
 
-def test_parameter_change_conv_model(conv_model, mock_img_dataset):
-    _test_parameter_change(conv_model, *mock_img_dataset)
+def test_parameter_change_conv_model(conv, mock_dataset):
+    X, y = mock_dataset
+    X = X.reshape((-1, 8, 8, 1))
+    _test_parameter_change(conv, X, y)
+
+
+def test_parameter_change_rnn_model(rnn, mock_dataset):
+    X, y = mock_dataset
+    X = X.reshape((-1, 8, 8))
+    _test_parameter_change(rnn, X, y)
 
 
 def _test_backprop(model, X, y):
@@ -72,9 +85,17 @@ def _test_backprop(model, X, y):
         previous_loss = loss
 
 
-def test_backprop_dense(dense_model, mock_dataset):
-    _test_backprop(dense_model, *mock_dataset)
+def test_backprop_dense(dense, mock_dataset):
+    _test_backprop(dense, *mock_dataset)
 
 
-def test_backprop_conv(conv_model, mock_img_dataset):
-    _test_backprop(conv_model, *mock_img_dataset)
+def test_backprop_conv(conv, mock_dataset):
+    X, y = mock_dataset
+    X = X.reshape((-1, 8, 8, 1))
+    _test_backprop(conv, X, y)
+
+
+def test_backprop_rnn(rnn, mock_dataset):
+    X, y = mock_dataset
+    X = X.reshape((-1, 8, 8))
+    _test_backprop(rnn, X, y)

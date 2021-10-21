@@ -380,7 +380,7 @@ class RNN(Layer):
         for p in self.param_names:
             self.grads[p] = np.zeros_like(self.params[p])
 
-        self.grads["W_o"] = grad.T @ self.ctx["h"][:, -1]
+        self.grads["W_o"] = grad.T @ self.ctx["h"][:, n_ts - 1]
         self.grads["b_o"] = grad.sum(axis=0)
         d_h = grad @ self.params["W_o"]
         d_in = np.empty_like(self.ctx["X"], dtype=np.float32)
@@ -451,10 +451,10 @@ class LSTM(Layer):
         for p in self.param_names:
             self.grads[p] = np.zeros_like(self.params[p])
 
-        batch_size, n_ts, input_dim = self.ctx["X"].shape
+        _, n_ts, input_dim = self.ctx["X"].shape
 
         # grads w.r.t. param W_o and b_o
-        self.grads["W_o"] = grad.T @ self.ctx["h"][:, -1]
+        self.grads["W_o"] = grad.T @ self.ctx["h"][:, n_ts - 1]
         self.grads["b_o"] = grad.sum(axis=0)
 
         # grads w.r.t. h_t
