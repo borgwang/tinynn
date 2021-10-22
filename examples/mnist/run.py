@@ -76,22 +76,20 @@ def main():
         evaluate(model, test_x, test_y)
     else:
         iterator = tn.data_iterator.BatchIterator(batch_size=args.batch_size)
-        loss_list = list()
         for epoch in range(args.num_ep):
             t_start = time.time()
             for batch in iterator(train_x, train_y):
                 pred = model.forward(batch.inputs)
                 loss, grads = model.backward(pred, batch.targets)
                 model.apply_grads(grads)
-                loss_list.append(loss)
             print(f"Epoch {epoch} time cost: {time.time() - t_start}")
-            # evaluate
+            # evaluate every epoch
             evaluate(model, test_x, test_y)
 
         # save model
         if not os.path.isdir(args.model_dir):
             os.makedirs(args.model_dir)
-        model_name = "mnist-%s-epoch%d.pkl" % (args.model_type, args.num_ep)
+        model_name = f"mnist-{args.model_type}-epoch{args.num_ep}.pkl"
         model_path = os.path.join(args.model_dir, model_name)
         model.save(model_path)
         print(f"Model saved in {model_path}")

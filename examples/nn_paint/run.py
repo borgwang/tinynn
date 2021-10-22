@@ -10,7 +10,7 @@ from PIL import Image
 
 def prepare_dataset(img_path):
     if not os.path.isfile(img_path):
-        raise FileExistsError("Image %s not exist" % img_path)
+        raise FileExistsError(f"Image {img_path} not exist")
     img = np.asarray(Image.open(img_path), dtype="float32") / 255.0
 
     train_x, train_y = [], []

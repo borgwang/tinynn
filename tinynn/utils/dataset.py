@@ -146,7 +146,7 @@ class Cifar10(Cifar):
 
     def _parse(self, **kwargs):
         dataset = self._parse_tarfile()
-        data_batch_name = ["data_batch_%d" % i for i in range(1, 6)]
+        data_batch_name = [f"data_batch_{i}" for i in range(1, 6)]
         train_x, train_y = [], []
         for name in data_batch_name:
             cont = dataset[name]

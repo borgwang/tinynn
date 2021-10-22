@@ -116,7 +116,7 @@ def train_distill_model(dataset):
     # save the distilled model
     if not os.path.isdir(args.model_dir):
         os.makedirs(args.model_dir)
-    model_path = os.path.join(args.model_dir, "distill-%d.model" % args.T)
+    model_path = os.path.join(args.model_dir, f"distill-{args.T}.model")
     student.save(model_path)
     print(f"Model saved in {model_path}")
 

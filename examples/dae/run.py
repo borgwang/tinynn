@@ -131,9 +131,9 @@ def main():
 
         # save all the generated images and original inputs for this batch
         noises_in_path = os.path.join(
-            args.output_dir, "ep%d-input.png" % epoch)
+            args.output_dir, f"ep{epoch}-input.png")
         genn_path = os.path.join(
-            args.output_dir, "ep%d-genn.png" % epoch)
+            args.output_dir, f"ep{epoch}-genn.png")
         save_batch_as_images(noises_in_path, noises_in, titles=batch.targets)
         save_batch_as_images(genn_path, genn, titles=batch.targets)
 

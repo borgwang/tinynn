@@ -70,13 +70,13 @@ def train(args):
             running_g_err = 0.9 * running_g_err + 0.1 * g_err
             if i % 100 == 0:
                 print(f"epoch: {epoch + 1}/{args.num_ep} iter-{i + 1}"
-                    f"d_err: {running_d_err:.4f} g_err: {running_g_err:.4f}")
+                      f"d_err: {running_d_err:.4f} g_err: {running_g_err:.4f}")
 
         # sampling
         print(f"epoch: {epoch + 1}/{args.num_ep}"
               f"d_err: {running_d_err:.4f} g_err: {running_g_err:.4f}")
         samples = G.forward(fix_noise)
-        img_name = "ep%d.png" % (epoch + 1)
+        img_name = f"ep{epoch + 1}.png"
         if not os.path.exists(args.output_dir):
             os.makedirs(args.output_dir)
         save_path = os.path.join(args.output_dir, img_name)
