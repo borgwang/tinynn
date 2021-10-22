@@ -47,6 +47,18 @@ def fixture_rnn_model():
     return tn.model.Model(net, loss, opt)
 
 
+@pytest.fixture(name="lstm")
+def fixture_lstm_model():
+    net = tn.net.Net([
+        tn.layer.LSTM(num_hidden=10),
+        tn.layer.ReLU(),
+        tn.layer.Dense(1)
+    ])
+    loss = tn.loss.MSE()
+    opt = tn.optimizer.SGD()
+    return tn.model.Model(net, loss, opt)
+
+
 def _test_parameter_change(model, X, y):
     pred = model.forward(X)
     loss, grads = model.backward(pred, y)
@@ -55,7 +67,7 @@ def _test_parameter_change(model, X, y):
     model.apply_grads(grads)
     params_after = model.net.params.values
     for p1, p2 in zip(params_before, params_after):
-        assert np.all(p1 != p2)
+        assert not np.array_equal(p1, p2)
 
 
 def test_parameters_change_dense_model(dense, mock_dataset):
@@ -72,6 +84,12 @@ def test_parameter_change_rnn_model(rnn, mock_dataset):
     X, y = mock_dataset
     X = X.reshape((-1, 8, 8))
     _test_parameter_change(rnn, X, y)
+
+
+def test_parameter_change_lstm_model(lstm, mock_dataset):
+    X, y = mock_dataset
+    X = X.reshape((-1, 8, 8))
+    _test_parameter_change(lstm, X, y)
 
 
 def _test_backprop(model, X, y):
@@ -99,3 +117,9 @@ def test_backprop_rnn(rnn, mock_dataset):
     X, y = mock_dataset
     X = X.reshape((-1, 8, 8))
     _test_backprop(rnn, X, y)
+
+
+def test_backprop_lstm(lstm, mock_dataset):
+    X, y = mock_dataset
+    X = X.reshape((-1, 8, 8))
+    _test_backprop(lstm, X, y)
