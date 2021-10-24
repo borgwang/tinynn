@@ -7,7 +7,7 @@ tn.seeder.random_seed(31)
 def test_structured_param():
     init = tn.initializer.Uniform(0.0, 1.0)
     net = tn.net.Net([tn.layer.Dense(10, w_init=init, b_init=init)])
-    net.init_params(input_shape=(1, ))
+    net.forward(np.ones((1, 1)))
 
     params = net.params
     assert isinstance(params, tn.structured_param.StructuredParam)

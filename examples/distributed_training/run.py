@@ -23,7 +23,8 @@ def get_model(lr):
         tn.layer.Dense(10)])
     model = tn.model.Model(net=net, loss=tn.loss.SoftmaxCrossEntropy(),
                            optimizer=tn.optimizer.Adam(lr=lr))
-    model.net.init_params(input_shape=(784,))
+    # manually init params shape by letting data forward through the network
+    model.net.forward(np.ones((1, *input_shape)))
     return model
 
 

@@ -23,16 +23,15 @@ class Net:
 
     def backward(self, grad):
         # back propagation
-        layer_grads = []
         for layer in reversed(self.layers):
             grad = layer.backward(grad)
-            layer_grads.append(copy.copy(layer.grads))
 
-        # return structured gradients
-        struct_grad = StructuredParam(layer_grads[::-1])
-        # keep the gradient w.r.t the input
-        struct_grad.wrt_input = grad
-        return struct_grad
+        # structured gradients
+        param_grads = [copy.deepcopy(layer.grads) for layer in self.layers]
+        struct_grads = StructuredParam(param_grads)
+        # save the gradients w.r.t the input
+        struct_grads.wrt_input = grad
+        return struct_grads
 
     @property
     def params(self):
@@ -54,7 +53,3 @@ class Net:
         for layer in self.layers:
             layer.is_training = is_training
         self._is_training = is_training
-
-    def init_params(self, input_shape):
-        # manually init params by letting data forward through the network
-        self.forward(np.ones((1, *input_shape)))
