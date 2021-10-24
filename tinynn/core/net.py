@@ -2,8 +2,6 @@
 
 import copy
 
-import numpy as np
-
 from tinynn.utils.structured_param import StructuredParam
 
 
