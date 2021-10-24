@@ -24,7 +24,7 @@ def get_model(lr):
     model = tn.model.Model(net=net, loss=tn.loss.SoftmaxCrossEntropy(),
                            optimizer=tn.optimizer.Adam(lr=lr))
     # manually init params shape by letting data forward through the network
-    model.net.forward(np.ones((1, *input_shape)))
+    model.net.forward(np.ones((1, 784)))
     return model
 
 
