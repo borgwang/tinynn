@@ -7,7 +7,7 @@ from tinynn.core.initializer import Zeros
 from tinynn.utils.math import sigmoid
 
 
-def empty(self, shape, dtype=np.float32):
+def empty(shape, dtype=np.float32):
     return np.empty(shape, dtype=dtype)
 
 

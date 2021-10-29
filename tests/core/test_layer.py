@@ -63,7 +63,7 @@ def test_conv_2d():
 def test_max_pool_2d():
     batch_size = 1
     channel = 2
-    input_ = np.random.randn(batch_size, 4, 4, channel)
+    input_ = np.random.randn(batch_size, 4, 4, channel).astype(np.float32)
 
     layer = tn.layer.MaxPool2D(pool_size=[2, 2], stride=[2, 2])
     output = layer.forward(input_)
