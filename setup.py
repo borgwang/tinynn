@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="tinynn",
-    version="0.1.0",
+    version="0.1.1",
     author="borgwang",
     author_email="borgwang@126.com",
     description="A lightweight deep learning library",
