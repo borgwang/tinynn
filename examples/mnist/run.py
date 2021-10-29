@@ -53,7 +53,6 @@ def main():
         test_x = test_x.reshape((-1, 28, 28))
         net = tn.net.Net([
             tn.layer.RNN(num_hidden=30),
-            tn.layer.Tanh(),
             tn.layer.Dense(10)
         ])
     elif args.model_type == "lstm":
@@ -61,7 +60,6 @@ def main():
         test_x = test_x.reshape((-1, 28, 28))
         net = tn.net.Net([
             tn.layer.LSTM(num_hidden=30),
-            tn.layer.Tanh(),
             tn.layer.Dense(10)
         ])
     else:

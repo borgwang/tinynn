@@ -7,6 +7,10 @@ from tinynn.core.initializer import Zeros
 from tinynn.utils.math import sigmoid
 
 
+def empty(self, shape, dtype=np.float32):
+    return np.empty(shape, dtype=dtype)
+
+
 class Layer:
     """Base class for layers."""
 
@@ -188,7 +192,7 @@ class Conv2D(Layer):
         # grads w.r.t. inputs
         d_X = grad @ self.ctx["W"].T
         # cast gradients back to original shape as d_in
-        d_in = np.zeros(shape=self.ctx["X_shape"])
+        d_in = np.zeros(shape=self.ctx["X_shape"], dtype=np.float32)
         for i, r in enumerate(range(0, in_h - k_h + 1, s_h)):
             for j, c in enumerate(range(0, in_w - k_w + 1, s_w)):
                 patch = d_X[:, i, j, :]
@@ -295,8 +299,8 @@ class MaxPool2D(Layer):
         out_w = (padded_w - k_w) // s_w + 1
 
         # construct output matrix and argmax matrix
-        max_pool = np.empty((batch_sz, out_h, out_w, in_c))
-        argmax = np.empty((batch_sz, out_h, out_w, in_c), dtype=int)
+        max_pool = empty((batch_sz, out_h, out_w, in_c))
+        argmax = empty((batch_sz, out_h, out_w, in_c), dtype=int)
         for r in range(out_h):
             r_start = r * s_h
             for c in range(out_w):
@@ -323,7 +327,7 @@ class MaxPool2D(Layer):
         k_sz = k_h * k_w
         pad_h, pad_w = self.padding[1:3]
 
-        d_in = np.zeros(shape=(batch_sz, in_h, in_w, in_c))
+        d_in = np.zeros(shape=(batch_sz, in_h, in_w, in_c), dtype=np.float32)
         for r in range(out_h):
             r_start = r * s_h
             for c in range(out_w):
@@ -347,44 +351,34 @@ class RNN(Layer):
                  b_init=Zeros()):
         super().__init__()
         self.n_h = num_hidden
-        self.initializers = {"W": w_init, "b": b_init,
-                             "W_o": w_init, "b_o": b_init}
+        self.initializers = {"W": w_init, "b": b_init}
 
-    def empty(self, shape):
-        return np.empty(shape, dtype=np.float32)
 
     def forward(self, inputs):
         batch_size, n_ts, input_dim = inputs.shape
         if not self.is_init:
             self.shapes = {"W": [self.n_h, self.n_h + input_dim],
-                           "b": [self.n_h],
-                           "W_o": [input_dim, self.n_h],
-                           "b_o": [input_dim]}
+                           "b": [self.n_h]}
             self._init_params()
 
-        a = self.empty((batch_size, n_ts, self.n_h))
-        h = self.empty((batch_size, n_ts + 1, self.n_h))
-        out = self.empty((batch_size, n_ts, input_dim))
+        a = empty((batch_size, n_ts, self.n_h))
+        h = empty((batch_size, n_ts + 1, self.n_h))
 
         h[:, -1] = 0.0
         for t in range(n_ts):
             z = np.hstack([h[:, t - 1], inputs[:, t]])
             a[:, t] = z @ self.params["W"].T + self.params["b"]
             h[:, t] = np.tanh(a[:, t])
-            out[:, t] = h[:, t] @ self.params["W_o"].T + self.params["b_o"]
         self.ctx = {"h": h, "X": inputs}
-        return out[:, -1]
+        return h[:, -2]
 
     def backward(self, grad):
         n_ts = self.ctx["X"].shape[1]
         for p in self.param_names:
             self.grads[p] = np.zeros_like(self.params[p])
 
-        self.grads["W_o"] = grad.T @ self.ctx["h"][:, n_ts - 1]
-        self.grads["b_o"] = grad.sum(axis=0)
-        d_h = grad @ self.params["W_o"]
         d_in = np.empty_like(self.ctx["X"], dtype=np.float32)
-
+        d_h = grad
         for t in reversed(range(n_ts)):
             d_a = d_h * (1 - self.ctx["h"][:, t] ** 2)
             d_in[:, t] = d_a @ self.params["W"][:, self.n_h:]
@@ -396,7 +390,7 @@ class RNN(Layer):
 
     @property
     def param_names(self):
-        return "W", "b", "W_o", "b_o"
+        return "W", "b"
 
 
 class LSTM(Layer):
@@ -407,11 +401,8 @@ class LSTM(Layer):
                  b_init=Zeros()):
         super().__init__()
         self.n_h = num_hidden
-        self.initializers = {"W_g": w_init, "W_c": w_init, "W_o": w_init,
-                             "b_g": b_init, "b_c": b_init, "b_o": b_init}
-
-    def empty(self, shape):
-        return np.empty(shape, dtype=np.float32)
+        self.initializers = {"W_g": w_init, "W_c": w_init,
+                             "b_g": b_init, "b_c": b_init}
 
     def forward(self, inputs):
         batch_size, n_ts, input_dim = inputs.shape
@@ -419,18 +410,15 @@ class LSTM(Layer):
             self.shapes = {"W_g": [3 * self.n_h, input_dim + self.n_h],
                            "b_g": [3 * self.n_h],
                            "W_c": [self.n_h, input_dim + self.n_h],
-                           "b_c": [self.n_h],
-                           "W_o": [input_dim, self.n_h],
-                           "b_o": [input_dim]}
+                           "b_c": [self.n_h]}
             self._init_params()
 
-        h = self.empty((batch_size, n_ts + 1, self.n_h))
+        h = empty((batch_size, n_ts + 1, self.n_h))
         h[:, -1] = 0.0
-        c = self.empty((batch_size, n_ts + 1, self.n_h))
+        c = empty((batch_size, n_ts + 1, self.n_h))
         c[:, -1] = 0.0
-        out = self.empty((batch_size, n_ts, input_dim))
-        gates = self.empty((batch_size, n_ts, 3 * self.n_h))
-        c_hat = self.empty((batch_size, n_ts + 1, self.n_h))
+        gates = empty((batch_size, n_ts, 3 * self.n_h))
+        c_hat = empty((batch_size, n_ts + 1, self.n_h))
 
         for t in range(n_ts):
             z = np.hstack([h[:, t-1], inputs[:, t]])
@@ -442,10 +430,9 @@ class LSTM(Layer):
 
             c[:, t] = f_gate * c[:, t - 1] + i_gate * c_hat[:, t]
             h[:, t] = o_gate * np.tanh(c[:, t])
-            out[:, t] = h[:, t] @ self.params["W_o"].T + self.params["b_o"]
 
         self.ctx = {"h": h, "c": c, "X": inputs, "gates": gates, "c_hat": c_hat}
-        return out[:, -1]
+        return h[:, -2]
 
     def backward(self, grad):
         for p in self.param_names:
@@ -453,15 +440,9 @@ class LSTM(Layer):
 
         _, n_ts, input_dim = self.ctx["X"].shape
 
-        # grads w.r.t. param W_o and b_o
-        self.grads["W_o"] = grad.T @ self.ctx["h"][:, n_ts - 1]
-        self.grads["b_o"] = grad.sum(axis=0)
-
-        # grads w.r.t. h_t
-        d_c_prev = 0
-        d_h_prev = grad @ self.params["W_o"]
-
         d_in = np.empty_like(self.ctx["X"], dtype=np.float32)
+        d_c_prev = 0
+        d_h_prev = grad
         for t in reversed(range(n_ts)):
             z = np.hstack([self.ctx["h"][:, t-1], self.ctx["X"][:, t]])
             tanhc = np.tanh(self.ctx["c"][:, t])
@@ -504,7 +485,7 @@ class LSTM(Layer):
 
     @property
     def param_names(self):
-        return "W_g", "b_g", "W_c", "b_c", "W_o", "b_o"
+        return "W_g", "b_g", "W_c", "b_c"
 
 
 class BatchNormalization(Layer):
@@ -736,7 +717,7 @@ def im2col(img, k_h, k_w, s_h, s_w):
     out_h = (h - k_h) // s_h + 1
     out_w = (w - k_w) // s_w + 1
     # allocate space for column matrix
-    col = np.empty((batch_sz * out_h * out_w, k_h * k_w * in_c))
+    col = empty((batch_sz * out_h * out_w, k_h * k_w * in_c))
     # fill in the column matrix
     batch_span = out_w * out_h
     for r in range(out_h):
