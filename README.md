@@ -1,4 +1,4 @@
-## tinynn
+# tinynn
 
 [![CI](https://github.com/borgwang/tinynn/actions/workflows/workflow.yml/badge.svg)](https://github.com/borgwang/tinynn/actions/workflows/workflow.yml)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/borgwang/tinynn.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/borgwang/tinynn/context:python)
@@ -6,16 +6,12 @@
 
 tinynn is a lightweight deep learning framework written in Python3 (for learning purposes).
 
-<p align="center">
-  <img src="http://ww4.sinaimg.cn/large/006tNc79gy1g63tkgdh1pj30to0fwjsk.jpg" width="80%" alt="tinynn-architecture" referrerPolicy="no-referrer"/>
-</p>
-
 ## Getting Started
 
 #### Install
 
 ```bash
-pip install tinynn
+pip3 install tinynn
 ```
 
 #### Run examples
@@ -25,13 +21,13 @@ git clone https://github.com/borgwang/tinynn.git
 cd tinynn/examples
 
 # MNIST classification
-python mnist/run.py
+python3 mnist/run.py
 
 # a toy regression task
-python nn_paint/run.py
+python3 nn_paint/run.py
 
 # reinforcement learning demo (gym environment required)
-python rl/run.py
+python3 rl/run.py
 ```
 
 #### Intuitive APIs
@@ -47,13 +43,6 @@ for batch in iterator(train_x, train_y):
     loss, grads = model.backward(preds, batch.targets)
     model.apply_grads(grads)
 ```
-
-#### Components
-
-- layers: Dense, Conv2D, ConvTranspose2D, RNN, MaxPool2D, Dropout, BatchNormalization
-- activation: ReLU, LeakyReLU, Sigmoid, Tanh, Softplus
-- losses: SoftmaxCrossEntropy, SigmoidCrossEntropy, MAE, MSE, Huber
-- optimizer: RAdam, Adam, SGD, Momentum, RMSProp, Adagrad, Adadelta
 
 ## Contribute
 
