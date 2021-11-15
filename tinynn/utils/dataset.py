@@ -45,7 +45,7 @@ class Dataset:
         return self._test_set
 
     @staticmethod
-    def get_one_hot(targets, n_classes):
+    def one_hot(targets, n_classes):
         return np.eye(n_classes, dtype=np.float32)[np.array(targets).reshape(-1)]
 
 
@@ -63,9 +63,9 @@ class MNIST(Dataset):
             train, valid, test = pickle.load(f, encoding="latin1")
 
         if kwargs["one_hot"]:
-            train = (train[0], self.get_one_hot(train[1], self._n_classes))
-            valid = (valid[0], self.get_one_hot(valid[1], self._n_classes))
-            test = (test[0], self.get_one_hot(test[1], self._n_classes))
+            train = (train[0], self.one_hot(train[1], self._n_classes))
+            valid = (valid[0], self.one_hot(valid[1], self._n_classes))
+            test = (test[0], self.one_hot(test[1], self._n_classes))
 
         self._train_set, self._valid_set, self._test_set = train, valid, test
 
@@ -103,8 +103,8 @@ class FashionMNIST(Dataset):
         test_x = test_x.reshape((len(test_x), -1))
 
         if kwargs["one_hot"]:
-            train_y = self.get_one_hot(train_y, self._n_classes)
-            test_y = self.get_one_hot(test_y, self._n_classes)
+            train_y = self.one_hot(train_y, self._n_classes)
+            test_y = self.one_hot(test_y, self._n_classes)
         self._train_set = (train_x, train_y)
         self._test_set = (test_x, test_y)
 
@@ -164,8 +164,8 @@ class Cifar10(Cifar):
             test_x = self._cifar_normalize(test_x)
 
         if kwargs["one_hot"]:
-            train_y = self.get_one_hot(train_y, self._n_classes)
-            test_y = self.get_one_hot(test_y, self._n_classes)
+            train_y = self.one_hot(train_y, self._n_classes)
+            test_y = self.one_hot(test_y, self._n_classes)
 
         self._train_set = (train_x, train_y)
         self._test_set = (test_x, test_y)
@@ -192,8 +192,8 @@ class Cifar100(Cifar):
             test_x = self._cifar_normalize(test_x)
 
         if kwargs["one_hot"]:
-            train_y = self.get_one_hot(train_y, self._n_classes)
-            test_y = self.get_one_hot(test_y, self._n_classes)
+            train_y = self.one_hot(train_y, self._n_classes)
+            test_y = self.one_hot(test_y, self._n_classes)
 
         self._train_set = (train_x, train_y)
         self._test_set = (test_x, test_y)
